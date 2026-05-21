@@ -327,6 +327,12 @@ function AuthModal({ ilkMod, kapat, basari }) {
 /* ─────────────────────────────────────────────
    DERS EKRANI
 ───────────────────────────────────────────── */
+// Bu dosyayı mevcut App.jsx'teki DersEkrani fonksiyonuyla değiştir
+// Değişiklikler:
+// 1. Ders başlamadan dil seçimi (Türkçe / Hedef Dil / İkidilli)
+// 2. Sesli konuşma da ekrana yazılır
+// 3. Her yanıt hem yazılı hem sesli gelir
+
 function DersEkrani({dilId, hoca, kul, kapat}){
   const dil = DILLER.find(d=>d.id===dilId);
   const [msgs, setMsgs]     = useState([]);
@@ -626,6 +632,7 @@ function DersEkrani({dilId, hoca, kul, kapat}){
     </div>
   );
 }
+
 /* ─────────────────────────────────────────────
    ADMİN PANELİ
 ───────────────────────────────────────────── */
