@@ -327,283 +327,298 @@ function AuthModal({ ilkMod, kapat, basari }) {
 /* ─────────────────────────────────────────────
    DERS EKRANI
 ───────────────────────────────────────────── */
-function DersEkrani({ dilId, hoca, kullanici, kapat }) {
+function DersEkrani({dilId, hoca, kul, kapat}){
   const dil = DILLER.find(d=>d.id===dilId);
-  const [mesajlar, setM]    = useState([]);
-  const [yazi, setY]        = useState("");
+  const [msgs, setMsgs]     = useState([]);
+  const [yazi, setYazi]     = useState("");
   const [yukl, setYukl]     = useState(false);
   const [mikr, setMikr]     = useState(false);
-  const [mikErr, setMikErr]  = useState("");
-  const [mikDestekli, setMD] = useState(true);
-  const [sure, setSure]     = useState(kullanici?.durum==="Deneme"?1200:0);
-  const sonRef  = useRef(null);
-  const recRef  = useRef(null);
-  const timerRef = useRef(null);
+  const [mikErr, setMikErr] = useState("");
+  const [sure, setSure]     = useState(kul?.plan==="Deneme"?1200:0);
+  const [dilMod, setDilMod] = useState(null); // null=seçilmedi, "tr"=türkçe, "hedef"=hedef dil, "iki"=ikidilli
+  const sonRef = useRef(null);
+  const recRef = useRef(null);
 
   useEffect(()=>{
-    // Tarayıcı ses desteğini kontrol et
-    const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR) setMD(false);
-
-    setM([{tip:"ai",tx:`Merhaba ${kullanici?.ad?.split(" ")[0]||""}! Ben ${hoca.ad}, ${hoca.yer} kökenli dil öğretmeninim.\n\nUzmanlık: ${hoca.uz}\n\nBugün ${dil.ad} dersiyle başlayalım! Ne öğrenmek istersin?`}]);
-
-    if(kullanici?.durum==="Deneme"){
-      timerRef.current = setInterval(()=>{
-        setSure(s=>{if(s<=1){clearInterval(timerRef.current);return 0;}return s-1;});
-      },1000);
+    if(kul?.plan==="Deneme"){
+      const ti=setInterval(()=>setSure(s=>{if(s<=1){clearInterval(ti);return 0;}return s-1;}),1000);
+      return()=>clearInterval(ti);
     }
-    return()=>{if(timerRef.current) clearInterval(timerRef.current);};
   },[]);
 
-  useEffect(()=>{sonRef.current?.scrollIntoView({behavior:"smooth"});},[mesajlar]);
+  useEffect(()=>{
+    if(dilMod){
+      const karsilamaMesaji = dilMod==="tr"
+        ? `Merhaba ${kul?.ad?.split(" ")[0]||""}! Ben ${hoca.ad}. ${dil.ad} dersine hoş geldin!\n\nUzmanlığım: ${hoca.uz}\n\nDersimizi Türkçe olarak işleyeceğiz. Mikrofona basarak sesli veya yazarak konuşabilirsin. Başlayalım!`
+        : dilMod==="hedef"
+        ? `Hello/Merhaba ${kul?.ad?.split(" ")[0]||""}! I am ${hoca.ad}. Welcome to your ${dil.ad} lesson!\n\nWe will conduct our lesson in ${dil.ad}. You can speak by pressing the microphone or type. Let's begin!`
+        : `Merhaba ${kul?.ad?.split(" ")[0]||""}! Ben ${hoca.ad}. ${dil.ad} dersine hoş geldin!\n\nHem Türkçe hem ${dil.ad} kullanarak ders işleyeceğiz. Mikrofona basarak sesli veya yazarak konuşabilirsin. Başlayalım!`;
+      setMsgs([{r:"ai", t:karsilamaMesaji, sesli:false}]);
+    }
+  },[dilMod]);
 
-  const mikBasla = () => {
+  useEffect(()=>{sonRef.current?.scrollIntoView({behavior:"smooth"});},[msgs]);
+
+  // Dil seçim ekranı
+  if(!dilMod){
+    return(
+      <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:8000}}>
+        <div style={{background:K.card,borderRadius:22,padding:36,width:400,border:`1px solid ${K.bdr3}`,textAlign:"center",boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><Av h={hoca} dil={dil} sz={80}/></div>
+          <div style={{color:K.tx,fontSize:18,fontWeight:800,marginBottom:4}}>{hoca.ad}</div>
+          <div style={{color:dil.vurgu,fontSize:12,marginBottom:6}}>{hoca.yer}</div>
+          <div style={{color:K.tx3,fontSize:13,marginBottom:24}}>{hoca.uz}</div>
+          
+          <div style={{color:K.tx2,fontSize:14,fontWeight:700,marginBottom:16}}>Ders dilini seç:</div>
+          
+          {[
+            {id:"tr",    baslik:"🇹🇷 Türkçe",          acik:"Hoca Türkçe konuşur ve yazar"},
+            {id:"hedef", baslik:`${dil.bayrak} ${dil.ad}`, acik:`Hoca ${dil.ad} konuşur ve yazar`},
+            {id:"iki",   baslik:"🔄 İkidilli",           acik:`Hem Türkçe hem ${dil.ad} karışık`},
+          ].map(s=>(
+            <div key={s.id} onClick={()=>setDilMod(s.id)}
+              style={{background:K.bg3,borderRadius:12,padding:"14px 18px",marginBottom:10,cursor:"pointer",
+                border:`1px solid ${K.bdr}`,textAlign:"left",transition:"all 0.2s"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=dil.vurgu;e.currentTarget.style.background="rgba(46,125,50,0.1)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=K.bdr;e.currentTarget.style.background=K.bg3;}}>
+              <div style={{color:K.tx,fontWeight:700,fontSize:14}}>{s.baslik}</div>
+              <div style={{color:K.tx3,fontSize:12,marginTop:3}}>{s.acik}</div>
+            </div>
+          ))}
+          
+          <button onClick={kapat} style={{marginTop:10,padding:"9px 24px",background:"transparent",color:K.tx4,border:`1px solid ${K.bdr}`,borderRadius:9,cursor:"pointer",fontSize:13}}>
+            ← Geri
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const sistemPrompt = dilMod==="tr"
+    ? `Sen ${hoca.ad} adlı AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} dersi veriyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Örnekleri ${dil.yerel} dilinde ver ama açıklamaları Türkçe yap. Sıcak, sabırlı ve motive edici ol. Hataları nazikçe düzelt. Maksimum 3 paragraf.`
+    : dilMod==="hedef"
+    ? `You are ${hoca.ad}, an AI language teacher from ${hoca.yer}. You teach ${dil.ad}. Specialty: ${hoca.uz}. ONLY respond in ${dil.ad}. Be warm, patient and motivating. Gently correct mistakes. Maximum 3 paragraphs.`
+    : `Sen ${hoca.ad} adlı AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} dersi veriyorsun. Uzmanlık: ${hoca.uz}. Hem Türkçe hem ${dil.ad} kullanarak yanıt ver. Açıklamaları Türkçe yap, örnekleri ${dil.yerel} dilinde ver, her örneğin Türkçe çevirisini de ekle. Sıcak, sabırlı ve motive edici ol. Hataları nazikçe düzelt. Maksimum 3 paragraf.`;
+
+  const mikBasla=()=>{
     setMikErr("");
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){
-      setMikErr("Ses girişi bu tarayıcıda desteklenmiyor. Chrome kullanmayı deneyin.");
-      return;
-    }
+    if(!SR){setMikErr("Tarayıcınız ses girişini desteklemiyor. Lütfen yazarak devam edin.");return;}
     try{
       const r=new SR();
-      r.lang=dil.mic||"tr-TR";
-      r.continuous=false;
-      r.interimResults=false;
+      // Dil moduna göre mikrofon dili
+      r.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+      r.continuous=false; r.interimResults=false;
       r.onstart=()=>setMikr(true);
       r.onresult=e=>{
-        const txt=e.results[0][0].transcript;
-        setY(txt);
+        const metin = e.results[0][0].transcript;
+        setYazi(metin); // Hem input'a yaz
         setMikr(false);
       };
       r.onerror=e=>{
         setMikr(false);
-        if(e.error==="not-allowed"){
-          setMikErr("Mikrofon izni reddedildi. Tarayıcı ayarlarından izin verin.");
-        } else if(e.error==="no-speech"){
-          setMikErr("Ses algılanamadı. Tekrar deneyin.");
-        } else {
-          setMikErr("Mikrofon hatası: "+e.error);
-        }
-        setTimeout(()=>setMikErr(""),5000);
+        setMikErr(e.error==="not-allowed"?"Mikrofon izni reddedildi. Tarayıcı ayarlarından izin verin.":"Ses algılanamadı, tekrar dene.");
+        setTimeout(()=>setMikErr(""),4000);
       };
       r.onend=()=>setMikr(false);
-      recRef.current=r;
-      r.start();
-    }catch(e){
-      setMikErr("Mikrofon başlatılamadı: "+e.message);
-    }
+      recRef.current=r; r.start();
+    }catch{setMikErr("Mikrofon başlatılamadı.");}
   };
+  const mikBirak=()=>{try{recRef.current?.stop();}catch{}setMikr(false);};
 
-  const mikBirak = ()=>{
-    try{recRef.current?.stop();}catch{}
-    setMikr(false);
-  };
-
-  const gonder = async()=>{
-    if(!yazi.trim()||yukl) return;
-    const txt=yazi.trim();
-    setY("");
-    setYukl(true);
-    setM(m=>[...m,{tip:"user",tx:txt}]);
+  const gonder=async(metinOverride)=>{
+    const txt=(metinOverride||yazi).trim();
+    if(!txt||yukl)return;
+    setYazi(""); setYukl(true);
+    // Mesajı ekrana yaz (sesli geldiyse de yazılır)
+    setMsgs(m=>[...m,{r:"user",t:txt}]);
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:800,
-          system:`Sen ${hoca.ad} adlı bir dil öğretmenisin. ${hoca.yer} kökenlisin. Öğrenciye ${dil.ad} dersi veriyorsun. Uzmanlığın: ${hoca.uz}.
-
-ÖNEMLI KURALLAR:
-- Sen bir DİL ÖĞRETMENİSİN, çevirmen değilsin
-- Türkçe yanıt ver, ${dil.yerel} dilinde örnekler ekle
-- Sıcak, sabırlı ve motive edici ol
-- Hataları nazikçe düzelt
-- Dini veya siyasi görüş bildirme, yalnızca dil öğret
-- Maksimum 3 paragraf yaz
-- Her yanıtta mutlaka bir alıştırma veya örnek ver`,
-          messages:[
-            ...mesajlar.filter(m=>m.tip).map(m=>({
-              role:m.tip==="ai"?"assistant":"user",
-              content:m.tx
-            })),
-            {role:"user",content:txt}
-          ]
+          model:"claude-sonnet-4-20250514",max_tokens:800,
+          system:sistemPrompt,
+          messages:[...msgs.filter(m=>m.r).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t})),{role:"user",content:txt}]
         })
       });
-
-      if(!r.ok){
-        const hata=await r.json().catch(()=>({}));
-        const kod=r.status;
-        if(kod===429){
-          throw new Error("API kullanım limiti doldu. Lütfen birkaç dakika bekleyip tekrar deneyin.");
-        } else if(kod===401){
-          throw new Error("API anahtarı geçersiz. Lütfen sistem yöneticisiyle iletişime geçin.");
-        } else {
-          throw new Error(hata?.error?.message||`Sunucu hatası (${kod}). Tekrar deneyin.`);
-        }
-      }
-
-      const d=await r.json();
-      const yanit=d.content?.[0]?.text;
-      if(!yanit) throw new Error("Boş yanıt alındı.");
-      setM(m=>[...m,{tip:"ai",tx:yanit}]);
-
-      // Sesli okuma (opsiyonel)
+      if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d?.error?.message||`Hata: ${res.status}`);}
+      const d=await res.json();
+      const y=d.content?.[0]?.text;
+      if(!y)throw new Error("Yanıt alınamadı.");
+      
+      // Yanıtı ekrana yaz
+      setMsgs(m=>[...m,{r:"ai",t:y}]);
+      
+      // Sesli oku
       try{
-        if(window.speechSynthesis){
-          window.speechSynthesis.cancel();
-          const u=new SpeechSynthesisUtterance(yanit.substring(0,200));
-          u.lang="tr-TR";
-          u.rate=0.9;
-          window.speechSynthesis.speak(u);
-        }
+        window.speechSynthesis?.cancel();
+        const u=new SpeechSynthesisUtterance(y.substring(0,200));
+        u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+        u.rate=0.85; u.pitch=1.1;
+        window.speechSynthesis?.speak(u);
       }catch{}
-
     }catch(e){
-      setM(m=>[...m,{tip:"hata",tx:`⚠️ ${e.message}`}]);
+      setMsgs(m=>[...m,{r:"ai",t:`Bağlantı hatası: ${e.message}. İnternet bağlantınızı kontrol edip tekrar deneyin.`}]);
     }
     setYukl(false);
   };
 
+  // Mikrofon bırakıldığında otomatik gönder
+  const mikBirakVeGonder=()=>{
+    try{recRef.current?.stop();}catch{}
+    setMikr(false);
+    // Kısa bekleme sonra input'taki metni gönder
+    setTimeout(()=>{
+      const input = document.getElementById("dersInput");
+      if(input && input.value.trim()){
+        gonder(input.value.trim());
+      }
+    }, 500);
+  };
+
   const mm=String(Math.floor(sure/60)).padStart(2,"0");
-  const ss2=String(sure%60).padStart(2,"0");
+  const ss=String(sure%60).padStart(2,"0");
+  const dilModLabel = dilMod==="tr" ? "🇹🇷 Türkçe" : dilMod==="hedef" ? `${dil.bayrak} ${dil.ad}` : "🔄 İkidilli";
 
   return(
-    <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",flexDirection:"column",zIndex:8000,fontFamily:"inherit"}}>
-      <style>{`
-        .nokta{animation:nokta 1s var(--d,0s) infinite}
-        @keyframes nokta{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
-        @keyframes titret{0%,100%{opacity:1}50%{opacity:.4}}
-      `}</style>
-
-      <div style={{background:"rgba(27,94,32,0.2)",padding:"4px 16px",fontSize:11,color:K.gL,textAlign:"center",borderBottom:`1px solid ${K.g1}44`}}>
+    <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",flexDirection:"column",zIndex:8000}}>
+      <style>{`.nk{animation:nk 1s var(--d,0s) infinite}@keyframes nk{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}@keyframes tt{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+      
+      {/* Güvenlik bandı */}
+      <div style={{background:"rgba(27,94,32,0.2)",padding:"4px 16px",fontSize:11,color:K.gL,textAlign:"center",borderBottom:`1px solid ${K.g2}44`}}>
         🔒 Platform hizmet kalitesi kapsamında denetlenebilir — Kayıt yapılmaz
       </div>
-
-      <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",
-        background:`linear-gradient(135deg,${dil.renk}ee,${dil.renk}99)`,
-        borderBottom:`2px solid ${dil.vurgu}`}}>
+      
+      {/* Başlık */}
+      <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",background:`linear-gradient(135deg,${dil.renk}ee,${dil.renk}99)`,borderBottom:`2px solid ${dil.vurgu}`}}>
         <Av h={hoca} dil={dil} sz={46}/>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{color:"#fff",fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{hoca.ad}</div>
+        <div style={{flex:1}}>
+          <div style={{color:"#fff",fontWeight:700,fontSize:14}}>{hoca.ad}</div>
           <div style={{color:dil.vurgu,fontSize:11}}>{hoca.yer} • {hoca.uz}</div>
         </div>
-        {kullanici?.durum==="Deneme"&&sure>0&&(
-          <div style={{background:"rgba(0,0,0,0.4)",borderRadius:8,padding:"4px 10px",textAlign:"center",flexShrink:0}}>
+        {/* Dil modu göstergesi */}
+        <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#fff",cursor:"pointer"}}
+          onClick={()=>{setDilMod(null);setMsgs([]);}}>
+          {dilModLabel} ↺
+        </div>
+        {kul?.plan==="Deneme"&&sure>0&&(
+          <div style={{background:"rgba(0,0,0,0.4)",borderRadius:8,padding:"4px 12px",textAlign:"center"}}>
             <div style={{fontSize:9,color:"#aaa"}}>KALAN</div>
-            <div style={{fontWeight:800,color:sure<300?K.errL:dil.vurgu,fontSize:16}}>{mm}:{ss2}</div>
+            <div style={{fontWeight:800,color:sure<300?K.errL:dil.vurgu,fontSize:17}}>{mm}:{ss}</div>
           </div>
         )}
-        <button onClick={kapat} style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",
-          borderRadius:8,padding:"8px 14px",cursor:"pointer",fontWeight:700,flexShrink:0}}>✕ Çık</button>
+        <button onClick={kapat} style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontWeight:700}}>✕ Çıkış</button>
       </div>
 
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-        {/* SOL PANEL */}
-        <div style={{width:180,background:K.bg2,borderRight:`1px solid ${K.bdr}`,padding:10,
-          display:"flex",flexDirection:"column",gap:8,overflowY:"auto",flexShrink:0}}>
-          <div style={{background:K.card,borderRadius:10,padding:10,border:`1px solid ${K.bdr2}`,textAlign:"center"}}>
-            <div style={{fontSize:9,color:K.tx4,marginBottom:6,fontWeight:700,letterSpacing:1}}>AI HOCAN</div>
-            <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Av h={hoca} dil={dil} sz={70}/></div>
-            <div style={{color:K.tx,fontWeight:700,fontSize:12}}>{hoca.ad}</div>
-            <div style={{color:dil.vurgu,fontSize:10,marginTop:2}}>{hoca.yer}</div>
-            <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:6}}>
-              <span style={{color:dil.vurgu,fontSize:11}}>⭐ {hoca.p}</span>
-              <span style={{color:K.tx4,fontSize:10}}>{hoca.n.toLocaleString()}</span>
+        {/* Sol panel */}
+        <div style={{width:190,background:K.bg2,borderRight:`1px solid ${K.bdr}`,padding:10,display:"flex",flexDirection:"column",gap:10,overflowY:"auto"}}>
+          <div style={{background:K.card,borderRadius:10,padding:12,border:`1px solid ${K.bdr2}`,textAlign:"center"}}>
+            <div style={{fontSize:9,color:K.tx4,marginBottom:8,fontWeight:700,letterSpacing:1}}>AI HOCAN</div>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Av h={hoca} dil={dil} sz={76}/></div>
+            <div style={{color:K.tx,fontWeight:700,fontSize:13}}>{hoca.ad}</div>
+            <div style={{color:dil.vurgu,fontSize:10,marginTop:3}}>{hoca.yer}</div>
+            <div style={{color:K.tx3,fontSize:10,marginTop:3}}>{hoca.uz}</div>
+            <div style={{display:"flex",justifyContent:"center",gap:10,marginTop:8}}>
+              <span style={{color:dil.vurgu,fontSize:12}}>⭐ {hoca.p}</span>
+              <span style={{color:K.tx4,fontSize:11}}>{hoca.n.toLocaleString()}</span>
             </div>
-            {yukl&&<div style={{marginTop:6,color:K.gL,fontSize:10,animation:"titret 1s infinite"}}>Yanıt yazıyor...</div>}
+            {yukl&&<div style={{marginTop:6,color:K.gL,fontSize:10,animation:"tt 1s infinite"}}>Yanıt yazıyor...</div>}
           </div>
-
-          {!mikDestekli&&(
-            <div style={{background:"rgba(249,168,37,0.1)",borderRadius:8,padding:8,
-              color:K.warn,fontSize:10,border:`1px solid ${K.warn}33`,textAlign:"center"}}>
-              🎤 Ses girişi için Chrome tarayıcısı kullanın
+          
+          <div style={{background:K.card,borderRadius:10,padding:12,border:`1px solid ${K.bdr}`,textAlign:"center"}}>
+            <div style={{fontSize:9,color:K.tx4,marginBottom:6,fontWeight:700,letterSpacing:1}}>KAMERA</div>
+            <div style={{background:K.bg3,borderRadius:8,padding:"12px 10px"}}>
+              <div style={{fontSize:22}}>📷</div>
+              <div style={{color:K.warn,fontSize:11,fontWeight:700,marginTop:4}}>Yakında!</div>
+              <div style={{color:K.tx4,fontSize:10,marginTop:3}}>Güncellemeyle gelecek</div>
             </div>
-          )}
-
-          {mikErr&&(
-            <div style={{background:"rgba(198,40,40,0.12)",borderRadius:8,padding:8,
-              color:K.errL,fontSize:10,border:`1px solid ${K.err}44`}}>{mikErr}</div>
-          )}
-
-          <div style={{background:K.card,borderRadius:10,padding:10}}>
-            <div style={{fontSize:9,color:K.tx4,marginBottom:6,fontWeight:700,letterSpacing:1}}>MODÜLLER</div>
-            {dil.moduller.map(m=>(
-              <div key={m} style={{padding:"5px 8px",borderRadius:6,marginBottom:3,
-                background:K.bg3,color:K.tx2,fontSize:10,borderLeft:`3px solid ${dil.vurgu}55`}}>{m}</div>
-            ))}
+          </div>
+          
+          {mikErr&&<div style={{background:"rgba(198,40,40,0.12)",borderRadius:8,padding:10,color:K.errL,fontSize:11,border:`1px solid ${K.err}44`}}>{mikErr}</div>}
+          
+          <div style={{background:K.card,borderRadius:10,padding:12}}>
+            <div style={{fontSize:9,color:K.tx4,marginBottom:8,fontWeight:700,letterSpacing:1}}>MODÜLLER</div>
+            {dil.mods.map(m=><div key={m} style={{padding:"6px 10px",borderRadius:7,marginBottom:4,background:K.bg3,color:K.tx2,fontSize:11,borderLeft:`3px solid ${dil.vurgu}55`}}>{m}</div>)}
+          </div>
+          
+          <div style={{background:K.card,borderRadius:10,padding:12}}>
+            <div style={{fontSize:9,color:K.tx4,marginBottom:8,fontWeight:700,letterSpacing:1}}>DERS DİLİ</div>
+            <div style={{color:K.gL,fontSize:12,fontWeight:600,textAlign:"center"}}>{dilModLabel}</div>
+            <button onClick={()=>{setDilMod(null);setMsgs([]);}}
+              style={{width:"100%",marginTop:8,padding:"7px",borderRadius:7,background:"rgba(46,125,50,0.12)",color:K.gL,border:`1px solid ${K.g2}44`,cursor:"pointer",fontSize:11,fontWeight:600}}>
+              Dil Değiştir
+            </button>
           </div>
         </div>
 
-        {/* SOHBET ALANI */}
-        <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
-          <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
-            {mesajlar.map((m,i)=>(
-              <div key={i} style={{display:"flex",justifyContent:m.tip==="user"?"flex-end":"flex-start",gap:6,alignItems:"flex-start"}}>
-                {m.tip!=="user"&&<Av h={hoca} dil={dil} sz={30}/>}
-                <div style={{
-                  maxWidth:"75%",padding:"10px 13px",borderRadius:14,color:K.tx,
-                  fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",
-                  background:m.tip==="user"?`linear-gradient(135deg,${K.g2},${K.t2})`:
-                             m.tip==="hata"?"rgba(198,40,40,0.15)":K.card,
-                  border:m.tip==="ai"?`1px solid ${K.bdr}`:
-                         m.tip==="hata"?`1px solid ${K.err}44`:"none",
-                  borderBottomRightRadius:m.tip==="user"?4:14,
-                  borderBottomLeftRadius:m.tip!=="user"?4:14,
-                }}>{m.tx}</div>
+        {/* Sohbet alanı */}
+        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+          <div style={{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12}}>
+            {msgs.map((m,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:m.r==="user"?"flex-end":"flex-start",gap:8,alignItems:"flex-start"}}>
+                {m.r==="ai"&&<Av h={hoca} dil={dil} sz={32}/>}
+                <div style={{maxWidth:"70%"}}>
+                  {/* Kim konuştu etiketi */}
+                  <div style={{fontSize:10,color:K.tx4,marginBottom:3,textAlign:m.r==="user"?"right":"left"}}>
+                    {m.r==="user"?"Sen":"🤖 "+hoca.ad.split(" ")[0]}
+                  </div>
+                  <div style={{padding:"11px 14px",borderRadius:16,color:K.tx,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",
+                    background:m.r==="user"?`linear-gradient(135deg,${K.g2},${K.t2})`:K.card,
+                    borderBottomRightRadius:m.r==="user"?4:16,
+                    borderBottomLeftRadius:m.r==="ai"?4:16,
+                    border:m.r==="ai"?`1px solid ${K.bdr}`:"none"}}>
+                    {m.t}
+                  </div>
+                </div>
               </div>
             ))}
             {yukl&&(
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <Av h={hoca} dil={dil} sz={30}/>
-                <div style={{background:K.card,borderRadius:14,padding:"10px 14px",
-                  border:`1px solid ${K.bdr}`,display:"flex",gap:4,alignItems:"center"}}>
-                  {[0,1,2].map(i=>(
-                    <div key={i} className="nokta" style={{"--d":`${i*0.18}s`,
-                      width:6,height:6,borderRadius:"50%",background:K.gL}}/>
-                  ))}
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <Av h={hoca} dil={dil} sz={32}/>
+                <div style={{background:K.card,borderRadius:16,padding:"10px 16px",border:`1px solid ${K.bdr}`,display:"flex",gap:4,alignItems:"center"}}>
+                  {[0,1,2].map(i=><div key={i} className="nk" style={{"--d":`${i*0.18}s`,width:7,height:7,borderRadius:"50%",background:K.gL}}/>)}
                 </div>
               </div>
             )}
             <div ref={sonRef}/>
           </div>
-
-          {/* GİRİŞ ALANI */}
-          <div style={{padding:10,borderTop:`1px solid ${K.bdr}`,background:K.bg2}}>
+          
+          {/* Input alanı */}
+          <div style={{padding:12,borderTop:`1px solid ${K.bdr}`,background:K.bg2}}>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <button
                 onMouseDown={mikBasla}
-                onMouseUp={mikBirak}
+                onMouseUp={mikBirakVeGonder}
                 onTouchStart={e=>{e.preventDefault();mikBasla();}}
-                onTouchEnd={e=>{e.preventDefault();mikBirak();}}
-                title="Basılı tut ve konuş"
-                style={{width:44,height:44,borderRadius:"50%",flexShrink:0,
-                  background:mikr?"rgba(198,40,40,0.25)":K.bg3,
+                onTouchEnd={e=>{e.preventDefault();mikBirakVeGonder();}}
+                style={{width:46,height:46,borderRadius:"50%",
+                  background:mikr?"rgba(198,40,40,0.3)":K.bg3,
                   border:`2px solid ${mikr?K.errL:K.g3}`,
-                  cursor:"pointer",fontSize:18,
-                  animation:mikr?"titret 0.5s infinite":"none",
+                  cursor:"pointer",fontSize:19,flexShrink:0,
+                  animation:mikr?"tt 0.5s infinite":"none",
                   userSelect:"none",WebkitUserSelect:"none",
-                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  boxShadow:mikr?"0 0 20px rgba(239,83,80,0.5)":"none"}}>
                 {mikr?"🔴":"🎤"}
               </button>
               <input
+                id="dersInput"
                 value={yazi}
-                onChange={e=>setY(e.target.value)}
+                onChange={e=>setYazi(e.target.value)}
                 onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&gonder()}
-                placeholder="Mesaj yaz ya da 🎤 basılı tut..."
-                style={{flex:1,background:K.bg3,border:`1px solid ${K.bdr}`,borderRadius:10,
-                  padding:"11px 13px",color:K.tx,fontSize:13,outline:"none",minWidth:0}}/>
-              <button
-                onClick={gonder}
-                disabled={yukl||!yazi.trim()}
-                style={{padding:"11px 16px",borderRadius:10,fontWeight:700,fontSize:15,border:"none",
-                  flexShrink:0,cursor:yukl||!yazi.trim()?"not-allowed":"pointer",
+                placeholder={mikr?"Dinliyorum...":"Mesaj yaz veya 🎤 basılı tut konuş..."}
+                style={{flex:1,background:mikr?"rgba(239,83,80,0.1)":K.bg3,
+                  border:`1px solid ${mikr?K.errL:K.bdr}`,
+                  borderRadius:10,padding:"12px 14px",color:K.tx,fontSize:13,outline:"none",
+                  transition:"all 0.2s"}}/>
+              <button onClick={()=>gonder()} disabled={yukl||!yazi.trim()}
+                style={{padding:"12px 20px",borderRadius:10,fontWeight:700,fontSize:15,border:"none",flexShrink:0,
+                  cursor:yukl||!yazi.trim()?"not-allowed":"pointer",
                   background:yukl||!yazi.trim()?K.bg3:`linear-gradient(135deg,${K.g2},${K.t2})`,
                   color:yukl||!yazi.trim()?K.tx4:"#fff"}}>➤</button>
             </div>
-            <div style={{textAlign:"center",color:K.tx4,fontSize:10,marginTop:4}}>
-              🎤 Basılı tut konuş, bırak gönder • Enter ile de gönder
+            <div style={{textAlign:"center",color:K.tx4,fontSize:10,marginTop:5}}>
+              🎤 Basılı tut konuş, bırak gönder • ⌨️ Yaz Enter'a bas • Her konuşma ekrana yazılır
             </div>
           </div>
         </div>
@@ -611,7 +626,6 @@ function DersEkrani({ dilId, hoca, kullanici, kapat }) {
     </div>
   );
 }
-
 /* ─────────────────────────────────────────────
    ADMİN PANELİ
 ───────────────────────────────────────────── */
