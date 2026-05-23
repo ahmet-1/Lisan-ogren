@@ -1,5 +1,3 @@
-
-cat > /mnt/user-data/outputs/LinguaAI_App.jsx << 'DOSYASONU'
 import { useState, useRef, useEffect } from "react";
 
 const K = {
