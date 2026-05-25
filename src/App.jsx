@@ -565,7 +565,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 }
 
 // ─── ADMİN PANELİ ────────────────────────────────────────────────────────────
-function AdminPanel({kapat}) {
+function AdminPanel({kapat, admCikis}){
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg]     = useState(getA());
   const [kayd, setKayd]   = useState(false);
@@ -853,7 +853,8 @@ export default function App() {
 
   const kulGiris = u => { setKul(u); DB.s("kul", u); };
   const kulCikis = () => { setKul(null); DB.d("kul"); };
-  const admKapat = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
+  const admKapat = () => { setAdAcik(false); };
+const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
   const admGiris = () => {
     const a = getA();
     if (adSifre === a.pw) {
@@ -875,7 +876,7 @@ export default function App() {
   const adm = getA();
 
   // Ekranlar
-  if (adAcik || adGir) return <AdminPanel kapat={admKapat}/>;
+  if (adAcik || adGir) return <AdminPanel kapat={admKapat} admCikis={admCikis}/>
   if (ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul || kul} kapat={()=>setDers(null)}/>;
 
   const bP  = {padding:"13px 28px",background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:14,boxShadow:`0 4px 20px ${K.g2}55`};
