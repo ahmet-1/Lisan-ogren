@@ -34,6 +34,7 @@ function usePWA() {
 
 // ─── DİLLER ─────────────────────────────────────────────────────────────────
 const DILLER = [
+  {id:"medrese", ad:"Medrese Eğitimi",  yerel:"التعليم الديني", bayrak:"📖", renk:"#1a0e00", vurgu:"#c8a045", acik:"Fıkıh, Akaid, Tefsir ve Hadis", mic:"ar-SA", mods:["Fıkıh","Akaid","Tefsir","Hadis","Feraiz"]},
   {id:"quran",  ad:"Kur'an-ı Kerim", yerel:"القرآن الكريم", bayrak:"🕌", renk:"#0d2a14", vurgu:"#f9a825", acik:"Tecvid, Makam ve Hıfz",        mic:"ar-SA", mods:["Tecvid","Makam","Hıfz","Sure Mealleri"]},
   {id:"arabic", ad:"Arapça",          yerel:"العربية",       bayrak:"🇪🇬", renk:"#2a0e0e", vurgu:"#ff8f00", acik:"Nahiv, Sarf ve Konuşma",       mic:"ar-SA", mods:["Nahiv","Sarf","Konuşma","Okuma-Yazma"]},
   {id:"english",ad:"İngilizce",        yerel:"English",       bayrak:"🇬🇧", renk:"#0e1a2a", vurgu:"#ef5350", acik:"British & American English",   mic:"en-US", mods:["Grammar","Speaking","Vocabulary","IELTS"]},
@@ -54,6 +55,14 @@ const HOCALAR = {
     {id:"q4",ad:"Üst. Fatıma Al-Zahrawi", yer:"Güney Sina, Mısır",   uz:"Tecvid & Kıraat Uzmanı",  p:4.7,n:870, c:false},
     {id:"q5",ad:"Öğrt. Yusuf Al-Nuri",    yer:"Kahire, Mısır",       uz:"Çocuklara Kur'an & Hıfz", p:4.9,n:640, c:true},
     {id:"q6",ad:"Öğrt. Zeynep Al-Safa",   yer:"Medine, S.Arabistan", uz:"Çocuklara Tecvid",        p:4.8,n:510, c:true},
+  ],
+  medrese:[
+    {id:"m1",ad:"Hoca Efendi Mahmud",     yer:"İstanbul, Türkiye",   uz:"Fıkıh & Akaid Uzmanı",    p:4.9,n:1100,c:false},
+    {id:"m2",ad:"Müftü Ahmed Şükrü",      yer:"Konya, Türkiye",      uz:"Tefsir & Kur'an İlimleri", p:4.8,n:890, c:false},
+    {id:"m3",ad:"Üst. Hafize Hanım",      yer:"Ankara, Türkiye",     uz:"Hadis & Siyer Uzmanı",     p:4.9,n:760, c:false},
+    {id:"m4",ad:"Üst. Fatma Nur",         yer:"Bursa, Türkiye",      uz:"Fıkıh & Feraiz Uzmanı",    p:4.7,n:680, c:false},
+    {id:"m5",ad:"Öğrt. Yusuf Hoca",       yer:"İstanbul, Türkiye",   uz:"Çocuklara Temel Din",      p:4.9,n:540, c:true},
+    {id:"m6",ad:"Öğrt. Zehra Hanım",      yer:"Kayseri, Türkiye",    uz:"Çocuklara Kur'an & Dua",   p:4.8,n:490, c:true},
   ],
   arabic:[
     {id:"a1",ad:"Dr. Khalid Al-Mansouri",yer:"Kahire, Mısır", uz:"Nahiv & Sarf Uzmanı",    p:4.9,n:2100,c:false},
@@ -330,21 +339,60 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   }, []);
 
   // Dil seçilince karşılama mesajı
+  const BESMELE_DILLER = ["quran","arabic","medrese"];
+  const BESMELE = `بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ
+Bismillâhirrahmânirrahîm
+"Rahman ve Rahim olan Allah'ın adıyla"
+
+رَبِّ يَسِّرْ وَلَا تُعَسِّرْ، رَبِّ تَمِّمْ بِالْخَيْرِ
+Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
+"Rabbim! Kolaylaştır, zorlaştırma. Rabbim! Hayırla tamamla."
+
+`;
+
   useEffect(() => {
     if (!dilMod) return;
     const ad = kul?.ad?.split(" ")[0] || "";
+    const besmeleVar = BESMELE_DILLER.includes(dilId);
+    const on = besmeleVar ? BESMELE : "";
     let txt;
-    if (dilMod === "tr")     txt = `Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nTürkçe ders yapacağız. Mikrofona basarak sesli veya yazarak konuşabilirsin. Hazır mısın?`;
-    else if (dilMod === "hedef") txt = `Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\n${dil.ad} dilinde ders yapacağız. Hazır mısın?`;
-    else txt = `Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nHem Türkçe hem ${dil.ad} kullanarak ders yapacağız. Hazır mısın?`;
+    if (dilMod === "tr")
+      txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nDersimizi Türkçe yapacağız. Mikrofona basarak sesli veya yazarak konuşabilirsin. Hayırlı dersler! 🤲`;
+    else if (dilMod === "hedef")
+      txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\n${dil.ad} dilinde ders yapacağız. Hazır mısın?`;
+    else
+      txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nHem Türkçe hem ${dil.ad} kullanarak ders yapacağız. Hayırlı dersler! 🤲`;
     setMsgs([{r:"ai", t:txt}]);
+
+    // Besmele + Rabbu Yessir sesli oku
+    if (besmeleVar) {
+      setTimeout(() => {
+        try {
+          window.speechSynthesis?.cancel();
+          const sesMetin = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir rabbi temmim bilhayr.";
+          const u = new SpeechSynthesisUtterance(sesMetin);
+          u.lang = "ar-SA"; u.rate = 0.70; u.pitch = 1.0;
+          window.speechSynthesis?.speak(u);
+        } catch {}
+      }, 500);
+    }
   }, [dilMod]);
 
   useEffect(() => { sonRef.current?.scrollIntoView({behavior:"smooth"}); }, [msgs]);
 
   // Sistem promptu
-  const getPrompt = () => {
+  const getMedresePrompt = () => {
     if (dilMod === "tr")
+      return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi, sabırlı ve şefkatli bir hoca gibi konuş. İslami adap ile başla. Öğrencinin sorularını Kuran ve Sünnet ışığında cevapla. Hataları nazikçe düzelt. Maks 3 paragraf.`;
+    if (dilMod === "hedef")
+      return `أنت ${hoca.ad}، مدرس ديني خبير. تخصصك: ${hoca.uz}. أجب فقط باللغة العربية. كن لطيفًا وصبورًا. صحح الأخطاء بلطف. ثلاث فقرات كحد أقصى.`;
+    return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. Hem Türkçe hem Arapça kullan. Açıklamaları Türkçe yap, Arapça ibareleri Türkçe okunuşuyla da ver. Hataları nazikçe düzelt. Maks 3 paragraf.`;
+  };
+
+  const getPrompt = () => {
+    if (dilId === "medrese") return getMedresePrompt();
+    // Diğer diller:
+    else if (dilMod === "tr")
       return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi ve sıcak bir hoca gibi konuş, tıpkı telefonla konuşur gibi. Öğrencinin yazdığı veya söylediği her şeyi dikkatle analiz et. Telaffuz, yazım ve gramer hatalarını MUTLAKA nazikçe düzelt: önce doğrusunu söyle, sonra kısaca açıkla. Her derste yeni bir şey öğret. Maks 3 paragraf.`;
     if (dilMod === "hedef")
       return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE ${dil.ad} dilinde yanıt ver. Samimi ve sıcak bir hoca gibi konuş. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
@@ -399,7 +447,55 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       recRef.current = r; r.start();
     } catch { setMikErr("Mikrofon başlatılamadı."); }
   };
-  const mikBirak = () => { try { recRef.current?.stop(); } catch {} setMikr(false); };
+  const mikBirak = () => {
+    try { recRef.current?.stop(); } catch {}
+    setMikr(false);
+    // Mikrofon bırakılınca 600ms bekle (ses işlensin) sonra otomatik gönder
+    setTimeout(() => {
+      setYazi(prev => {
+        if (prev.trim()) {
+          // Otomatik gönder
+          gonderMetin(prev.trim());
+          return "";
+        }
+        return prev;
+      });
+    }, 600);
+  };
+
+  const gonderMetin = async (txt) => {
+    if (!txt || yukl) return;
+    setYazi(""); setYukl(true);
+    setMsgs(m => [...m, {r:"user", t:txt}]);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:800,
+          system: getPrompt(),
+          messages: [
+            ...msgs.filter(m=>m.r).map(m => ({role: m.r==="ai"?"assistant":"user", content:m.t})),
+            {role:"user", content:txt}
+          ]
+        })
+      });
+      if (!res.ok) { const d=await res.json().catch(()=>({})); throw new Error(d?.error?.message || `Hata: ${res.status}`); }
+      const d   = await res.json();
+      const yan = d.content?.[0]?.text;
+      if (!yan) throw new Error("Yanıt alınamadı.");
+      setMsgs(m => [...m, {r:"ai", t:yan}]);
+      try {
+        window.speechSynthesis?.cancel();
+        const u = new SpeechSynthesisUtterance(yan.substring(0,200));
+        u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+        u.rate = 0.85; u.pitch = 1.1;
+        window.speechSynthesis?.speak(u);
+      } catch {}
+    } catch(e) {
+      setMsgs(m => [...m, {r:"ai", t:`Bağlantı hatası: ${e.message}. İnternet bağlantınızı kontrol edip tekrar deneyin.`}]);
+    }
+    setYukl(false);
+  };
 
   const gonder = async () => {
     if (!yazi.trim() || yukl) return;
@@ -565,7 +661,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 }
 
 // ─── ADMİN PANELİ ────────────────────────────────────────────────────────────
-function AdminPanel({kapat, admCikis}){
+function AdminPanel({kapat, admCikis}) {
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg]     = useState(getA());
   const [kayd, setKayd]   = useState(false);
@@ -635,8 +731,11 @@ function AdminPanel({kapat, admCikis}){
           </button>
         ))}
         <div style={{flex:1}}/>
-        <button onClick={kapat} style={{padding:"10px 12px",borderRadius:9,border:`1px solid ${K.bdr}`,background:"transparent",color:K.tx4,cursor:"pointer",fontSize:12}}>
+        <button onClick={kapat} style={{padding:"10px 12px",borderRadius:9,border:`1px solid ${K.bdr}`,background:"transparent",color:K.tx4,cursor:"pointer",fontSize:12,marginBottom:6}}>
           ← Uygulamaya Dön
+        </button>
+        <button onClick={admCikis} style={{padding:"8px 12px",borderRadius:9,border:`1px solid ${K.err}44`,background:"rgba(198,40,40,0.08)",color:K.errL,cursor:"pointer",fontSize:11}}>
+          🚪 Admin Çıkışı
         </button>
       </div>
 
@@ -853,8 +952,8 @@ export default function App() {
 
   const kulGiris = u => { setKul(u); DB.s("kul", u); };
   const kulCikis = () => { setKul(null); DB.d("kul"); };
-  const admKapat = () => { setAdAcik(false); };
-const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
+  const admKapat = () => { setAdAcik(false); };  // Sadece paneli kapat, oturumu kapatma
+  const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };  // Gerçek çıkış
   const admGiris = () => {
     const a = getA();
     if (adSifre === a.pw) {
@@ -876,7 +975,7 @@ const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
   const adm = getA();
 
   // Ekranlar
-  if (adAcik || adGir) return <AdminPanel kapat={admKapat} admCikis={admCikis}/>
+  if (adAcik || adGir) return <AdminPanel kapat={admKapat} admCikis={admCikis}/>;
   if (ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul || kul} kapat={()=>setDers(null)}/>;
 
   const bP  = {padding:"13px 28px",background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:14,boxShadow:`0 4px 20px ${K.g2}55`};
@@ -942,7 +1041,17 @@ const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
               <button onClick={()=>{setAuthMod("kayit");setAuthAcik(true);}} style={{padding:"7px 16px",borderRadius:8,background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff",border:"none",cursor:"pointer",fontWeight:700,fontSize:12}}>Üye Ol</button>
             </>
           )}
-          <button onClick={()=>{setAdModal(true);setAdHata("");setAdSifre("");setAdUnuttu(false);}} style={{padding:"6px 9px",borderRadius:8,border:`1px solid ${K.bdr}`,background:"transparent",color:K.tx4,cursor:"pointer",fontSize:10}}>⚙</button>
+          {adGir ? (
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <div style={{background:"rgba(46,125,50,0.15)",borderRadius:8,padding:"6px 12px",fontSize:12,color:K.gL,fontWeight:700,border:`1px solid ${K.g2}44`,cursor:"pointer"}}
+                onClick={()=>setAdAcik(true)}>
+                🔧 Admin
+              </div>
+              <button onClick={admCikis} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${K.err}44`,background:"rgba(198,40,40,0.08)",color:K.errL,cursor:"pointer",fontSize:11}}>Çıkış</button>
+            </div>
+          ) : (
+            <button onClick={()=>{setAdModal(true);setAdHata("");setAdSifre("");setAdUnuttu(false);}} style={{padding:"6px 9px",borderRadius:8,border:`1px solid ${K.bdr}`,background:"transparent",color:K.tx4,cursor:"pointer",fontSize:10}}>⚙</button>
+          )}
         </div>
       </nav>
 
