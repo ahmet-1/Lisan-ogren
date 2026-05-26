@@ -364,14 +364,23 @@ Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
       txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nHem Türkçe hem ${dil.ad} kullanarak ders yapacağız. Hayırlı dersler! 🤲`;
     setMsgs([{r:"ai", t:txt}]);
 
-    // Besmele + Rabbu Yessir sesli oku
+    // Besmele + Rabbu Yessir sesli oku - hocaya göre ses ayarı
     if (besmeleVar) {
       setTimeout(() => {
         try {
           window.speechSynthesis?.cancel();
           const sesMetin = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir rabbi temmim bilhayr.";
           const u = new SpeechSynthesisUtterance(sesMetin);
-          u.lang = "ar-SA"; u.rate = 0.70; u.pitch = 1.0;
+          u.lang = "ar-SA";
+          u.rate = 0.70;
+          // Kadın hoca ise pitch yüksek, erkek ise düşük
+          const kadinIsimler = ["Meryem","Fatıma","Hafize","Fatma","Zehra","Zeynep"];
+          const kadinMi = kadinIsimler.some(k => hoca.ad.includes(k));
+          u.pitch = kadinMi ? 1.4 : 0.8;
+          // Tarayıcıdaki sesleri kullan
+          const sesler = window.speechSynthesis.getVoices();
+          const arabicSes = sesler.find(s => s.lang.startsWith("ar") && (kadinMi ? s.name.toLowerCase().includes("female") || s.name.includes("Maged") === false : true));
+          if (arabicSes) u.voice = arabicSes;
           window.speechSynthesis?.speak(u);
         } catch {}
       }, 500);
@@ -428,39 +437,109 @@ Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
     );
   }
 
-  const mikBasla = () => {
+  // ── TELEFON MODU MİKROFON ──
+  // Bir kez bas → sürekli dinler → hoca yanıtlar → tekrar konuşabilirsin
+  const konusmaRef = useRef(false); // Mikrofon açık mı
+
+  const mikToggle = () => {
+    if (konusmaRef.current) {
+      // Mikrofonu kapat
+      konusmaRef.current = false;
+      try { recRef.current?.stop(); } catch {}
+      setMikr(false);
+      return;
+    }
+    // Mikrofonu aç - telefon gibi sürekli dinle
+    konusmaRef.current = true;
+    mikDinle();
+  };
+
+  const mikDinle = () => {
+    if (!konusmaRef.current) return; // Kapatıldıysa dur
     setMikErr("");
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { setMikErr("Tarayıcınız ses girişini desteklemiyor."); return; }
+    if (!SR) { setMikErr("Tarayıcınız ses girişini desteklemiyor."); konusmaRef.current = false; return; }
     try {
       const r = new SR();
-      r.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
-      r.continuous = false; r.interimResults = false;
-      r.onstart  = () => setMikr(true);
-      r.onresult = e => { setYazi(e.results[0][0].transcript); setMikr(false); };
-      r.onerror  = e => {
+      // DİL SORUNU: Seçilen dile göre mikrofon dili
+      // Türkçe seçtiyse TR dinle, hedef dil seçtiyse o dili dinle
+      if (dilMod === "tr") r.lang = "tr-TR";
+      else if (dilMod === "hedef") r.lang = dil.mic;
+      else r.lang = "tr-TR"; // ikidilli modda Türkçe dinle
+      r.continuous = false;
+      r.interimResults = false;
+      r.onstart = () => setMikr(true);
+      r.onresult = e => {
+        const metin = e.results[0][0].transcript;
+        // Ekrana yaz - dile göre doğru dilde
+        setMsgs(m => [...m, {r:"user", t:metin}]);
+        // Hocanın yanıt vermesini bekle
         setMikr(false);
-        setMikErr(e.error==="not-allowed" ? "Mikrofon izni reddedildi." : "Ses algılanamadı.");
-        setTimeout(() => setMikErr(""), 4000);
+        gonderSesli(metin);
       };
-      r.onend = () => setMikr(false);
-      recRef.current = r; r.start();
-    } catch { setMikErr("Mikrofon başlatılamadı."); }
-  };
-  const mikBirak = () => {
-    try { recRef.current?.stop(); } catch {}
-    setMikr(false);
-    // Mikrofon bırakılınca 600ms bekle (ses işlensin) sonra otomatik gönder
-    setTimeout(() => {
-      setYazi(prev => {
-        if (prev.trim()) {
-          // Otomatik gönder
-          gonderMetin(prev.trim());
-          return "";
+      r.onerror = e => {
+        setMikr(false);
+        if (e.error === "no-speech") {
+          // Sessizlik - tekrar dinlemeye başla
+          if (konusmaRef.current) setTimeout(mikDinle, 500);
+        } else if (e.error === "not-allowed") {
+          setMikErr("Mikrofon izni reddedildi.");
+          konusmaRef.current = false;
+        } else {
+          if (konusmaRef.current) setTimeout(mikDinle, 500);
         }
-        return prev;
+      };
+      r.onend = () => {
+        setMikr(false);
+        // Hoca konuşmuyorsa tekrar dinlemeye başla
+        if (konusmaRef.current && !yukl) {
+          setTimeout(mikDinle, 800);
+        }
+      };
+      recRef.current = r;
+      r.start();
+    } catch { setMikErr("Mikrofon başlatılamadı."); konusmaRef.current = false; }
+  };
+
+  const gonderSesli = async (txt) => {
+    if (!txt || yukl) return;
+    setYukl(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:800,
+          system: getPrompt(),
+          messages: [
+            ...msgs.filter(m=>m.r).map(m => ({role: m.r==="ai"?"assistant":"user", content:m.t})),
+            {role:"user", content:txt}
+          ]
+        })
       });
-    }, 600);
+      if (!res.ok) { const d=await res.json().catch(()=>({})); throw new Error(d?.error?.message || `Hata: ${res.status}`); }
+      const d = await res.json();
+      const yan = d.content?.[0]?.text;
+      if (!yan) throw new Error("Yanıt alınamadı.");
+      setMsgs(m => [...m, {r:"ai", t:yan}]);
+      // Sesli oku - bitince tekrar dinlemeye başla
+      try {
+        window.speechSynthesis?.cancel();
+        const u = new SpeechSynthesisUtterance(yan.substring(0,300));
+        u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+        u.rate = 0.85; u.pitch = 1.1;
+        u.onend = () => {
+          // Hoca konuşmayı bitirdi, tekrar dinlemeye başla
+          if (konusmaRef.current) setTimeout(mikDinle, 500);
+        };
+        window.speechSynthesis?.speak(u);
+      } catch {
+        if (konusmaRef.current) setTimeout(mikDinle, 500);
+      }
+    } catch(e) {
+      setMsgs(m => [...m, {r:"ai", t:`Bağlantı hatası: ${e.message}`}]);
+      if (konusmaRef.current) setTimeout(mikDinle, 500);
+    }
+    setYukl(false);
   };
 
   const gonderMetin = async (txt) => {
@@ -633,16 +712,17 @@ Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
           {/* Input */}
           <div style={{padding:12,borderTop:`1px solid ${K.bdr}`,background:K.bg2}}>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <button onMouseDown={mikBasla} onMouseUp={mikBirak}
-                onTouchStart={e=>{e.preventDefault();mikBasla();}} onTouchEnd={e=>{e.preventDefault();mikBirak();}}
-                style={{width:46,height:46,borderRadius:"50%",background:mikr?"rgba(198,40,40,0.2)":K.bg3,
+              <button onClick={mikToggle}
+                style={{width:46,height:46,borderRadius:"50%",
+                  background:mikr?"rgba(198,40,40,0.25)":K.bg3,
                   border:`2px solid ${mikr?K.errL:K.g3}`,cursor:"pointer",fontSize:19,flexShrink:0,
-                  animation:mikr?"tt 0.5s infinite":"none",userSelect:"none",WebkitUserSelect:"none"}}>
+                  animation:mikr?"tt 0.5s infinite":"none",userSelect:"none",WebkitUserSelect:"none",
+                  boxShadow:mikr?`0 0 20px ${K.errL}55`:"none"}}>
                 {mikr ? "🔴" : "🎤"}
               </button>
               <input value={yazi} onChange={e=>setYazi(e.target.value)}
                 onKeyDown={e => e.key==="Enter" && !e.shiftKey && gonder()}
-                placeholder={mikr ? "Dinliyorum..." : "Mesaj yaz veya 🎤 basılı tut konuş..."}
+                placeholder={mikr ? "🎤 Dinliyorum... (tekrar bas gönder)" : "Mesaj yaz veya 🎤 bas konuş..."}
                 style={{flex:1,background:K.bg3,border:`1px solid ${K.bdr}`,borderRadius:10,padding:"12px 14px",color:K.tx,fontSize:13,outline:"none"}}/>
               <button onClick={gonder} disabled={yukl || !yazi.trim()}
                 style={{padding:"12px 20px",borderRadius:10,fontWeight:700,fontSize:15,border:"none",flexShrink:0,
@@ -651,7 +731,7 @@ Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
                   color: yukl||!yazi.trim() ? K.tx4 : "#fff"}}>➤</button>
             </div>
             <div style={{textAlign:"center",color:K.tx4,fontSize:10,marginTop:5}}>
-              🎤 Bas konuş bırak gönder • ⌨️ Yaz Enter'a bas • Her konuşma ekrana yazılır
+              🎤 Bas konuş, tekrar bas gönder • ⌨️ Yaz Enter'a bas • Her konuşma ekrana yazılır
             </div>
           </div>
         </div>
