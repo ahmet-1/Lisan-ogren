@@ -399,8 +399,9 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const getPrompt = () => {
     if (dilId === "medrese") return getMedresePrompt();
     // Diğer diller:
+    const guvenlik = " ÖNEMLI: Müstehcen, hakaret veya şiddet içerikli mesajlara yanıt verme. Böyle bir mesaj gelirse: Üyeliğiniz askıya alınabilir de ve dersi bitir.";
     else if (dilMod === "tr")
-      return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi ve sıcak bir hoca gibi konuş, tıpkı telefonla konuşur gibi. Öğrencinin yazdığı veya söylediği her şeyi dikkatle analiz et. Telaffuz, yazım ve gramer hatalarını MUTLAKA nazikçe düzelt: önce doğrusunu söyle, sonra kısaca açıkla. Her derste yeni bir şey öğret. Maks 3 paragraf.`;
+      return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi ve sıcak bir hoca gibi konuş, tıpkı telefonla konuşur gibi. Öğrencinin yazdığı veya söylediği her şeyi dikkatle analiz et. Telaffuz, yazım ve gramer hatalarını MUTLAKA nazikçe düzelt: önce doğrusunu söyle, sonra kısaca açıkla. Her derste yeni bir şey öğret. Maks 3 paragraf.${guvenlik}`;
     if (dilMod === "hedef")
       return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE ${dil.ad} dilinde yanıt ver. Samimi ve sıcak bir hoca gibi konuş. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
     return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. Hem Türkçe hem ${dil.ad} kullan. Açıklamaları Türkçe yap, örnekleri ${dil.ad} dilinde ver. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
@@ -496,8 +497,22 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     } catch { setMikErr("Mikrofon başlatılamadı."); konusmaRef.current = false; }
   };
 
+  // Uygunsuz içerik kontrolü
+  const uygunsuzKelimeler = ["sex","porn","küfür","sik","orospu","amk","göt","meme","nude","hack","bomb","terör"];
+  const uygunsuzMu = (txt) => uygunsuzKelimeler.some(k => txt.toLowerCase().includes(k));
+
   const gonderSesli = async (txt) => {
     if (!txt || yukl) return;
+    // Uygunsuz içerik kontrolü
+    if (uygunsuzMu(txt)) {
+      setMsgs(m => [...m, {r:"ai", t:"⚠️ UYARI: Bu tür içerikler platform kurallarına aykırıdır. Lütfen derse odaklanın. Tekrarında üyeliğiniz askıya alınabilir."}]);
+      // Admin'e bildirim kaydet
+      const a = getA();
+      const uyari = {id:Date.now(), kulId:kul?.id, kulAd:kul?.ad, email:kul?.email, mesaj:txt, tarih:new Date().toLocaleString("tr-TR"), tip:"uygunsuz"};
+      setA({...a, ihtarlar:[...(a.ihtarlar||[]), uyari]});
+      if (konusmaRef.current) setTimeout(mikDinle, 1000);
+      return;
+    }
     setYukl(true);
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -539,6 +554,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   const gonderMetin = async (txt) => {
     if (!txt || yukl) return;
+    if (uygunsuzMu(txt)) {
+      setMsgs(m => [...m, {r:"ai", t:"⚠️ UYARI: Bu tür içerikler platform kurallarına aykırıdır. Lütfen derse odaklanın. Tekrarında üyeliğiniz askıya alınabilir."}]);
+      const a = getA();
+      const uyari = {id:Date.now(), kulId:kul?.id, kulAd:kul?.ad||"Admin", email:kul?.email||"admin", mesaj:txt, tarih:new Date().toLocaleString("tr-TR"), tip:"uygunsuz"};
+      setA({...a, ihtarlar:[...(a.ihtarlar||[]), uyari]});
+      setYazi("");
+      return;
+    }
     setYazi(""); setYukl(true);
     setMsgs(m => [...m, {r:"user", t:txt}]);
     try {
@@ -783,7 +806,7 @@ function AdminPanel({kapat, admCikis}) {
 
   const SEKMELER = [
     ["dash","📊","Dashboard"],["kul","👥","Kullanıcılar"],["ode","💳","Ödemeler"],
-    ["ders","📡","Aktif Dersler"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["set","⚙️","Ayarlar"]
+    ["ders","📡","Aktif Dersler"],["iht","⚠️","İhtar Geçmişi"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["set","⚙️","Ayarlar"]
   ];
 
   return (
@@ -958,6 +981,41 @@ function AdminPanel({kapat, admCikis}) {
               </div>
             ))}
           </div>
+        </>}
+
+        {sekme==="iht" && <>
+          <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:8}}>⚠️ İhtar Geçmişi</div>
+          <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Uygunsuz içerik gönderen kullanıcılar otomatik kaydedilir.</div>
+          {(getA().ihtarlar||[]).length===0 ? (
+            <div style={{background:K.card,borderRadius:12,padding:30,border:`1px solid ${K.bdr}`,textAlign:"center",color:K.tx4}}>Henüz ihtar kaydı yok ✓</div>
+          ) : [...(getA().ihtarlar||[])].reverse().map(ih => (
+            <div key={ih.id} style={{background:K.card,borderRadius:12,padding:16,border:`1px solid ${K.err}44`,marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <div>
+                  <div style={{color:K.tx,fontWeight:700}}>{ih.kulAd}</div>
+                  <div style={{color:K.tx4,fontSize:11}}>{ih.email} • {ih.tarih}</div>
+                </div>
+                <div style={{background:"rgba(198,40,40,0.15)",color:K.errL,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:700,height:"fit-content"}}>⚠️ UYARI</div>
+              </div>
+              <div style={{background:K.bg3,borderRadius:8,padding:10,color:K.tx3,fontSize:12,fontStyle:"italic"}}>"{ih.mesaj}"</div>
+              <div style={{display:"flex",gap:8,marginTop:10}}>
+                <button onClick={()=>{
+                  const a=getA();
+                  const u=a.users.find(x=>x.id===ih.kulId);
+                  if(u){setA({...a,users:a.users.map(x=>x.id===ih.kulId?{...x,durum:"Askıya Alındı"}:x)});alert(`${u.ad} üyeliği askıya alındı.`);}
+                }} style={{padding:"6px 14px",borderRadius:7,background:"rgba(198,40,40,0.15)",color:K.errL,border:`1px solid ${K.err}44`,cursor:"pointer",fontSize:12,fontWeight:600}}>
+                  Üyeliği Askıya Al
+                </button>
+                <button onClick={()=>{
+                  const a=getA();
+                  setA({...a,ihtarlar:(a.ihtarlar||[]).filter(x=>x.id!==ih.id)});
+                  window.location.reload();
+                }} style={{padding:"6px 14px",borderRadius:7,background:K.bg3,color:K.tx4,border:`1px solid ${K.bdr}`,cursor:"pointer",fontSize:12}}>
+                  Kaydı Sil
+                </button>
+              </div>
+            </div>
+          ))}
         </>}
 
         {sekme==="set" && <>
