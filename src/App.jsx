@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
- 
+
 // ─── RENKLER ───────────────────────────────────────────────────────────────
 const K = {
   bg:"#071510", bg2:"#0a1e13", bg3:"#0d2618", card:"#0f2c1c",
@@ -9,7 +9,7 @@ const K = {
   tx:"#e8f5e9", tx2:"#a5d6a7", tx3:"#6a9e74", tx4:"#3d6b47",
   warn:"#f9a825", err:"#c62828", errL:"#ef5350", gold:"#f57f17",
 };
- 
+
 // ─── VERİTABANI ─────────────────────────────────────────────────────────────
 const DB = {
   g: k => { try { const v=localStorage.getItem("la_"+k); return v?JSON.parse(v):null; } catch { return null; } },
@@ -18,7 +18,7 @@ const DB = {
 };
 const getA = () => DB.g("adm") || { pw:"admin123", email:"", contactEmail:"", iban:"", bank:"", acName:"", users:[], pays:[] };
 const setA = d => DB.s("adm", d);
- 
+
 // ─── PWA MANIFEST (Ana Ekrana Ekle) ─────────────────────────────────────────
 // Bu index.html'de manifest.json ile yapılır - App.jsx'te useEffect ile ekleriz
 function usePWA() {
@@ -31,7 +31,7 @@ function usePWA() {
     document.title = "LinguaAI — AI Hoca ile 10 Dil Öğren";
   }, []);
 }
- 
+
 // ─── DİLLER ─────────────────────────────────────────────────────────────────
 const DILLER = [
   {id:"medrese", ad:"Medrese Eğitimi",  yerel:"التعليم الديني", bayrak:"📖", renk:"#1a0e00", vurgu:"#c8a045", acik:"Fıkıh, Akaid, Tefsir ve Hadis", mic:"ar-SA", mods:["Fıkıh","Akaid","Tefsir","Hadis","Feraiz"]},
@@ -46,7 +46,7 @@ const DILLER = [
   {id:"russian",ad:"Rusça",            yerel:"Русский",       bayrak:"🇷🇺", renk:"#0a0a2a", vurgu:"#ef5350", acik:"Kiril alfabesi & Konuşma",     mic:"ru-RU", mods:["Kiril","Gramer","Konuşma","TORFL"]},
   {id:"spanish",ad:"İspanyolca",       yerel:"Español",       bayrak:"🇪🇸", renk:"#2a1a0a", vurgu:"#ff8f00", acik:"Dünyanın en yaygın dili",      mic:"es-ES", mods:["Gramática","Conversación","Cultura","DELE"]},
 ];
- 
+
 const HOCALAR = {
   quran:[
     {id:"q1",ad:"Şeyh Ahmed Al-Ghamdi",   yer:"Mekke, S.Arabistan",  uz:"Tecvid & Hıfz Uzmanı",    p:4.9,n:1240,c:false},
@@ -137,7 +137,7 @@ const HOCALAR = {
     {id:"s6",ad:"Öğrt. Lucía Fernández",yer:"Barselona, İspanya", uz:"Çocuk İspanyolcası",         p:4.8,n:640, c:true},
   ],
 };
- 
+
 // ─── AVATAR ──────────────────────────────────────────────────────────────────
 function Av({h, dil, sz=64}) {
   const ini = h.ad.split(" ").slice(-2).map(w=>w[0]).join("");
@@ -158,7 +158,7 @@ function Av({h, dil, sz=64}) {
     </div>
   );
 }
- 
+
 // ─── GİRİŞ / KAYIT MODAL ────────────────────────────────────────────────────
 function AuthModal({ilkMod, kapat, basari}) {
   const [mod, setMod]     = useState(ilkMod || "giris");
@@ -166,7 +166,7 @@ function AuthModal({ilkMod, kapat, basari}) {
   const [h, setH]         = useState({});
   const [tamam, setTamam] = useState(false);
   const [mesaj, setMesaj] = useState("");
- 
+
   const inp = (k, tip, yer) => (
     <div style={{marginBottom:10}}>
       <input type={tip} value={f[k]} placeholder={yer}
@@ -177,7 +177,7 @@ function AuthModal({ilkMod, kapat, basari}) {
       {h[k] && <div style={{color:K.errL,fontSize:11,marginTop:3}}>{h[k]}</div>}
     </div>
   );
- 
+
   const doGiris = () => {
     const e = {};
     if (!f.email) e.email = "E-posta gerekli";
@@ -188,7 +188,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     if (!u) { setH({sifre:"E-posta veya şifre hatalı"}); return; }
     basari(getA().users.find(x=>x.id===u.id) || u);
   };
- 
+
   const doKayit = () => {
     const e = {};
     if (!f.ad.trim())  e.ad = "Zorunlu";
@@ -216,12 +216,12 @@ function AuthModal({ilkMod, kapat, basari}) {
     setTamam(true);
     basari(yeni);
   };
- 
+
   const doSifre = () => {
     if (!f.email.includes("@")) { setH({email:"Geçerli e-posta girin"}); return; }
     setMesaj("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
   };
- 
+
   const tabS = a => ({
     flex:1, padding:"10px", border:"none", cursor:"pointer", fontWeight:700, fontSize:13,
     background: a ? `linear-gradient(135deg,${K.g2},${K.t2})` : K.bg3,
@@ -230,11 +230,11 @@ function AuthModal({ilkMod, kapat, basari}) {
   const btnP = {width:"100%",padding:12,background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8};
   const btnG = {width:"100%",padding:11,background:"transparent",color:K.tx2,border:`1px solid ${K.bdr}`,borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:13,marginBottom:8};
   const lnk  = {background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12,fontWeight:600};
- 
+
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
       <div style={{background:K.card,borderRadius:22,padding:24,width:390,border:`1px solid ${K.bdr3}`,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
- 
+
         {/* Başlık */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           {mod !== "unuttu" && (
@@ -246,7 +246,7 @@ function AuthModal({ilkMod, kapat, basari}) {
           {mod === "unuttu" && <div style={{color:K.tx,fontSize:16,fontWeight:700}}>Şifremi Unuttum</div>}
           <button onClick={kapat} style={{background:"none",border:"none",color:K.tx3,fontSize:22,cursor:"pointer",marginLeft:8}}>✕</button>
         </div>
- 
+
         {/* ── GİRİŞ ── */}
         {mod === "giris" && <>
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>
@@ -263,7 +263,7 @@ function AuthModal({ilkMod, kapat, basari}) {
             Hesabın yok mu? <button style={lnk} onClick={()=>{setMod("kayit");setH({});setTamam(false);}}>Üye Ol</button>
           </div>
         </>}
- 
+
         {/* ── KAYIT ── */}
         {mod === "kayit" && (tamam ? (
           <div style={{textAlign:"center",padding:"16px 0"}}>
@@ -294,7 +294,7 @@ function AuthModal({ilkMod, kapat, basari}) {
             Zaten hesabın var mı? <button style={lnk} onClick={()=>{setMod("giris");setH({});}}>Giriş Yap</button>
           </div>
         </>)}
- 
+
         {/* ── ŞİFREMİ UNUTTUM ── */}
         {mod === "unuttu" && (mesaj ? (
           <div style={{textAlign:"center",padding:"16px 0"}}>
@@ -316,7 +316,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     </div>
   );
 }
- 
+
 // ─── DERS EKRANI ─────────────────────────────────────────────────────────────
 function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d => d.id === dilId);
@@ -330,7 +330,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const sonRef = useRef(null);
   const recRef = useRef(null);
   const konusmaRef = useRef(false);
- 
+
   // Geri sayım
   useEffect(() => {
     if (kul?.plan === "Deneme") {
@@ -338,7 +338,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       return () => clearInterval(ti);
     }
   }, []);
- 
+
   // Dil seçilince karşılama mesajı
   const BESMELE_DILLER = ["quran","arabic","medrese"];
   const BESMELE = "\u0628\u0650\u0633\u0652\u0645\u0650 \u0627\u0644\u0644\u0647\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0671\u0646\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650\n" +
@@ -347,7 +347,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     "\u0631\u064e\u0628\u0650\u0651 \u064a\u064e\u0633\u0650\u0651\u0631\u0652 \u0648\u064e\u0644\u064e\u0627 \u062a\u064f\u0639\u064e\u0633\u0650\u0651\u0631\u0652\u060c \u0631\u064e\u0628\u0650\u0651 \u062a\u064e\u0645\u0650\u0651\u0645\u0652 \u0628\u0650\u0627\u0644\u0652\u062e\u064e\u064a\u0652\u0631\u0650\n" +
     "Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr\n" +
     "Rabbim! Kolaylaştır, zorlaştırma. Rabbim! Hayırla tamamla.\n\n";
- 
+
   useEffect(() => {
     if (!dilMod) return;
     const ad = kul?.ad?.split(" ")[0] || "";
@@ -361,7 +361,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     else
       txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nHem Türkçe hem ${dil.ad} kullanarak ders yapacağız. Hayırlı dersler! 🤲`;
     setMsgs([{r:"ai", t:txt}]);
- 
+
     // Besmele + Rabbu Yessir sesli oku - hocaya göre ses ayarı
     if (besmeleVar) {
       setTimeout(() => {
@@ -384,9 +384,9 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       }, 500);
     }
   }, [dilMod]);
- 
+
   useEffect(() => { sonRef.current?.scrollIntoView({behavior:"smooth"}); }, [msgs]);
- 
+
   // Sistem promptu
   const getMedresePrompt = () => {
     if (dilMod === "tr")
@@ -395,7 +395,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       return `أنت ${hoca.ad}، مدرس ديني خبير. تخصصك: ${hoca.uz}. أجب فقط باللغة العربية. كن لطيفًا وصبورًا. صحح الأخطاء بلطف. ثلاث فقرات كحد أقصى.`;
     return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. Hem Türkçe hem Arapça kullan. Açıklamaları Türkçe yap, Arapça ibareleri Türkçe okunuşuyla da ver. Hataları nazikçe düzelt. Maks 3 paragraf.`;
   };
- 
+
   const getPrompt = () => {
     if (dilId === "medrese") return getMedresePrompt();
     // Diğer diller:
@@ -406,7 +406,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE ${dil.ad} dilinde yanıt ver. Samimi ve sıcak bir hoca gibi konuş. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
     return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. Hem Türkçe hem ${dil.ad} kullan. Açıklamaları Türkçe yap, örnekleri ${dil.ad} dilinde ver. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
   };
- 
+
   // ── DİL SEÇİM EKRANI ──
   if (!dilMod) {
     return (
@@ -435,7 +435,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       </div>
     );
   }
- 
+
   // ── TELEFON MODU MİKROFON ──
   const mikToggle = () => {
     if (konusmaRef.current) {
@@ -449,7 +449,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     konusmaRef.current = true;
     mikDinle();
   };
- 
+
   const mikDinle = () => {
     if (!konusmaRef.current) return; // Kapatıldıysa dur
     setMikErr("");
@@ -496,11 +496,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       r.start();
     } catch { setMikErr("Mikrofon başlatılamadı."); konusmaRef.current = false; }
   };
- 
+
   // Uygunsuz içerik kontrolü
   const uygunsuzKelimeler = ["sex","porn","küfür","sik","orospu","amk","göt","meme","nude","hack","bomb","terör"];
   const uygunsuzMu = (txt) => uygunsuzKelimeler.some(k => txt.toLowerCase().includes(k));
- 
+
   const gonderSesli = async (txt) => {
     if (!txt || yukl) return;
     // Uygunsuz içerik kontrolü
@@ -551,7 +551,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     setYukl(false);
   };
- 
+
   const gonderMetin = async (txt) => {
     if (!txt || yukl) return;
     if (uygunsuzMu(txt)) {
@@ -593,7 +593,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     setYukl(false);
   };
- 
+
   const gonder = async () => {
     if (!yazi.trim() || yukl) return;
     const txt = yazi.trim(); setYazi(""); setYukl(true);
@@ -627,20 +627,20 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     setYukl(false);
   };
- 
+
   const mm = String(Math.floor(sure/60)).padStart(2,"0");
   const ss = String(sure%60).padStart(2,"0");
   const dilLabel = dilMod==="tr" ? "🇹🇷 Türkçe" : dilMod==="hedef" ? `${dil.bayrak} ${dil.ad}` : "🔄 İkidilli";
- 
+
   return (
     <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",flexDirection:"column",zIndex:8000}}>
       <style>{`.nk{animation:nk 1s var(--d,0s) infinite}@keyframes nk{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}@keyframes tt{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
- 
+
       {/* Güvenlik bandı */}
       <div style={{background:"rgba(27,94,32,0.2)",padding:"4px 16px",fontSize:11,color:K.gL,textAlign:"center",borderBottom:`1px solid ${K.g2}44`}}>
         🔒 Platform hizmet kalitesi kapsamında denetlenebilir — Kayıt yapılmaz
       </div>
- 
+
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",background:`linear-gradient(135deg,${dil.renk}ee,${dil.renk}99)`,borderBottom:`2px solid ${dil.vurgu}`}}>
         <Av h={hoca} dil={dil} sz={46}/>
@@ -658,7 +658,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         )}
         <button onClick={kapat} style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontWeight:700}}>✕ Çıkış</button>
       </div>
- 
+
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
         {/* Sol panel */}
         <div style={{width:190,background:K.bg2,borderRight:`1px solid ${K.bdr}`,padding:10,display:"flex",flexDirection:"column",gap:10,overflowY:"auto"}}>
@@ -695,7 +695,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
             </button>
           </div>
         </div>
- 
+
         {/* Sohbet */}
         <div style={{flex:1,display:"flex",flexDirection:"column"}}>
           <div style={{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12}}>
@@ -726,7 +726,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
             )}
             <div ref={sonRef}/>
           </div>
- 
+
           {/* Input */}
           <div style={{padding:12,borderTop:`1px solid ${K.bdr}`,background:K.bg2}}>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -757,7 +757,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     </div>
   );
 }
- 
+
 // ─── ADMİN PANELİ ────────────────────────────────────────────────────────────
 function AdminPanel({kapat, admCikis}) {
   const [sekme, setSekme] = useState("dash");
@@ -766,9 +766,9 @@ function AdminPanel({kapat, admCikis}) {
   const [hE, setHE]       = useState(""); const [hT, setHT] = useState("7 Gün"); const [hOk, setHOk] = useState(false); const [hErr, setHErr] = useState("");
   const [p1, setP1]       = useState(""); const [p2, setP2] = useState(""); const [pMsg, setPMsg] = useState("");
   const [izle, setIzle]   = useState(null);
- 
+
   const kaydet = y => { setCfg(y); setA(y); setKayd(true); setTimeout(()=>setKayd(false),2000); };
- 
+
   const kul  = cfg.users || [];
   const ode  = cfg.pays  || [];
   const toplam = kul.length;
@@ -776,7 +776,7 @@ function AdminPanel({kapat, admCikis}) {
   const deneme = kul.filter(u=>u.durum==="Deneme").length;
   const bekl   = ode.filter(o=>o.d==="bekle").length;
   const gelir  = kul.reduce((t,u)=>{ const n=parseInt((u.odeme||"0").replace(/[^0-9]/g,"")); return t+(isNaN(n)?0:n); }, 0);
- 
+
   const onayOde = id => {
     const o = ode.find(x=>x.id===id); if (!o) return;
     kaydet({...cfg,
@@ -784,7 +784,7 @@ function AdminPanel({kapat, admCikis}) {
       users: kul.map(u => u.email===o.email ? {...u,plan:o.plan,durum:"Aktif",odeme:`₺${parseInt((u.odeme||"0").replace(/[^0-9]/g,""))+(o.tutar||299)}`} : u)
     });
   };
- 
+
   const hediye = () => {
     if (!hE.includes("@")) { setHErr("Geçerli e-posta girin"); return; }
     const u = kul.find(x=>x.email===hE);
@@ -792,23 +792,23 @@ function AdminPanel({kapat, admCikis}) {
     kaydet({...cfg, users:kul.map(x=>x.email===hE?{...x,plan:hT,durum:"Aktif",hediye:true}:x)});
     setHOk(true);
   };
- 
+
   const sifreDegis = () => {
     if (p1.length<6)   { setPMsg("En az 6 karakter"); return; }
     if (p1 !== p2)     { setPMsg("Şifreler eşleşmiyor"); return; }
     kaydet({...cfg, pw:p1}); setPMsg("✅ Güncellendi!"); setP1(""); setP2("");
   };
- 
+
   const gI  = {width:"100%",padding:"10px 12px",background:K.bg3,border:`1px solid ${K.bdr}`,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box",marginBottom:11};
   const kd  = {background:K.card,borderRadius:12,padding:16,border:`1px solid ${K.bdr}`,marginBottom:14};
   const bG  = {padding:"10px 18px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13,border:"none",background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff"};
   const lnk = {background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12,fontWeight:600};
- 
+
   const SEKMELER = [
     ["dash","📊","Dashboard"],["kul","👥","Kullanıcılar"],["ode","💳","Ödemeler"],
     ["ders","📡","Aktif Dersler"],["iht","⚠️","İhtar Geçmişi"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["set","⚙️","Ayarlar"]
   ];
- 
+
   return (
     <div style={{position:"fixed",inset:0,background:K.bg,zIndex:7000,display:"flex"}}>
       {/* Sidebar */}
@@ -836,10 +836,10 @@ function AdminPanel({kapat, admCikis}) {
           🚪 Admin Çıkışı
         </button>
       </div>
- 
+
       {/* İçerik */}
       <div style={{flex:1,overflowY:"auto",padding:22}}>
- 
+
         {sekme==="dash" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Dashboard</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
@@ -855,7 +855,7 @@ function AdminPanel({kapat, admCikis}) {
           {cfg.contactEmail && <div style={kd}><div style={{color:K.tx2,fontSize:12,marginBottom:4,fontWeight:600}}>İletişim E-postası</div><div style={{color:K.gL,fontSize:15,fontWeight:700}}>{cfg.contactEmail}</div></div>}
           {cfg.iban && <div style={kd}><div style={{color:K.tx2,fontSize:12,marginBottom:8,fontWeight:600}}>IBAN</div><div style={{color:K.tx3,fontSize:13,lineHeight:2}}>{cfg.acName}<br/><strong style={{color:K.gL,fontFamily:"monospace"}}>{cfg.iban}</strong><br/>{cfg.bank}</div></div>}
         </>}
- 
+
         {sekme==="kul" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Kullanıcılar ({toplam})</div>
           {kul.length===0 ? <div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Henüz kayıtlı kullanıcı yok</div> : (
@@ -877,7 +877,7 @@ function AdminPanel({kapat, admCikis}) {
             </div>
           )}
         </>}
- 
+
         {sekme==="ode" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Ödemeler</div>
           {!cfg.iban && <div style={{background:"rgba(249,168,37,0.1)",border:`1px solid ${K.warn}44`,borderRadius:10,padding:14,marginBottom:14}}><div style={{color:K.warn,fontWeight:700,marginBottom:4}}>⚠️ IBAN girilmemiş</div><div style={{color:K.tx4,fontSize:12}}>Ayarlar sekmesinden IBAN ekleyin.</div></div>}
@@ -905,7 +905,7 @@ function AdminPanel({kapat, admCikis}) {
               </div>
             ))}
         </>}
- 
+
         {sekme==="ders" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:8}}>Aktif Dersler</div>
           <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Hizmet kalitesi kapsamında izleyebilirsiniz.</div>
@@ -935,7 +935,7 @@ function AdminPanel({kapat, admCikis}) {
             </div>
           )}
         </>}
- 
+
         {sekme==="hed" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Hediye Ver</div>
           <div style={{...kd,maxWidth:440}}>
@@ -961,7 +961,7 @@ function AdminPanel({kapat, admCikis}) {
             </>}
           </div>
         </>}
- 
+
         {sekme==="bil" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Bildirim Gönder</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -982,7 +982,7 @@ function AdminPanel({kapat, admCikis}) {
             ))}
           </div>
         </>}
- 
+
         {sekme==="iht" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:8}}>⚠️ İhtar Geçmişi</div>
           <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Uygunsuz içerik gönderen kullanıcılar otomatik kaydedilir.</div>
@@ -1017,7 +1017,7 @@ function AdminPanel({kapat, admCikis}) {
             </div>
           ))}
         </>}
- 
+
         {sekme==="set" && <>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Ayarlar</div>
           <div style={kd}>
@@ -1049,16 +1049,16 @@ function AdminPanel({kapat, admCikis}) {
             {kayd && <div style={{color:K.gL,fontSize:13,fontWeight:600}}>✅ Kaydedildi!</div>}
           </div>
         </>}
- 
+
       </div>
     </div>
   );
 }
- 
+
 // ─── ANA UYGULAMA ─────────────────────────────────────────────────────────────
 export default function App() {
   usePWA();
- 
+
   const [kul,     setKul]     = useState(() => DB.g("kul"));
   const [adGir,   setAdGir]   = useState(() => DB.g("adGir") === true);
   const [adAcik,  setAdAcik]  = useState(false);
@@ -1066,7 +1066,7 @@ export default function App() {
   const [dilSec,  setDilSec]  = useState(null);
   const [cocuk,   setCocuk]   = useState(false);
   const [ders,    setDers]    = useState(null);
- 
+
   const [authAcik, setAuthAcik] = useState(false);
   const [authMod,  setAuthMod]  = useState("giris");
   const [adModal,  setAdModal]  = useState(false);
@@ -1074,7 +1074,7 @@ export default function App() {
   const [adHata,   setAdHata]   = useState("");
   const [adUnuttu, setAdUnuttu] = useState(false);
   const [odePlan,  setOdePlan]  = useState(null);
- 
+
   // PWA — Ana ekrana ekle promptu
   const [pwaPrompt, setPwaPrompt] = useState(null);
   useEffect(() => {
@@ -1082,7 +1082,7 @@ export default function App() {
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
- 
+
   const kulGiris = u => { setKul(u); DB.s("kul", u); };
   const kulCikis = () => { setKul(null); DB.d("kul"); };
   const admKapat = () => { setAdAcik(false); };  // Sadece paneli kapat, oturumu kapatma
@@ -1095,7 +1095,7 @@ export default function App() {
       setAdSifre(""); setAdHata(""); setAdUnuttu(false);
     } else setAdHata("Yanlış şifre");
   };
- 
+
   const dersGir = () => {
     if (DB.g("adGir") === true || adGir) return true;
     if (!kul) return false;
@@ -1103,18 +1103,18 @@ export default function App() {
     if (kul.durum === "Deneme") return (Date.now() - kul.trialStart) / 86400000 < 5;
     return false;
   };
- 
+
   const git = s => { setSayfa(s); setDilSec(null); };
   const adm = getA();
- 
+
   // Ekranlar
   if (adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis}/>;
   if (ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul || kul} kapat={()=>setDers(null)}/>;
- 
+
   const bP  = {padding:"13px 28px",background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:14,boxShadow:`0 4px 20px ${K.g2}55`};
   const bS  = {padding:"13px 28px",background:"transparent",color:K.tx2,border:`1px solid ${K.bdr}`,borderRadius:12,cursor:"pointer",fontWeight:600,fontSize:14};
   const gI2 = {width:"100%",padding:"11px 13px",background:K.bg3,border:`1px solid ${K.bdr}`,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
- 
+
   return (
     <div style={{minHeight:"100vh",background:`linear-gradient(170deg,${K.bg},${K.bg2} 50%,${K.bg})`,fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
       <style>{`*{box-sizing:border-box}
@@ -1123,7 +1123,7 @@ export default function App() {
         @keyframes y2{0%,100%{transform:translateY(4px)}50%{transform:translateY(-8px)}}
         @keyframes gir{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
- 
+
       {/* PWA — Ana ekrana ekle banner */}
       {pwaPrompt && (
         <div style={{background:`linear-gradient(135deg,${K.g2},${K.t2})`,padding:"10px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
@@ -1143,7 +1143,7 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
       {/* NAVBAR */}
       <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 22px",borderBottom:`1px solid ${K.bdr}`,background:"rgba(7,21,16,0.97)",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
         {/* Logo — her zaman ana sayfaya */}
@@ -1152,13 +1152,13 @@ export default function App() {
           <span style={{fontSize:20,fontWeight:900,color:K.tx}}>Lingua</span>
           <span style={{fontSize:20,fontWeight:900,color:K.gL}}>AI</span>
         </div>
- 
+
         <div style={{display:"flex",gap:3}}>
           {[["ana","Ana Sayfa"],["diller","Diller"],["fiyatlar","Fiyatlar"],["iletisim","İletişim"]].map(([s,l]) => (
             <button key={s} onClick={()=>git(s)} style={{padding:"7px 13px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:sayfa===s?700:400,background:sayfa===s?"rgba(46,125,50,0.2)":"transparent",color:sayfa===s?K.gL:K.tx3}}>{l}</button>
           ))}
         </div>
- 
+
         <div style={{display:"flex",gap:7,alignItems:"center"}}>
           {kul ? (
             <>
@@ -1187,7 +1187,7 @@ export default function App() {
           )}
         </div>
       </nav>
- 
+
       {/* ANA SAYFA */}
       {sayfa==="ana" && (
         <div style={{animation:"gir 0.5s ease"}}>
@@ -1206,7 +1206,7 @@ export default function App() {
               <button style={bS} onClick={()=>git("fiyatlar")}>Fiyatlar</button>
             </div>
           </div>
- 
+
           <div style={{display:"flex",justifyContent:"center",gap:18,padding:"0 22px 36px",flexWrap:"wrap",alignItems:"flex-end"}}>
             {[
               {ad:"Şeyh Ahmed Al-Ghamdi",p:4.9,n:1240,c:false,uz:"Tecvid",dil:DILLER[0],a:0},
@@ -1222,7 +1222,7 @@ export default function App() {
               </div>
             ))}
           </div>
- 
+
           <div style={{display:"flex",gap:12,padding:"0 22px 36px",justifyContent:"center",flexWrap:"wrap"}}>
             {[
               {t:"🎤 Sesli Konuşma",d:"Mikrofona bas, hocanla sesli konuş"},
@@ -1236,7 +1236,7 @@ export default function App() {
               </div>
             ))}
           </div>
- 
+
           <div style={{padding:"0 22px 58px",textAlign:"center"}}>
             <div style={{fontSize:13,fontWeight:700,color:K.tx4,marginBottom:16}}>10 Dil</div>
             <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
@@ -1252,7 +1252,7 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
       {/* DİLLER */}
       {sayfa==="diller" && !dilSec && (
         <div style={{padding:"26px 22px"}}>
@@ -1286,7 +1286,7 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
       {/* HOCA SEÇ */}
       {sayfa==="diller" && dilSec && (
         <div style={{padding:"26px 22px"}}>
@@ -1330,7 +1330,7 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
       {/* FİYATLAR */}
       {sayfa==="fiyatlar" && (
         <div style={{padding:"50px 22px",textAlign:"center"}}>
@@ -1370,7 +1370,7 @@ export default function App() {
           )}
         </div>
       )}
- 
+
       {/* İLETİŞİM */}
       {sayfa==="iletisim" && (
         <div style={{padding:"50px 22px",maxWidth:500,margin:"0 auto"}}>
@@ -1396,14 +1396,14 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
       {/* ── MODALLER ── */}
- 
+
       {authAcik && (
         <AuthModal ilkMod={authMod} kapat={()=>setAuthAcik(false)}
           basari={u=>{kulGiris(u);setAuthAcik(false);git("diller");}}/>
       )}
- 
+
       {odePlan && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
           <div style={{background:K.card,borderRadius:20,padding:26,width:390,border:`1px solid ${K.bdr3}`,boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
@@ -1432,7 +1432,7 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
       {/* ADMİN GİRİŞ MODALI */}
       {adModal && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
@@ -1441,7 +1441,7 @@ export default function App() {
               <div style={{color:K.tx,fontSize:15,fontWeight:700}}>{adUnuttu ? "Admin Şifresi Sıfırla" : "Yönetici Girişi"}</div>
               <button onClick={()=>{setAdModal(false);setAdHata("");setAdSifre("");setAdUnuttu(false);}} style={{background:"none",border:"none",color:K.tx3,fontSize:18,cursor:"pointer"}}>✕</button>
             </div>
- 
+
             {!adUnuttu ? (
               <>
                 <input type="password" value={adSifre} placeholder="Yönetici şifresi"
@@ -1485,7 +1485,7 @@ export default function App() {
           </div>
         </div>
       )}
- 
+
     </div>
   );
 }
