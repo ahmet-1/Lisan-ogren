@@ -326,9 +326,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const [mikr, setMikr]     = useState(false);
   const [mikErr, setMikErr] = useState("");
   const [sure, setSure]     = useState(kul?.plan==="Deneme" ? 1200 : 0);
-  const [dilMod, setDilMod] = useState(null); // null=seçim ekranı, "tr"/"hedef"/"iki"
+  const [dilMod, setDilMod] = useState(null);
   const sonRef = useRef(null);
   const recRef = useRef(null);
+  const konusmaRef = useRef(false);
 
   // Geri sayım
   useEffect(() => {
@@ -340,15 +341,12 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   // Dil seçilince karşılama mesajı
   const BESMELE_DILLER = ["quran","arabic","medrese"];
-  const BESMELE = `بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ
-Bismillâhirrahmânirrahîm
-"Rahman ve Rahim olan Allah'ın adıyla"
-
-رَبِّ يَسِّرْ وَلَا تُعَسِّرْ، رَبِّ تَمِّمْ بِالْخَيْرِ
-Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
-"Rabbim! Kolaylaştır, zorlaştırma. Rabbim! Hayırla tamamla."
-
-`;
+  const BESMELE = "\u0628\u0650\u0633\u0652\u0645\u0650 \u0627\u0644\u0644\u0647\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0671\u0646\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650\n" +
+    "Bismillâhirrahmânirrahîm\n" +
+    "Rahman ve Rahim olan Allah'ın adıyla\n\n" +
+    "\u0631\u064e\u0628\u0650\u0651 \u064a\u064e\u0633\u0650\u0651\u0631\u0652 \u0648\u064e\u0644\u064e\u0627 \u062a\u064f\u0639\u064e\u0633\u0650\u0651\u0631\u0652\u060c \u0631\u064e\u0628\u0650\u0651 \u062a\u064e\u0645\u0650\u0651\u0645\u0652 \u0628\u0650\u0627\u0644\u0652\u062e\u064e\u064a\u0652\u0631\u0650\n" +
+    "Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr\n" +
+    "Rabbim! Kolaylaştır, zorlaştırma. Rabbim! Hayırla tamamla.\n\n";
 
   useEffect(() => {
     if (!dilMod) return;
@@ -438,9 +436,6 @@ Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr
   }
 
   // ── TELEFON MODU MİKROFON ──
-  // Bir kez bas → sürekli dinler → hoca yanıtlar → tekrar konuşabilirsin
-  const konusmaRef = useRef(false); // Mikrofon açık mı
-
   const mikToggle = () => {
     if (konusmaRef.current) {
       // Mikrofonu kapat
