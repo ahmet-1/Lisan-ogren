@@ -1118,7 +1118,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     // Diğer diller:
     const guvenlik = " ÖNEMLI: Müstehcen, hakaret veya şiddet içerikli mesajlara yanıt verme. Böyle bir mesaj gelirse: Üyeliğiniz askıya alınabilir de ve dersi bitir.";
     const seviyeInfo = ` Öğrencinin mevcut seviyesi: ${seviye}. Dersini bu seviyeye uygun yap. A1-A2 için çok basit, B1-B2 için orta, C1-C2 için ileri düzey içerik kullan.`;
-    else if (dilMod === "tr")
+    if (dilMod === "tr")
       return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi ve sıcak bir hoca gibi konuş, tıpkı telefonla konuşur gibi. Öğrencinin yazdığı veya söylediği her şeyi dikkatle analiz et. Telaffuz, yazım ve gramer hatalarını MUTLAKA nazikçe düzelt: önce doğrusunu söyle, sonra kısaca açıkla. Her derste yeni bir şey öğret. Maks 3 paragraf.${guvenlik}`;
     if (dilMod === "hedef")
       return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE ${dil.ad} dilinde yanıt ver. Samimi ve sıcak bir hoca gibi konuş. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
