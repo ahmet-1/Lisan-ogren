@@ -176,7 +176,7 @@ function usePWA() {
     if (!meta) { meta = document.createElement('meta'); meta.name = "theme-color"; document.head.appendChild(meta); }
     meta.content = "#071510";
     // Title
-    document.title = "LinguaAI — AI Hoca ile 10 Dil Öğren";
+    document.title = "Lisan Öğren — AI Hoca ile 10 Dil Öğren";
   }, []);
 }
 
@@ -560,19 +560,19 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       "Öğretme stili: " + persona.stil + "\nHata düzeltme: " + persona.duzeltme + "\n" +
       "Öğrencinin seviyesi: " + seviye + "\n" +
       mufredatInfo + "\n" + hafizaInfo + "\n" + guvenlikInfo + "\n" + guvenlik;
-
-    if (dilMod === "tr")
-      return temel + "\nSADECE TÜRKÇE yanıt ver. Samimi konuş, tıpkı telefonda gibi. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-    if (dilMod === "hedef")
-      return temel + "\nSADECE " + dil.ad + " dilinde yanıt ver. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-    return temel + "\nHem Türkçe hem " + dil.ad + " kullan. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-  };port { useState, useRef, useEffect } from "react";
+    
+     if (dilMod === "tr")
+     return temel + "\nSADECE TÜRKÇE yanıt ver. Samimi konuş, tıpkı telefonda gibi. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
+     if (dilMod === "hedef")
+       return temel + "\nSADECE " + dil.ad + " dilinde yanıt ver. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
+     return temel + "\nHem Türkçe hem " + dil.ad + " kullan. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
+  }
 
 // ─── RENKLER ───────────────────────────────────────────────────────────────
-const K = {
-  bg:"#071510", bg2:"#0a1e13", bg3:"#0d2618", card:"#0f2c1c",
+ const K = {
+   bg:"#071510", bg2:"#0a1e13", bg3:"#0d2618", card:"#0f2c1c",
   bdr:"#1a3d26", bdr2:"#1f4d30", bdr3:"#266040",
-  g2:"#2e7d32", g3:"#388e3c", g4:"#43a047", gL:"#66bb6a",
+   g2:"#2e7d32", g3:"#388e3c", g4:"#43a047", gL:"#66bb6a",
   t2:"#00695c", t3:"#00897b", tL:"#26a69a",
   tx:"#e8f5e9", tx2:"#a5d6a7", tx3:"#6a9e74", tx4:"#3d6b47",
   warn:"#f9a825", err:"#c62828", errL:"#ef5350", gold:"#f57f17",
@@ -744,7 +744,7 @@ function usePWA() {
     if (!meta) { meta = document.createElement('meta'); meta.name = "theme-color"; document.head.appendChild(meta); }
     meta.content = "#071510";
     // Title
-    document.title = "LinguaAI — AI Hoca ile 10 Dil Öğren";
+    document.title = "Lisan Öğren — AI Hoca ile 10 Dil Öğren";
   }, []);
 }
 
@@ -1578,7 +1578,7 @@ function AdminPanel({kapat, admCikis}) {
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,paddingBottom:14,borderBottom:`1px solid ${K.bdr}`,cursor:"pointer"}}
           onClick={kapat}>
           <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${K.g4},${K.t3})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:17}}>L</div>
-          <span style={{fontWeight:900,color:K.tx,fontSize:15}}>Lingua<span style={{color:K.gL}}>AI</span></span>
+          <span style={{fontWeight:900,color:K.tx,fontSize:15}}>Lisan Öğren<span style={{color:K.gL}}>AI</span></span>
         </div>
         {SEKMELER.map(([id,ic,lb]) => (
           <button key={id} onClick={()=>setSekme(id)}
@@ -1784,9 +1784,9 @@ function AdminPanel({kapat, admCikis}) {
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>👤 Hesap</div>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>Yönetici E-postası</div>
-            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@linguaai.com" style={gI}/>
+            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@lisan Öğren.com" style={gI}/>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>İletişim E-postası (Kullanıcılara Görünür)</div>
-            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@linguaai.com" style={gI}/>
+            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@lisan Öğren.com" style={gI}/>
           </div>
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>💳 IBAN Bilgileri</div>
@@ -1890,7 +1890,7 @@ export default function App() {
         <div style={{background:`linear-gradient(135deg,${K.g2},${K.t2})`,padding:"10px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:32,height:32,borderRadius:8,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:16}}>L</div>
-            <span style={{color:"#fff",fontSize:13,fontWeight:600}}>LinguaAI'yi ana ekrana ekle — uygulama gibi kullan!</span>
+            <span style={{color:"#fff",fontSize:13,fontWeight:600}}>Lisan Öğren'yi ana ekrana ekle — uygulama gibi kullan!</span>
           </div>
           <div style={{display:"flex",gap:8}}>
             <button onClick={()=>{ pwaPrompt.prompt(); setPwaPrompt(null); }}
@@ -1910,7 +1910,7 @@ export default function App() {
         {/* Logo — her zaman ana sayfaya */}
         <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>git("ana")}>
           <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${K.g4},${K.t3})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:18,boxShadow:`0 2px 14px ${K.g2}66`}}>L</div>
-          <span style={{fontSize:20,fontWeight:900,color:K.tx}}>Lingua</span>
+          <span style={{fontSize:20,fontWeight:900,color:K.tx}}>Lisan Öğren</span>
           <span style={{fontSize:20,fontWeight:900,color:K.gL}}>AI</span>
         </div>
 
