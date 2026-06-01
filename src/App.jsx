@@ -583,7 +583,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
     // Besmele + Rabbu Yessir sesli oku - hocaya göre ses ayarı
     if (besmeleVar) {
-      setTimeout(() => {
+      setTimeout(async () => {
         try {
           const besmeleSes = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir rabbi temmim bilhayr.";
           await elevenTTS(besmeleSes, hoca.id, "ar-SA");
@@ -1278,9 +1278,9 @@ function AdminPanel({kapat, admCikis}) {
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>👤 Hesap</div>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>Yönetici E-postası</div>
-            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@linguaai.com" style={gI}/>
+            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@lisanöğren.com" style={gI}/>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>İletişim E-postası (Kullanıcılara Görünür)</div>
-            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@linguaai.com" style={gI}/>
+            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@lisanöğren.com" style={gI}/>
           </div>
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>💳 IBAN Bilgileri</div>
