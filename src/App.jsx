@@ -1011,7 +1011,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       </div>
     </div>
   );
-}
+
 
 // ─── ADMİN PANELİ ────────────────────────────────────────────────────────────
 function AdminPanel({kapat, admCikis}) {
