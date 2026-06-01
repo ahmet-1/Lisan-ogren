@@ -1,1 +1,1 @@
-# LinguaAI
+# Lisan Öğren

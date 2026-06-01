@@ -1,6 +1,6 @@
 {
-  "name": "LinguaAI - Dil Öğrenme",
-  "short_name": "LinguaAI",
+  "name": "Lisan Öğren - Dil Öğrenme",
+  "short_name": "Lisan Öğren",
   "description": "AI hoca ile 10 dil öğren",
   "start_url": "/",
   "display": "standalone",
