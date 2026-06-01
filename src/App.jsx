@@ -16,6 +16,76 @@ const DB = {
   s: (k,v) => { try { localStorage.setItem("la_"+k, JSON.stringify(v)); } catch {} },
   d: k => { try { localStorage.removeItem("la_"+k); } catch {} },
 };
+// ── ELEVENLabs TTS ──
+const ELEVEN_KEY = "sk_98641aad565ed42005457be29bbed5b4bc23e2fc59b7e05c";
+
+// Her hoca için ElevenLabs ses ID'si
+const HOCA_SES = {
+  // Erkek sesler
+  "q1": "pNInz6obpgDQGcFmaJgB", // Adam - derin erkek
+  "q2": "VR6AewLTigWG4xSOukaG", // Arnold - otoriter
+  "a1": "pNInz6obpgDQGcFmaJgB",
+  "a2": "VR6AewLTigWG4xSOukaG",
+  "m1": "TxGEqnHWrfWFTfGW9XjX", // Josh - olgun
+  "m2": "TxGEqnHWrfWFTfGW9XjX",
+  "e1": "jBpfuIE2acCO8z3wKNLl", // Fin - British
+  "e2": "jBpfuIE2acCO8z3wKNLl",
+  "j1": "pNInz6obpgDQGcFmaJgB",
+  "j2": "TxGEqnHWrfWFTfGW9XjX",
+  // Kadın sesler
+  "q3": "EXAVITQu4vr4xnSDxMaL", // Bella - yumuşak kadın
+  "q4": "EXAVITQu4vr4xnSDxMaL",
+  "a3": "EXAVITQu4vr4xnSDxMaL",
+  "a4": "EXAVITQu4vr4xnSDxMaL",
+  "m3": "EXAVITQu4vr4xnSDxMaL",
+  "m4": "21m00Tcm4TlvDq8ikWAM", // Rachel - profesyonel kadın
+  "e3": "21m00Tcm4TlvDq8ikWAM",
+  "e4": "21m00Tcm4TlvDq8ikWAM",
+  "j3": "EXAVITQu4vr4xnSDxMaL",
+  "j4": "21m00Tcm4TlvDq8ikWAM",
+  // Çocuk hocalar
+  "default_child": "EXAVITQu4vr4xnSDxMaL",
+};
+
+const elevenTTS = async (metin, hocaId, dil_mic) => {
+  const sesId = HOCA_SES[hocaId] || HOCA_SES["default_child"];
+  try {
+    const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + sesId, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": ELEVEN_KEY,
+      },
+      body: JSON.stringify({
+        text: metin.substring(0, 500),
+        model_id: "eleven_multilingual_v2",
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 0.9 }
+      })
+    });
+    if (!res.ok) throw new Error("ElevenLabs hata: " + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    return new Promise((resolve) => {
+      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+      audio.onerror = () => resolve();
+      audio.play().catch(() => resolve());
+    });
+  } catch(e) {
+    // ElevenLabs başarısız olursa tarayıcı sesini kullan
+    console.warn("ElevenLabs fallback:", e.message);
+    return new Promise((resolve) => {
+      try {
+        window.speechSynthesis?.cancel();
+        const u = new SpeechSynthesisUtterance(metin.substring(0,200));
+        u.lang = dil_mic || "tr-TR"; u.rate = 0.85;
+        u.onend = resolve; u.onerror = resolve;
+        window.speechSynthesis?.speak(u);
+      } catch { resolve(); }
+    });
+  }
+};
+
 const getA = () => DB.g("adm") || { pw:"admin123", email:"", contactEmail:"", iban:"", bank:"", acName:"", users:[], pays:[] };
 const setA = d => DB.s("adm", d);
 
@@ -515,20 +585,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     if (besmeleVar) {
       setTimeout(() => {
         try {
-          window.speechSynthesis?.cancel();
-          const sesMetin = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir rabbi temmim bilhayr.";
-          const u = new SpeechSynthesisUtterance(sesMetin);
-          u.lang = "ar-SA";
-          u.rate = 0.70;
-          // Kadın hoca ise pitch yüksek, erkek ise düşük
-          const kadinIsimler = ["Meryem","Fatıma","Hafize","Fatma","Zehra","Zeynep"];
-          const kadinMi = kadinIsimler.some(k => hoca.ad.includes(k));
-          u.pitch = kadinMi ? 1.4 : 0.8;
-          // Tarayıcıdaki sesleri kullan
-          const sesler = window.speechSynthesis.getVoices();
-          const arabicSes = sesler.find(s => s.lang.startsWith("ar") && (kadinMi ? s.name.toLowerCase().includes("female") || s.name.includes("Maged") === false : true));
-          if (arabicSes) u.voice = arabicSes;
-          window.speechSynthesis?.speak(u);
+          const besmeleSes = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir rabbi temmim bilhayr.";
+          await elevenTTS(besmeleSes, hoca.id, "ar-SA");
         } catch {}
       }, 500);
     }
@@ -549,581 +607,24 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const persona = getPersona(hoca.id);
     const mufredatInfo = getMufredatPrompt(dilId, seviye);
     const hafizaInfo = kul?.id ? getHafizaPrompt(kul.id, dilId) : "";
-    const guvenlikInfo = getGuvenlikPrompt(dilId);
+    const guvenlikBilgi = getGuvenlikPrompt(dilId);
     const guvenlik = " ÖNEMLI: Müstehcen veya hakaret içerikli mesajlara yanıt verme.";
 
     if (dilId === "medrese") {
-      return getMedresePrompt() + mufredatInfo + hafizaInfo + guvenlikInfo;
+      return getMedresePrompt() + mufredatInfo + hafizaInfo + guvenlikBilgi;
     }
 
     const temel = "Sen " + hoca.ad + " adlı uzman bir AI dil öğretmenisin. " + hoca.yer + " kökenlisin. " + dil.ad + " öğretiyorsun. Uzmanlık: " + hoca.uz + ".\n" +
       "Öğretme stili: " + persona.stil + "\nHata düzeltme: " + persona.duzeltme + "\n" +
       "Öğrencinin seviyesi: " + seviye + "\n" +
-      mufredatInfo + "\n" + hafizaInfo + "\n" + guvenlikInfo + "\n" + guvenlik;
-    
-     if (dilMod === "tr")
-     return temel + "\nSADECE TÜRKÇE yanıt ver. Samimi konuş, tıpkı telefonda gibi. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-     if (dilMod === "hedef")
-       return temel + "\nSADECE " + dil.ad + " dilinde yanıt ver. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-     return temel + "\nHem Türkçe hem " + dil.ad + " kullan. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-  }
+      mufredatInfo + "\n" + hafizaInfo + "\n" + guvenlikBilgi + "\n" + guvenlik;
 
-// ─── RENKLER ───────────────────────────────────────────────────────────────
- const K = {
-   bg:"#071510", bg2:"#0a1e13", bg3:"#0d2618", card:"#0f2c1c",
-  bdr:"#1a3d26", bdr2:"#1f4d30", bdr3:"#266040",
-   g2:"#2e7d32", g3:"#388e3c", g4:"#43a047", gL:"#66bb6a",
-  t2:"#00695c", t3:"#00897b", tL:"#26a69a",
-  tx:"#e8f5e9", tx2:"#a5d6a7", tx3:"#6a9e74", tx4:"#3d6b47",
-  warn:"#f9a825", err:"#c62828", errL:"#ef5350", gold:"#f57f17",
-};
-
-// ─── VERİTABANI ─────────────────────────────────────────────────────────────
-const DB = {
-  g: k => { try { const v=localStorage.getItem("la_"+k); return v?JSON.parse(v):null; } catch { return null; } },
-  s: (k,v) => { try { localStorage.setItem("la_"+k, JSON.stringify(v)); } catch {} },
-  d: k => { try { localStorage.removeItem("la_"+k); } catch {} },
-};
-const getA = () => DB.g("adm") || { pw:"admin123", email:"", contactEmail:"", iban:"", bank:"", acName:"", users:[], pays:[] };
-const setA = d => DB.s("adm", d);
-
-// ── GİZLİ MÜFREDAT MOTORİ ──
-const MUFREDAT = {
-  english: {
-    A1: { units:["Selamlaşma","Sayılar","Renkler","Aile"], grammar:["to be","have got","articles"], vocab:500, speaking:"Basit tanıtım cümleleri" },
-    A2: { units:["Alışveriş","Yön sorma","Restoran","İş"], grammar:["Simple Present","Past Simple","Adjectives"], vocab:1000, speaking:"Günlük konuşma" },
-    B1: { units:["Seyahat","Sağlık","Medya","Çevre"], grammar:["Present Perfect","Conditionals","Passive"], vocab:2000, speaking:"Fikir belirtme" },
-    B2: { units:["İş hayatı","Politika","Kültür","Teknoloji"], grammar:["Advanced tenses","Reported speech","Modals"], vocab:4000, speaking:"Tartışma ve ikna" },
-    C1: { units:["Akademik","Hukuk","Tıp","Edebiyat"], grammar:["Complex structures","Inversion","Cleft sentences"], vocab:8000, speaking:"Akıcı ve doğal" },
-    C2: { units:["Native level","İdiomatic","Academic writing"], grammar:["All mastered"], vocab:16000, speaking:"Ana dil seviyesi" },
-  },
-  arabic: {
-    A1: { units:["Arap alfabesi","Selamlaşma","Sayılar","Renkler"], grammar:["Harfler","Harekeler","Basit cümleler"], vocab:300, speaking:"Temel kelimeler" },
-    A2: { units:["Aile","Ev","Gıda","Giyim"], grammar:["Müzekker/Müennes","İsim tamlaması","Fiil çekimi"], vocab:800, speaking:"Basit diyaloglar" },
-    B1: { units:["Seyahat","Ticaret","Din hayatı","Medya"], grammar:["Sarf","Nahiv temelleri","Zamirler"], vocab:1500, speaking:"Günlük Arapça" },
-    B2: { units:["Edebiyat","İş","Siyaset","Felsefe"], grammar:["İleri Nahiv","Belagat","Masdar"], vocab:3000, speaking:"Fesahat" },
-    C1: { units:["Klasik Arapça","Tefsir dili","Fıkıh dili"], grammar:["Tam Nahiv-Sarf","Aruz"], vocab:6000, speaking:"Fasih Arapça" },
-    C2: { units:["Arap edebiyatı","Şiir","Hitabet"], grammar:["Tam hakimiyet"], vocab:12000, speaking:"Ana dil seviyesi" },
-  },
-  quran: {
-    A1: { units:["Elif-Ba","Harekeler","Tenvin","Sukun"], grammar:["Tecvid temelleri","Makharij"], vocab:0, speaking:"Harf telaffuzu" },
-    A2: { units:["Kısa sureler","Fetha-Kesre-Damme","Med"], grammar:["İdğam","İhfa","İklab"], vocab:0, speaking:"Kısa sure okuma" },
-    B1: { units:["Amme Cüzü","Tecvid kuralları","Makam"], grammar:["Kalb","Kalkale","Ğunne"], vocab:0, speaking:"Sure okuma" },
-    B2: { units:["Hıfz başlangıç","Sure mealleri","Tefsir"], grammar:["İleri tecvid","Vakf-İbtida"], vocab:0, speaking:"Ezberleme" },
-    C1: { units:["Hıfz orta","Kıraat","Makamlar"], grammar:["Riyayet","Dirayет"], vocab:0, speaking:"Makamla okuma" },
-    C2: { units:["Hatim","İleri hıfz","Kıraat-ı seb'a"], grammar:["Tam hakimiyet"], vocab:0, speaking:"Hafız seviyesi" },
-  },
-  medrese: {
-    A1: { units:["İman esasları","Namaz","Abdest","Taharet"], grammar:["Temel fıkıh","İbadet hükümleri"], vocab:200, speaking:"Dualar" },
-    A2: { units:["Oruç","Zekat","Hac","Ahlak"], grammar:["Fıkıh usulü temelleri","Kelam"], vocab:500, speaking:"Dini konuşma" },
-    B1: { units:["Hadis","Siyer","Tefsir","Kelam"], grammar:["Usul-ü fıkıh","Hadis usulü"], vocab:1000, speaking:"İlmi sohbet" },
-    B2: { units:["İleri fıkıh","Kur'an ilimleri","Tasavvuf"], grammar:["Mantık","Belagat"], vocab:2000, speaking:"Müzakere" },
-    C1: { units:["Müftülük bilgisi","Fetva","Mezhep farkları"], grammar:["İctihad usulü"], vocab:4000, speaking:"Alim düzeyi" },
-    C2: { units:["Tam ilim hakimiyeti"], grammar:["Külliyat"], vocab:8000, speaking:"Müderris seviyesi" },
-  },
-  japanese: {
-    A1: { units:["Hiragana","Katakana","Selamlaşma","Sayılar"], grammar:["は/が/を","Temel fiiller","Desu/Masu"], vocab:300, speaking:"Basit tanıtım" },
-    A2: { units:["Alışveriş","Yön","Aile","Yemek"], grammar:["Te formu","Geçmiş zaman","Sıfatlar"], vocab:800, speaking:"Günlük konuşma" },
-    B1: { units:["İş","Seyahat","Haber","Kültür"], grammar:["Passive","Causative","Conditionals","Keigo"], vocab:2000, speaking:"JLPT N3" },
-    B2: { units:["İş Japonca","Medya","Edebiyat"], grammar:["İleri Keigo","Bağlaçlar","JLPT N2"], vocab:4000, speaking:"Akıcı" },
-    C1: { units:["Akademik","Hukuk","Tıp"], grammar:["JLPT N1","Klasik Japonca"], vocab:8000, speaking:"Ana dil yakın" },
-    C2: { units:["Ana dil","Edebiyat","Kanji tam"], grammar:["Tam hakimiyet"], vocab:16000, speaking:"Ana dil seviyesi" },
-  },
-  french: {
-    A1: { units:["Alfabe","Selamlaşma","Renkler","Sayılar"], grammar:["Articles","Être/Avoir","Genre"], vocab:400, speaking:"Bonjour, merci" },
-    A2: { units:["Aile","Ev","Yemek","Alışveriş"], grammar:["Passé composé","Imparfait","Pronoms"], vocab:1000, speaking:"Günlük Fransızca" },
-    B1: { units:["Seyahat","İş","Medya","Kültür"], grammar:["Subjonctif","Conditionnel","Passif"], vocab:2000, speaking:"DELF B1" },
-    B2: { units:["Politika","Edebiyat","Bilim"], grammar:["İleri subjonctif","Discours indirect"], vocab:4000, speaking:"DELF B2" },
-    C1: { units:["Akademik Fransızca","Edebiyat","Felsefe"], grammar:["Tam hakimiyet"], vocab:8000, speaking:"Dalf C1" },
-    C2: { units:["Fransız edebiyatı","Hitabet"], grammar:["Mükemmel"], vocab:16000, speaking:"Ana dil" },
-  },
-  spanish: {
-    A1: { units:["Alfabe","Selamlaşma","Aile","Renkler"], grammar:["Ser/Estar","Artículos","Género"], vocab:400, speaking:"Hola, gracias" },
-    A2: { units:["Alışveriş","Yön","Yemek","İş"], grammar:["Pretérito","Verbos reflexivos","Imperativo"], vocab:1000, speaking:"Günlük İspanyolca" },
-    B1: { units:["Seyahat","Medya","Kültür","Çevre"], grammar:["Subjuntivo","Condicional","Passive"], vocab:2000, speaking:"DELE B1" },
-    B2: { units:["İş","Politika","Edebiyat"], grammar:["İleri subjuntivo","Discurso indirecto"], vocab:4000, speaking:"DELE B2" },
-    C1: { units:["Akademik","Hukuk","Tıp"], grammar:["Tam hakimiyet"], vocab:8000, speaking:"Ana dil yakın" },
-    C2: { units:["Edebiyat","Hitabet"], grammar:["Mükemmel"], vocab:16000, speaking:"Ana dil" },
-  },
-};
-
-// Müfredat prompt'u oluştur
-const getMufredatPrompt = (dilId, seviye) => {
-  const mf = MUFREDAT[dilId]?.[seviye];
-  if (!mf) return "";
-  return `
-GIZLI MÜFREDAT (öğrenciye gösterme, sadece takip et):
-Mevcut Seviye: ${seviye}
-Üniteler: ${mf.units.join(", ")}
-Gramer Konuları: ${mf.grammar.join(", ")}
-Hedef Kelime: ${mf.vocab} kelime
-Konuşma Hedefi: ${mf.speaking}
-Bu bilgileri kullanarak dersi yönlendir. Öğrencinin seviyesine göre sorular sor, pratik yaptır.`;
-};
-
-// ── ÖĞRETMEN PERSONA SİSTEMİ ──
-const PERSONA = {
-  "q1": { stil:"Sabırlı ve metodolojik", ses:"Derin, ölçülü", hiz:0.70, duzeltme:"Nazikçe ve hemen düzelt, doğrusunu tekrar ettir", hitap:"kardeşim" },
-  "q2": { stil:"Geleneksel medrese tarzı", ses:"Ciddi ama sıcak", hiz:0.75, duzeltme:"Yanlışı düzelt ve neden yanlış olduğunu açıkla", hitap:"kardeşim" },
-  "q3": { stil:"Teşvik edici ve nazik", ses:"Yumuşak kadın sesi", hiz:0.80, duzeltme:"Önce teşvik et, sonra düzelt", hitap:"kardeşim" },
-  "q4": { stil:"Akademik ve detaylı", ses:"Sakin kadın sesi", hiz:0.75, duzeltme:"Detaylı açıkla", hitap:"sevgili öğrencim" },
-  "m1": { stil:"Hoca Efendi tarzı", ses:"Otoriter ama şefkatli", hiz:0.75, duzeltme:"Kaynak göstererek düzelt", hitap:"evladım" },
-  "m2": { stil:"Müftü tarzı, resmi", ses:"Ağır başlı", hiz:0.70, duzeltme:"İlmi kaynak ver", hitap:"talebem" },
-  "e1": { stil:"British profesyonel", ses:"Açık ve net", hiz:0.90, duzeltme:"Hemen düzelt ve örnek ver", hitap:"dear student" },
-  "e3": { stil:"Amerikan enerjik", ses:"Hızlı ve pozitif", hiz:1.0, duzeltme:"Casual tarzda düzelt", hitap:"hey" },
-  "j1": { stil:"Formal Japon", ses:"Sakin ve net", hiz:0.85, duzeltme:"Kibar şekilde düzelt", hitap:"san" },
-  "default": { stil:"Sıcak ve motive edici", ses:"Doğal", hiz:0.85, duzeltme:"Nazikçe düzelt", hitap:"sevgili öğrencim" },
-};
-
-const getPersona = (hocaId) => PERSONA[hocaId] || PERSONA["default"];
-
-// ── UZUN SÜRELİ HAFIZA SİSTEMİ ──
-const getHafiza = (kulId, dilId) => DB.g("hf_"+kulId+"_"+dilId) || { hatalar:[], zayifAlanlar:[], telaffuzHatalari:[], toplamDers:0, sonDers:null };
-const setHafiza = (kulId, dilId, data) => DB.s("hf_"+kulId+"_"+dilId, data);
-
-const hataKaydet = (kulId, dilId, hata, tip) => {
-  const h = getHafiza(kulId, dilId);
-  const yeniHata = { hata, tip, tarih: new Date().toLocaleDateString("tr-TR"), tekrar:1 };
-  const mevcutIdx = h.hatalar.findIndex(x => x.hata === hata);
-  if (mevcutIdx > -1) h.hatalar[mevcutIdx].tekrar++;
-  else h.hatalar.unshift(yeniHata);
-  h.hatalar = h.hatalar.slice(0, 20); // Son 20 hata
-  setHafiza(kulId, dilId, h);
-};
-
-const getHafizaPrompt = (kulId, dilId) => {
-  const h = getHafiza(kulId, dilId);
-  if (!kulId || h.hatalar.length === 0) return "";
-  const enCokHatalar = h.hatalar.sort((a,b) => b.tekrar - a.tekrar).slice(0,5);
-  return `
-ÖĞRENCI HAFIZASI (gizli tut, sadece kullan):
-Toplam ders: ${h.toplamDers}
-Tekrarlayan hatalar: ${enCokHatalar.map(x => x.hata+"("+x.tekrar+"x)").join(", ")}
-Zayıf alanlar: ${h.zayifAlanlar.join(", ")||"henüz yok"}
-Bu bilgilere göre öğrencinin hatalarını takip et ve zayıf alanlara odaklan.`;
-};
-
-// ── BİLGİ GÜVENLİĞİ - HALÜSİNASYON ÖNLEME ──
-const getGuvenlikPrompt = (dilId) => {
-  if (dilId === "quran") return `
-KURAN GÜVENLİK KURALLARI:
-- Sadece gerçek Kuran ayetleri ve sureler hakkında konuş
-- Uydurma hadis veya ayet söyleme, bilmiyorsan "bilmiyorum" de
-- Tecvid kuralları için klasik Türk tecvid kitaplarını referans al
-- Kıraat farklılıkları için "rivayetlere göre farklılık olabilir" de`;
-  if (dilId === "medrese") return `
-MEDRESE GÜVENLİK KURALLARI:
-- Sadece 4 büyük Sünni mezhebi (Hanefi, Maliki, Şafii, Hanbeli) kaynaklı bil ver
-- Tartışmalı konularda "alimler arasında farklı görüşler vardır" de
-- Fetvaya benzeyecek konularda "bir alime danışmanız gerekir" de
-- Uydurma hadis söyleme, bilmiyorsan "bilmiyorum" de`;
-  return "";
-};
-
-
-// ── SEVİYE & DERS GEÇMİŞİ SİSTEMİ ──
-const SEVIYELER = ["A1","A2","B1","B2","C1","C2"];
-const getDersGecmis = (kulId, dilId) => DB.g("dg_"+kulId+"_"+dilId) || [];
-const setDersGecmis = (kulId, dilId, data) => DB.s("dg_"+kulId+"_"+dilId, data);
-const getSeviye = (kulId, dilId) => DB.g("sv_"+kulId+"_"+dilId) || "A1";
-const setSeviye = (kulId, dilId, sv) => DB.s("sv_"+kulId+"_"+dilId, sv);
-const seviyeGuncelle = (kulId, dilId) => {
-  const sayi = getDersGecmis(kulId, dilId).length;
-  const idx = Math.min(Math.floor(sayi / 5), SEVIYELER.length - 1);
-  const yeniSv = SEVIYELER[idx];
-  setSeviye(kulId, dilId, yeniSv);
-  return yeniSv;
-};
-
-// ─── PWA MANIFEST (Ana Ekrana Ekle) ─────────────────────────────────────────
-// Bu index.html'de manifest.json ile yapılır - App.jsx'te useEffect ile ekleriz
-function usePWA() {
-  useEffect(() => {
-    // Theme color
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) { meta = document.createElement('meta'); meta.name = "theme-color"; document.head.appendChild(meta); }
-    meta.content = "#071510";
-    // Title
-    document.title = "Lisan Öğren — AI Hoca ile 10 Dil Öğren";
-  }, []);
-}
-
-// ─── DİLLER ─────────────────────────────────────────────────────────────────
-const DILLER = [
-  {id:"medrese", ad:"Medrese Eğitimi",  yerel:"التعليم الديني", bayrak:"📖", renk:"#1a0e00", vurgu:"#c8a045", acik:"Fıkıh, Akaid, Tefsir ve Hadis", mic:"ar-SA", mods:["Fıkıh","Akaid","Tefsir","Hadis","Feraiz"]},
-  {id:"quran",  ad:"Kur'an-ı Kerim", yerel:"القرآن الكريم", bayrak:"🕌", renk:"#0d2a14", vurgu:"#f9a825", acik:"Tecvid, Makam ve Hıfz",        mic:"ar-SA", mods:["Tecvid","Makam","Hıfz","Sure Mealleri"]},
-  {id:"arabic", ad:"Arapça",          yerel:"العربية",       bayrak:"🇪🇬", renk:"#2a0e0e", vurgu:"#ff8f00", acik:"Nahiv, Sarf ve Konuşma",       mic:"ar-SA", mods:["Nahiv","Sarf","Konuşma","Okuma-Yazma"]},
-  {id:"english",ad:"İngilizce",        yerel:"English",       bayrak:"🇬🇧", renk:"#0e1a2a", vurgu:"#ef5350", acik:"British & American English",   mic:"en-US", mods:["Grammar","Speaking","Vocabulary","IELTS"]},
-  {id:"german", ad:"Almanca",          yerel:"Deutsch",       bayrak:"🇩🇪", renk:"#1a1a0e", vurgu:"#fdd835", acik:"A1'den C2'ye Almanca",         mic:"de-DE", mods:["Grammatik","Sprechen","Vokabeln","TestDaF"]},
-  {id:"italian",ad:"İtalyanca",        yerel:"Italiano",      bayrak:"🇮🇹", renk:"#0e2a0e", vurgu:"#ff8f00", acik:"La bella lingua italiana",     mic:"it-IT", mods:["Grammatica","Conversazione","Cultura","CILS"]},
-  {id:"french", ad:"Fransızca",        yerel:"Français",      bayrak:"🇫🇷", renk:"#0a1030", vurgu:"#ef5350", acik:"La langue de l'amour",         mic:"fr-FR", mods:["Grammaire","Conversation","Culture","DELF"]},
-  {id:"turkish",ad:"Türkçe",           yerel:"Türkçe",        bayrak:"🇹🇷", renk:"#2a0a0a", vurgu:"#ecf0f1", acik:"Ana dil & Yabancılara Türkçe", mic:"tr-TR", mods:["Dilbilgisi","Konuşma","Yazma","TÖMER"]},
-  {id:"russian",ad:"Rusça",            yerel:"Русский",       bayrak:"🇷🇺", renk:"#0a0a2a", vurgu:"#ef5350", acik:"Kiril alfabesi & Konuşma",     mic:"ru-RU", mods:["Kiril","Gramer","Konuşma","TORFL"]},
-  {id:"spanish",ad:"İspanyolca",       yerel:"Español",       bayrak:"🇪🇸", renk:"#2a1a0a", vurgu:"#ff8f00", acik:"Dünyanın en yaygın dili",      mic:"es-ES", mods:["Gramática","Conversación","Cultura","DELE"]},
-];
-
-const HOCALAR = {
-  quran:[
-    {id:"q1",ad:"Şeyh Ahmed Al-Ghamdi",   yer:"Mekke, S.Arabistan",  uz:"Tecvid & Hıfz Uzmanı",    p:4.9,n:1240,c:false},
-    {id:"q2",ad:"Şeyh Omar Al-Fadil",     yer:"Medine, S.Arabistan", uz:"Makam & Kıraat Uzmanı",   p:4.8,n:980, c:false},
-    {id:"q3",ad:"Üst. Meryem Al-Husseini",yer:"Kahire, Mısır",       uz:"Sure Mealleri & Tefsir",  p:4.9,n:1560,c:false},
-    {id:"q4",ad:"Üst. Fatıma Al-Zahrawi", yer:"Güney Sina, Mısır",   uz:"Tecvid & Kıraat Uzmanı",  p:4.7,n:870, c:false},
-    {id:"q5",ad:"Öğrt. Yusuf Al-Nuri",    yer:"Kahire, Mısır",       uz:"Çocuklara Kur'an & Hıfz", p:4.9,n:640, c:true},
-    {id:"q6",ad:"Öğrt. Zeynep Al-Safa",   yer:"Medine, S.Arabistan", uz:"Çocuklara Tecvid",        p:4.8,n:510, c:true},
-  ],
-  medrese:[
-    {id:"m1",ad:"Hoca Efendi Mahmud",     yer:"İstanbul, Türkiye",   uz:"Fıkıh & Akaid Uzmanı",    p:4.9,n:1100,c:false},
-    {id:"m2",ad:"Müftü Ahmed Şükrü",      yer:"Konya, Türkiye",      uz:"Tefsir & Kur'an İlimleri", p:4.8,n:890, c:false},
-    {id:"m3",ad:"Üst. Hafize Hanım",      yer:"Ankara, Türkiye",     uz:"Hadis & Siyer Uzmanı",     p:4.9,n:760, c:false},
-    {id:"m4",ad:"Üst. Fatma Nur",         yer:"Bursa, Türkiye",      uz:"Fıkıh & Feraiz Uzmanı",    p:4.7,n:680, c:false},
-    {id:"m5",ad:"Öğrt. Yusuf Hoca",       yer:"İstanbul, Türkiye",   uz:"Çocuklara Temel Din",      p:4.9,n:540, c:true},
-    {id:"m6",ad:"Öğrt. Zehra Hanım",      yer:"Kayseri, Türkiye",    uz:"Çocuklara Kur'an & Dua",   p:4.8,n:490, c:true},
-  ],
-  arabic:[
-    {id:"a1",ad:"Dr. Khalid Al-Mansouri",yer:"Kahire, Mısır", uz:"Nahiv & Sarf Uzmanı",    p:4.9,n:2100,c:false},
-    {id:"a2",ad:"Prof. Yusuf Al-Azhari", yer:"Kahire, Mısır", uz:"Fesahat & Belağat",      p:4.8,n:1450,c:false},
-    {id:"a3",ad:"Dr. Nour Al-Rashidi",   yer:"Bağdat, Irak",  uz:"Modern Arapça",          p:4.9,n:1890,c:false},
-    {id:"a4",ad:"Üst. Layla Al-Baghdadi",yer:"Amman, Ürdün",  uz:"Nahiv & Okuma-Yazma",    p:4.7,n:1120,c:false},
-    {id:"a5",ad:"Öğrt. Samir Al-Faruq", yer:"Kahire, Mısır", uz:"Çocuklara Temel Arapça", p:4.9,n:720, c:true},
-    {id:"a6",ad:"Öğrt. Hana Al-Zubi",   yer:"Amman, Ürdün",  uz:"Çocuklara Arapça",       p:4.8,n:590, c:true},
-  ],
-  english:[
-    {id:"e1",ad:"James Harrison",      yer:"Londra, İngiltere",    uz:"British English & IELTS",       p:4.9,n:3200,c:false},
-    {id:"e2",ad:"Dr. William Clarke",  yer:"Oxford, İngiltere",    uz:"Academic English & Writing",    p:4.8,n:2100,c:false},
-    {id:"e3",ad:"Sarah Mitchell",      yer:"New York, ABD",        uz:"American English & TOEFL",      p:4.9,n:2800,c:false},
-    {id:"e4",ad:"Emma Thompson",       yer:"Manchester, İngiltere",uz:"Conversation & Pronunciation",  p:4.8,n:1950,c:false},
-    {id:"e5",ad:"Tom Bradley",         yer:"Bristol, İngiltere",   uz:"Çocuklara Eğlenceli İngilizce", p:4.9,n:880, c:true},
-    {id:"e6",ad:"Lucy Williams",       yer:"Edinburgh, İskoçya",   uz:"Çocuk İngilizcesi",             p:4.8,n:740, c:true},
-  ],
-  german:[
-    {id:"g1",ad:"Prof. Klaus Weber", yer:"Berlin, Almanya",   uz:"Grammatik & TestDaF",        p:4.9,n:1800,c:false},
-    {id:"g2",ad:"Dr. Hans Mueller",  yer:"Münih, Almanya",    uz:"İş Almancası & C2",          p:4.7,n:1200,c:false},
-    {id:"g3",ad:"Anna Schneider",    yer:"Hamburg, Almanya",  uz:"Konuşma & Telaffuz",         p:4.9,n:2100,c:false},
-    {id:"g4",ad:"Dr. Maria Fischer", yer:"Viyana, Avusturya", uz:"A1-B2 & Günlük Almanca",     p:4.8,n:1600,c:false},
-    {id:"g5",ad:"Felix Braun",       yer:"Köln, Almanya",     uz:"Çocuklara Eğlenceli Almanca",p:4.9,n:650, c:true},
-    {id:"g6",ad:"Lena Hoffmann",     yer:"Stuttgart, Almanya",uz:"Çocuk Almancası",            p:4.8,n:520, c:true},
-  ],
-  italian:[
-    {id:"i1",ad:"Marco Rossi",           yer:"Roma, İtalya",    uz:"Conversazione & Cultura",  p:4.8,n:1400,c:false},
-    {id:"i2",ad:"Prof. Antonio Bianchi", yer:"Floransa, İtalya",uz:"Grammatica & CILS",        p:4.9,n:1100,c:false},
-    {id:"i3",ad:"Sofia De Luca",         yer:"Milano, İtalya",  uz:"Moda İtalyancası & İş",    p:4.9,n:1750,c:false},
-    {id:"i4",ad:"Giulia Ferrari",        yer:"Napoli, İtalya",  uz:"Konuşma & Telaffuz",       p:4.7,n:980, c:false},
-    {id:"i5",ad:"Luca Marino",           yer:"Torino, İtalya",  uz:"Çocuklara İtalyanca",      p:4.8,n:430, c:true},
-    {id:"i6",ad:"Chiara Esposito",       yer:"Roma, İtalya",    uz:"Çocuk İtalyancası",        p:4.9,n:380, c:true},
-  ],
-  french:[
-    {id:"f1",ad:"Pierre Dubois",       yer:"Paris, Fransa",    uz:"Grammaire & DELF",   p:4.8,n:1900,c:false},
-    {id:"f2",ad:"Dr. Jean-Luc Martin", yer:"Lyon, Fransa",     uz:"Fransız Edebiyatı",  p:4.9,n:1200,c:false},
-    {id:"f3",ad:"Marie Dupont",        yer:"Paris, Fransa",    uz:"Konuşma & Telaffuz", p:4.9,n:2300,c:false},
-    {id:"f4",ad:"Camille Bernard",     yer:"Bordeaux, Fransa", uz:"İş Fransızcası",     p:4.7,n:1050,c:false},
-    {id:"f5",ad:"Theo Laurent",        yer:"Marseille, Fransa",uz:"Çocuklara Fransızca",p:4.8,n:490, c:true},
-    {id:"f6",ad:"Amelie Petit",        yer:"Nice, Fransa",     uz:"Çocuk Fransızcası",  p:4.9,n:420, c:true},
-  ],
-  japanese:[
-    {id:"j1",ad:"Tanaka Hiroshi",  yer:"Tokyo, Japonya",   uz:"JLPT N1-N2 & İş Japonca", p:4.9,n:2200,c:false},
-    {id:"j2",ad:"Yamamoto Kenji",  yer:"Osaka, Japonya",   uz:"Hiragana & Katakana",      p:4.8,n:1700,c:false},
-    {id:"j3",ad:"Suzuki Yuki",     yer:"Tokyo, Japonya",   uz:"Konuşma & Günlük Japonca", p:4.9,n:2500,c:false},
-    {id:"j4",ad:"Nakamura Hana",   yer:"Kyoto, Japonya",   uz:"Kültür & Başlangıç JLPT",  p:4.8,n:1900,c:false},
-    {id:"j5",ad:"Öğrt. Sato Riku", yer:"Tokyo, Japonya",   uz:"Çocuklara Eğlenceli Japonca",p:4.9,n:680,c:true},
-    {id:"j6",ad:"Öğrt. Ito Sakura",yer:"Osaka, Japonya",   uz:"Çocuk Japonca",            p:4.8,n:520, c:true},
-  ],
-  turkish:[
-    {id:"t1",ad:"Prof. Mehmet Yıldız",yer:"İstanbul, Türkiye",uz:"Dilbilgisi & Yazma",      p:4.9,n:1500,c:false},
-    {id:"t2",ad:"Dr. Ali Kaya",       yer:"Ankara, Türkiye",  uz:"Yabancılara Türkçe",      p:4.8,n:1100,c:false},
-    {id:"t3",ad:"Prof. Ayşe Demir",   yer:"İstanbul, Türkiye",uz:"Konuşma & Telaffuz",      p:4.9,n:1900,c:false},
-    {id:"t4",ad:"Dr. Zeynep Arslan",  yer:"Bursa, Türkiye",   uz:"Edebiyat & İleri Türkçe", p:4.8,n:1300,c:false},
-    {id:"t5",ad:"Öğrt. Burak Şahin", yer:"İzmir, Türkiye",   uz:"Çocuklara Türkçe",        p:4.9,n:620, c:true},
-    {id:"t6",ad:"Öğrt. Elif Kılıç",  yer:"Ankara, Türkiye",  uz:"Çocuk Türkçesi",          p:4.8,n:540, c:true},
-  ],
-  russian:[
-    {id:"r1",ad:"Prof. Dmitri Volkov", yer:"Moskova, Rusya",      uz:"Kiril & Rus Grameri", p:4.9,n:1600,c:false},
-    {id:"r2",ad:"Dr. Alexei Petrov",   yer:"St.Petersburg, Rusya",uz:"İş Rusçası & TORFL",  p:4.8,n:1200,c:false},
-    {id:"r3",ad:"Dr. Natasha Ivanova", yer:"Moskova, Rusya",      uz:"Konuşma & Telaffuz",  p:4.9,n:2000,c:false},
-    {id:"r4",ad:"Prof. Elena Sorokina",yer:"Kazan, Rusya",        uz:"Edebiyat & Rusça",    p:4.8,n:1400,c:false},
-    {id:"r5",ad:"Öğrt. Ivan Novikov",  yer:"Moskova, Rusya",      uz:"Çocuklara Rusça",     p:4.9,n:560, c:true},
-    {id:"r6",ad:"Öğrt. Olga Morozova", yer:"Novosibirsk, Rusya",  uz:"Çocuk Rusçası",       p:4.8,n:480, c:true},
-  ],
-  spanish:[
-    {id:"s1",ad:"Prof. Carlos García",  yer:"Madrid, İspanya",   uz:"Gramática & DELE",           p:4.9,n:2400,c:false},
-    {id:"s2",ad:"Dr. Miguel Rodríguez", yer:"Barselona, İspanya", uz:"İş İspanyolcası",            p:4.8,n:1800,c:false},
-    {id:"s3",ad:"Ana Martínez",         yer:"Sevilla, İspanya",   uz:"Conversación",               p:4.9,n:2600,c:false},
-    {id:"s4",ad:"Dr. Isabel López",     yer:"Valencia, İspanya",  uz:"Latin Amerika İspanyolcası", p:4.8,n:2100,c:false},
-    {id:"s5",ad:"Öğrt. Diego Sánchez",  yer:"Madrid, İspanya",    uz:"Çocuklara İspanyolca",       p:4.9,n:720, c:true},
-    {id:"s6",ad:"Öğrt. Lucía Fernández",yer:"Barselona, İspanya", uz:"Çocuk İspanyolcası",         p:4.8,n:640, c:true},
-  ],
-};
-
-// ─── AVATAR ──────────────────────────────────────────────────────────────────
-function Av({h, dil, sz=64}) {
-  const ini = h.ad.split(" ").slice(-2).map(w=>w[0]).join("");
-  return (
-    <div style={{
-      width:sz, height:sz, borderRadius:"50%", flexShrink:0, position:"relative",
-      background:`linear-gradient(145deg,${dil.renk},${dil.renk}cc)`,
-      border:`${sz>50?3:2}px solid ${dil.vurgu}`,
-      display:"flex", alignItems:"center", justifyContent:"center",
-      boxShadow:`0 0 20px ${dil.vurgu}33`
-    }}>
-      <span style={{fontSize:sz>80?28:sz>50?18:12, fontWeight:900, color:"#fff", fontFamily:"Georgia,serif"}}>{ini}</span>
-      {h.c && sz>50 && (
-        <div style={{position:"absolute",top:-4,right:-4,width:20,height:20,borderRadius:"50%",
-          background:K.gold,border:`2px solid ${K.bg}`,display:"flex",alignItems:"center",
-          justifyContent:"center",fontSize:10,color:"#fff",fontWeight:700}}>★</div>
-      )}
-    </div>
-  );
-}
-
-// ─── GİRİŞ / KAYIT MODAL ────────────────────────────────────────────────────
-function AuthModal({ilkMod, kapat, basari}) {
-  const [mod, setMod]     = useState(ilkMod || "giris");
-  const [f, setF]         = useState({ad:"",email:"",tel:"",tc:"",dogum:"",sehir:"",sifre:"",sifre2:"",onay:false});
-  const [h, setH]         = useState({});
-  const [tamam, setTamam] = useState(false);
-  const [mesaj, setMesaj] = useState("");
-
-  const inp = (k, tip, yer) => (
-    <div style={{marginBottom:10}}>
-      <input type={tip} value={f[k]} placeholder={yer}
-        onChange={e => { setF(p=>({...p,[k]:e.target.value})); setH(p=>({...p,[k]:""})); }}
-        style={{width:"100%",padding:"10px 13px",background:K.bg3,
-          border:`1px solid ${h[k]?K.err:K.bdr}`,borderRadius:9,
-          color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"}} />
-      {h[k] && <div style={{color:K.errL,fontSize:11,marginTop:3}}>{h[k]}</div>}
-    </div>
-  );
-
-  const doGiris = () => {
-    const e = {};
-    if (!f.email) e.email = "E-posta gerekli";
-    if (!f.sifre) e.sifre = "Şifre gerekli";
-    if (Object.keys(e).length) { setH(e); return; }
-    const a = getA();
-    const u = (a.users||[]).find(x => x.email.toLowerCase()===f.email.toLowerCase() && x.pw===f.sifre);
-    if (!u) { setH({sifre:"E-posta veya şifre hatalı"}); return; }
-    basari(getA().users.find(x=>x.id===u.id) || u);
-  };
-
-  const doKayit = () => {
-    const e = {};
-    if (!f.ad.trim())  e.ad = "Zorunlu";
-    if (!f.email.includes("@")) e.email = "Geçerli e-posta";
-    if (!f.tel.trim()) e.tel = "Zorunlu";
-    if (f.tc.length!==11 || !/^\d+$/.test(f.tc)) e.tc = "11 haneli TC";
-    if (!f.dogum)      e.dogum = "Zorunlu";
-    if (!f.sehir.trim()) e.sehir = "Zorunlu";
-    if (f.sifre.length < 6)  e.sifre = "En az 6 karakter";
-    if (f.sifre !== f.sifre2) e.sifre2 = "Şifreler eşleşmiyor";
-    if (!f.onay) e.onay = "Onay zorunlu";
-    if (Object.keys(e).length) { setH(e); return; }
-    const a = getA();
-    if ((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())) {
-      setH({email:"Bu e-posta zaten kayıtlı"}); return;
-    }
-    const yeni = {
-      id:Date.now(), ad:f.ad, email:f.email, tel:f.tel, tc:f.tc,
-      dogum:f.dogum, sehir:f.sehir, pw:f.sifre,
-      plan:"Deneme", durum:"Deneme", dil:"—",
-      tarih:new Date().toLocaleDateString("tr-TR"),
-      odeme:"₺0", trialStart:Date.now(), hediye:false
-    };
-    setA({...a, users:[...(a.users||[]), yeni]});
-    setTamam(true);
-    basari(yeni);
-  };
-
-  const doSifre = () => {
-    if (!f.email.includes("@")) { setH({email:"Geçerli e-posta girin"}); return; }
-    setMesaj("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
-  };
-
-  const tabS = a => ({
-    flex:1, padding:"10px", border:"none", cursor:"pointer", fontWeight:700, fontSize:13,
-    background: a ? `linear-gradient(135deg,${K.g2},${K.t2})` : K.bg3,
-    color: a ? "#fff" : K.tx3, borderRadius:8
-  });
-  const btnP = {width:"100%",padding:12,background:`linear-gradient(135deg,${K.g2},${K.t2})`,color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8};
-  const btnG = {width:"100%",padding:11,background:"transparent",color:K.tx2,border:`1px solid ${K.bdr}`,borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:13,marginBottom:8};
-  const lnk  = {background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12,fontWeight:600};
-
-  return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
-      <div style={{background:K.card,borderRadius:22,padding:24,width:390,border:`1px solid ${K.bdr3}`,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
-
-        {/* Başlık */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          {mod !== "unuttu" && (
-            <div style={{display:"flex",gap:6,flex:1}}>
-              <button style={tabS(mod==="giris")} onClick={()=>{setMod("giris");setH({});}}>Giriş Yap</button>
-              <button style={tabS(mod==="kayit")} onClick={()=>{setMod("kayit");setH({});setTamam(false);}}>Üye Ol</button>
-            </div>
-          )}
-          {mod === "unuttu" && <div style={{color:K.tx,fontSize:16,fontWeight:700}}>Şifremi Unuttum</div>}
-          <button onClick={kapat} style={{background:"none",border:"none",color:K.tx3,fontSize:22,cursor:"pointer",marginLeft:8}}>✕</button>
-        </div>
-
-        {/* ── GİRİŞ ── */}
-        {mod === "giris" && <>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>
-          {inp("email","email","ornek@mail.com")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şifre</div>
-          {inp("sifre","password","••••••••")}
-          <div style={{textAlign:"right",marginBottom:14}}>
-            <button style={lnk} onClick={()=>{setMod("unuttu");setH({});setMesaj("");}}>
-              Şifremi Unuttum
-            </button>
-          </div>
-          <button style={btnP} onClick={doGiris}>Giriş Yap</button>
-          <div style={{textAlign:"center",color:K.tx3,fontSize:12}}>
-            Hesabın yok mu? <button style={lnk} onClick={()=>{setMod("kayit");setH({});setTamam(false);}}>Üye Ol</button>
-          </div>
-        </>}
-
-        {/* ── KAYIT ── */}
-        {mod === "kayit" && (tamam ? (
-          <div style={{textAlign:"center",padding:"16px 0"}}>
-            <div style={{fontSize:56,marginBottom:12}}>🎉</div>
-            <div style={{color:K.tx,fontSize:20,fontWeight:700,marginBottom:8}}>Hoş Geldin!</div>
-            <div style={{color:K.tx3,fontSize:13,marginBottom:20}}>5 günlük ücretsiz denemen başladı.</div>
-            <button style={btnP} onClick={kapat}>Derse Başla →</button>
-            <button style={btnG} onClick={kapat}>Ana Sayfaya Dön</button>
-          </div>
-        ) : <>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Ahmet Yılmaz")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>{inp("email","email","ornek@mail.com")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Telefon</div>{inp("tel","tel","05XX XXX XXXX")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>T.C. Kimlik No</div>{inp("tc","text","12345678901")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Doğum Tarihi</div>{inp("dogum","date","")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şehir</div>{inp("sehir","text","İstanbul")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şifre</div>{inp("sifre","password","min 6 karakter")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şifre Tekrar</div>{inp("sifre2","password","tekrar girin")}
-          <div style={{background:K.bg3,borderRadius:9,padding:11,marginBottom:12,border:`1px solid ${K.bdr}`}}>
-            <label style={{display:"flex",gap:9,cursor:"pointer",alignItems:"flex-start"}}>
-              <input type="checkbox" checked={f.onay} onChange={e=>setF(p=>({...p,onay:e.target.checked}))} style={{marginTop:2,width:15,height:15,accentColor:K.gL}}/>
-              <span style={{color:K.tx3,fontSize:11,lineHeight:1.6}}>Platform hizmet kalitesi kontrolleri kapsamındaki denetim uygulamalarını ve gizlilik politikasını okudum, kabul ediyorum.</span>
-            </label>
-            {h.onay && <div style={{color:K.errL,fontSize:10,marginTop:4}}>{h.onay}</div>}
-          </div>
-          <button style={btnP} onClick={doKayit}>Kayıt Ol →</button>
-          <div style={{textAlign:"center",color:K.tx3,fontSize:12}}>
-            Zaten hesabın var mı? <button style={lnk} onClick={()=>{setMod("giris");setH({});}}>Giriş Yap</button>
-          </div>
-        </>)}
-
-        {/* ── ŞİFREMİ UNUTTUM ── */}
-        {mod === "unuttu" && (mesaj ? (
-          <div style={{textAlign:"center",padding:"16px 0"}}>
-            <div style={{fontSize:50,marginBottom:12}}>📧</div>
-            <div style={{color:K.tx,fontSize:16,fontWeight:700,marginBottom:8}}>E-posta Gönderildi!</div>
-            <div style={{color:K.tx3,fontSize:13,marginBottom:20}}>{mesaj}</div>
-            <button style={btnP} onClick={()=>setMod("giris")}>Giriş Yap</button>
-          </div>
-        ) : <>
-          <div style={{color:K.tx3,fontSize:12,marginBottom:14,lineHeight:1.6}}>Kayıtlı e-posta adresinizi girin. Şifre sıfırlama bağlantısı göndereceğiz.</div>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>
-          {inp("email","email","ornek@mail.com")}
-          <button style={btnP} onClick={doSifre}>Sıfırlama E-postası Gönder</button>
-          <div style={{textAlign:"center"}}>
-            <button style={lnk} onClick={()=>setMod("giris")}>← Giriş Yap'a Dön</button>
-          </div>
-        </>)}
-      </div>
-    </div>
-  );
-}
-
-// ─── DERS EKRANI ─────────────────────────────────────────────────────────────
-function DersEkrani({dilId, hoca, kul, kapat}) {
-  const dil = DILLER.find(d => d.id === dilId);
-  const [msgs, setMsgs]     = useState([]);
-  const [yazi, setYazi]     = useState("");
-  const [yukl, setYukl]     = useState(false);
-  const [mikr, setMikr]     = useState(false);
-  const [mikErr, setMikErr] = useState("");
-  const [sure, setSure]     = useState(kul?.plan==="Deneme" ? 1200 : 0);
-  const [dilMod, setDilMod] = useState(null);
-  const [seviye, setSeviyeState] = useState(() => kul?.id ? getSeviye(kul.id, dilId) : "A1");
-  const sonRef = useRef(null);
-  const recRef = useRef(null);
-  const konusmaRef = useRef(false);
-  const dersBaslangic = useRef(Date.now());
-
-  // Geri sayım
-  useEffect(() => {
-    if (kul?.plan === "Deneme") {
-      const ti = setInterval(() => setSure(s => { if (s<=1){clearInterval(ti);return 0;} return s-1; }), 1000);
-      return () => clearInterval(ti);
-    }
-  }, []);
-
-  // Dil seçilince karşılama mesajı
-  const BESMELE_DILLER = ["quran","arabic","medrese"];
-  const BESMELE = "\u0628\u0650\u0633\u0652\u0645\u0650 \u0627\u0644\u0644\u0647\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0671\u0646\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650\n" +
-    "Bismillâhirrahmânirrahîm\n" +
-    "Rahman ve Rahim olan Allah'ın adıyla\n\n" +
-    "\u0631\u064e\u0628\u0650\u0651 \u064a\u064e\u0633\u0650\u0651\u0631\u0652 \u0648\u064e\u0644\u064e\u0627 \u062a\u064f\u0639\u064e\u0633\u0650\u0651\u0631\u0652\u060c \u0631\u064e\u0628\u0650\u0651 \u062a\u064e\u0645\u0650\u0651\u0645\u0652 \u0628\u0650\u0627\u0644\u0652\u062e\u064e\u064a\u0652\u0631\u0650\n" +
-    "Rabbî yessir ve lâ tuassir, rabbî temmim bil-hayr\n" +
-    "Rabbim! Kolaylaştır, zorlaştırma. Rabbim! Hayırla tamamla.\n\n";
-
-  useEffect(() => {
-    if (!dilMod) return;
-    const ad = kul?.ad?.split(" ")[0] || "";
-    const besmeleVar = BESMELE_DILLER.includes(dilId);
-    const on = besmeleVar ? BESMELE : "";
-    let txt;
     if (dilMod === "tr")
-      txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nDersimizi Türkçe yapacağız. Mikrofona basarak sesli veya yazarak konuşabilirsin. Hayırlı dersler! 🤲`;
-    else if (dilMod === "hedef")
-      txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\n${dil.ad} dilinde ders yapacağız. Hazır mısın?`;
-    else
-      txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nHem Türkçe hem ${dil.ad} kullanarak ders yapacağız. Hayırlı dersler! 🤲`;
-    setMsgs([{r:"ai", t:txt}]);
-
-    // Besmele + Rabbu Yessir sesli oku - hocaya göre ses ayarı
-    if (besmeleVar) {
-      setTimeout(() => {
-        try {
-          window.speechSynthesis?.cancel();
-          const sesMetin = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir rabbi temmim bilhayr.";
-          const u = new SpeechSynthesisUtterance(sesMetin);
-          u.lang = "ar-SA";
-          u.rate = 0.70;
-          // Kadın hoca ise pitch yüksek, erkek ise düşük
-          const kadinIsimler = ["Meryem","Fatıma","Hafize","Fatma","Zehra","Zeynep"];
-          const kadinMi = kadinIsimler.some(k => hoca.ad.includes(k));
-          u.pitch = kadinMi ? 1.4 : 0.8;
-          // Tarayıcıdaki sesleri kullan
-          const sesler = window.speechSynthesis.getVoices();
-          const arabicSes = sesler.find(s => s.lang.startsWith("ar") && (kadinMi ? s.name.toLowerCase().includes("female") || s.name.includes("Maged") === false : true));
-          if (arabicSes) u.voice = arabicSes;
-          window.speechSynthesis?.speak(u);
-        } catch {}
-      }, 500);
-    }
-  }, [dilMod]);
-
-  useEffect(() => { sonRef.current?.scrollIntoView({behavior:"smooth"}); }, [msgs]);
-
-  // Sistem promptu
-  const getMedresePrompt = () => {
-    if (dilMod === "tr")
-      return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi, sabırlı ve şefkatli bir hoca gibi konuş. İslami adap ile başla. Öğrencinin sorularını Kuran ve Sünnet ışığında cevapla. Hataları nazikçe düzelt. Maks 3 paragraf.`;
+      return temel + "\nSADECE TÜRKÇE yanıt ver. Samimi konuş, tıpkı telefonda gibi. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
     if (dilMod === "hedef")
-      return `أنت ${hoca.ad}، مدرس ديني خبير. تخصصك: ${hoca.uz}. أجب فقط باللغة العربية. كن لطيفًا وصبورًا. صحح الأخطاء بلطف. ثلاث فقرات كحد أقصى.`;
-    return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. Hem Türkçe hem Arapça kullan. Açıklamaları Türkçe yap, Arapça ibareleri Türkçe okunuşuyla da ver. Hataları nazikçe düzelt. Maks 3 paragraf.`;
-  };
-
-  const getPrompt = () => {
-    if (dilId === "medrese") return getMedresePrompt();
-    // Diğer diller:
-    const guvenlik = " ÖNEMLI: Müstehcen, hakaret veya şiddet içerikli mesajlara yanıt verme. Böyle bir mesaj gelirse: Üyeliğiniz askıya alınabilir de ve dersi bitir.";
-    const seviyeInfo = ` Öğrencinin mevcut seviyesi: ${seviye}. Dersini bu seviyeye uygun yap. A1-A2 için çok basit, B1-B2 için orta, C1-C2 için ileri düzey içerik kullan.`;
-    if (dilMod === "tr")
-      return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi ve sıcak bir hoca gibi konuş, tıpkı telefonla konuşur gibi. Öğrencinin yazdığı veya söylediği her şeyi dikkatle analiz et. Telaffuz, yazım ve gramer hatalarını MUTLAKA nazikçe düzelt: önce doğrusunu söyle, sonra kısaca açıkla. Her derste yeni bir şey öğret. Maks 3 paragraf.${guvenlik}`;
-    if (dilMod === "hedef")
-      return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE ${dil.ad} dilinde yanıt ver. Samimi ve sıcak bir hoca gibi konuş. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
-    return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. Hem Türkçe hem ${dil.ad} kullan. Açıklamaları Türkçe yap, örnekleri ${dil.ad} dilinde ver. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
-  };
+      return temel + "\nSADECE " + dil.ad + " dilinde yanıt ver. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
+    return temel + "\nHem Türkçe hem " + dil.ad + " kullan. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
+  };};
 
   // ── DİL SEÇİM EKRANI ──
   if (!dilMod) {
@@ -1272,17 +773,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         h.sonDers = new Date().toLocaleDateString("tr-TR");
         setHafiza(kul.id, dilId, h);
       }
-      // Sesli oku - bitince tekrar dinlemeye başla
+      // ElevenLabs ile sesli oku - bitince tekrar dinlemeye başla
       try {
-        window.speechSynthesis?.cancel();
-        const u = new SpeechSynthesisUtterance(yan.substring(0,300));
-        u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
-        u.rate = 0.85; u.pitch = 1.1;
-        u.onend = () => {
-          // Hoca konuşmayı bitirdi, tekrar dinlemeye başla
-          if (konusmaRef.current) setTimeout(mikDinle, 500);
-        };
-        window.speechSynthesis?.speak(u);
+        await elevenTTS(yan.substring(0, 500), hoca.id, dilMod==="hedef" ? dil.mic : "tr-TR");
+        if (konusmaRef.current) setTimeout(mikDinle, 500);
       } catch {
         if (konusmaRef.current) setTimeout(mikDinle, 500);
       }
@@ -1578,7 +1072,7 @@ function AdminPanel({kapat, admCikis}) {
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,paddingBottom:14,borderBottom:`1px solid ${K.bdr}`,cursor:"pointer"}}
           onClick={kapat}>
           <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${K.g4},${K.t3})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:17}}>L</div>
-          <span style={{fontWeight:900,color:K.tx,fontSize:15}}>Lisan Öğren<span style={{color:K.gL}}>AI</span></span>
+          <span style={{fontWeight:900,color:K.tx,fontSize:15}}>Lisan <span style={{color:K.gL}}>Öğren</span></span>
         </div>
         {SEKMELER.map(([id,ic,lb]) => (
           <button key={id} onClick={()=>setSekme(id)}
@@ -1784,9 +1278,9 @@ function AdminPanel({kapat, admCikis}) {
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>👤 Hesap</div>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>Yönetici E-postası</div>
-            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@lisan Öğren.com" style={gI}/>
+            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@linguaai.com" style={gI}/>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>İletişim E-postası (Kullanıcılara Görünür)</div>
-            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@lisan Öğren.com" style={gI}/>
+            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@linguaai.com" style={gI}/>
           </div>
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>💳 IBAN Bilgileri</div>
@@ -1910,8 +1404,8 @@ export default function App() {
         {/* Logo — her zaman ana sayfaya */}
         <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>git("ana")}>
           <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${K.g4},${K.t3})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:18,boxShadow:`0 2px 14px ${K.g2}66`}}>L</div>
-          <span style={{fontSize:20,fontWeight:900,color:K.tx}}>Lisan Öğren</span>
-          <span style={{fontSize:20,fontWeight:900,color:K.gL}}>AI</span>
+          <span style={{fontSize:20,fontWeight:900,color:K.tx}}>Lisan </span>
+          <span style={{fontSize:20,fontWeight:900,color:K.gL}}>Öğren</span>
         </div>
 
         <div style={{display:"flex",gap:3}}>
