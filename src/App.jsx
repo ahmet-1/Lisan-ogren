@@ -58,7 +58,7 @@ const elevenTTS = async (metin, hocaId, dil_mic) => {
       },
       body: JSON.stringify({
         text: metin.substring(0, 500),
-        model_id: "eleven_multilisan Öğren_v2",
+        model_id: "eleven_multilingual_v2",
         voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 0.9 }
       })
     });
@@ -581,7 +581,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       txt = `${on}Merhaba ${ad}! Ben ${hoca.ad}.\n\nUzmanlığım: ${hoca.uz}\n\nHem Türkçe hem ${dil.ad} kullanarak ders yapacağız. Hayırlı dersler! 🤲`;
     setMsgs([{r:"ai", t:txt}]);
 
-    // Besmele + Rabbu Yessir sesli oku - hocaya göre ses ayarı
+    // Besmele + Rabbu Yessir sesli oku
     if (besmeleVar) {
       setTimeout(async () => {
         try {
@@ -1278,9 +1278,9 @@ function AdminPanel({kapat, admCikis}) {
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>👤 Hesap</div>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>Yönetici E-postası</div>
-            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@lisanöğren.com" style={gI}/>
+            <input value={cfg.email||""} onChange={e=>setCfg(s=>({...s,email:e.target.value}))} placeholder="admin@linguaai.com" style={gI}/>
             <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>İletişim E-postası (Kullanıcılara Görünür)</div>
-            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@lisanöğren.com" style={gI}/>
+            <input value={cfg.contactEmail||""} onChange={e=>setCfg(s=>({...s,contactEmail:e.target.value}))} placeholder="iletisim@linguaai.com" style={gI}/>
           </div>
           <div style={kd}>
             <div style={{color:K.tx,fontWeight:700,marginBottom:14,fontSize:14}}>💳 IBAN Bilgileri</div>
