@@ -16,8 +16,6 @@ const DB = {
   s: (k,v) => { try { localStorage.setItem("la_"+k, JSON.stringify(v)); } catch {} },
   d: k => { try { localStorage.removeItem("la_"+k); } catch {} },
 };
-// ── ELEVENLabs TTS ──
-const ELEVEN_KEY = "sk_98641aad565ed42005457be29bbed5b4bc23e2fc59b7e05c";
 
 // Her hoca için ElevenLabs ses ID'si
 const HOCA_SES = {
@@ -50,7 +48,7 @@ const HOCA_SES = {
 const elevenTTS = async (metin, hocaId, dil_mic) => {
   const sesId = HOCA_SES[hocaId] || HOCA_SES["default_child"];
   try {
-    const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + sesId, {
+    const res = await fetch("/api/tts" + sesId, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -750,7 +748,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     setYukl(true);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/chat", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:800,
@@ -800,7 +798,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     setYazi(""); setYukl(true);
     setMsgs(m => [...m, {r:"user", t:txt}]);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/chat", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:800,
@@ -834,7 +832,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const txt = yazi.trim(); setYazi(""); setYukl(true);
     setMsgs(m => [...m, {r:"user", t:txt}]);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/chat", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:800,
