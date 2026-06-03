@@ -52,7 +52,7 @@ const elevenTTS = async (metin, hocaId, dil_mic) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "xi-api-key": ELEVEN_KEY
+        "xi-api-key": ELEVEN_KEY,
       },
       body: JSON.stringify({
         text: metin.substring(0, 500),
