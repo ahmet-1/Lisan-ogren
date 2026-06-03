@@ -489,7 +489,7 @@ function AuthModal({ilkMod, kapat, basari}) {
             <button style={btnG} onClick={kapat}>Ana Sayfaya Dön</button>
           </div>
         ) : <>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Ahmet Yılmaz")}
+          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","İsim Soyisim")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>{inp("email","email","ornek@mail.com")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Telefon</div>{inp("tel","tel","05XX XXX XXXX")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>T.C. Kimlik No</div>{inp("tc","text","12345678901")}
