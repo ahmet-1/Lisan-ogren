@@ -533,25 +533,31 @@ function AuthModal({ilkMod, kapat, basari}) {
 }
 
 // ─── DERS EKRANI ─────────────────────────────────────────────────────────────
-  function DersEkrani ({dilId, hoca, kul, kapat}) {
+ function DersEkrani({ dilId, hoca, kul, kapat }) {
   const dil = DILLER.find(d => d.id === dilId);
-  const [msgs, setMsgs]     = useState([]);
-  const [yazi, setYazi]     = useState("");
-  const [yukl, setYukl]     = useState(false);
-  const [mikr, setMikr]     = useState(false);
+  const [msgs, setMsgs] = useState([]);
+  const [yazi, setYazi] = useState("");
+  const [yukl, setYukl] = useState(false);
+  const [mikr, setMikr] = useState(false);
   const [mikErr, setMikErr] = useState("");
-  const [sure, setSure]     = useState(kul?.plan==="Deneme" ? 1200 : 0);
+  const [sure, setSure] = useState(kul?.plan === "Deneme" ? 1200 : 0);
   const [dilMod, setDilMod] = useState(null);
   const [seviye, setSeviyeState] = useState(() => kul?.id ? getSeviye(kul.id, dilId) : "A1");
   const sonRef = useRef(null);
   const recRef = useRef(null);
   const konusmaRef = useRef(false);
   const dersBaslangic = useRef(Date.now());
-  
+  }
   // Geri sayım
-  useEffect(() => {
+ useEffect(() => {
     if (kul?.plan === "Deneme") {
-      const ti = setInterval(() => setSure(s => { if (s<=1){clearInterval(ti);return 0;} return s-1; }), 1000);
+      const ti = setInterval(() => setSure(s => {
+        if (s <= 1) {
+          clearInterval(ti);
+          return 0;
+        }
+        return s - 1;
+      }), 1000);
       return () => clearInterval(ti);
     }
   }, []);
@@ -1828,4 +1834,4 @@ export default function App() {
 
     </div>
   );
-
+}
