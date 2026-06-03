@@ -1774,7 +1774,7 @@ export default function App() {
       )}
 
       {/* ADMİN GİRİŞ MODALI */}
-      {adModal && (
+      {adModal && ( 
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
           <div style={{background:K.card,borderRadius:18,padding:26,width:320,border:`1px solid ${K.bdr3}`,boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
