@@ -626,7 +626,7 @@ function AuthModal({ilkMod, kapat, basari}) {
 
   // ── DİL SEÇİM EKRANI ──
   if (!dilMod) {
-    return (
+  (
       <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",alignItems:"center",justifyContent:"center",zIndex:8000}}>
         <div style={{background:K.card,borderRadius:22,padding:36,width:400,border:`1px solid ${K.bdr3}`,textAlign:"center",boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><Av h={hoca} dil={dil} sz={80}/></div>
@@ -865,7 +865,7 @@ function AuthModal({ilkMod, kapat, basari}) {
   const ss = String(sure%60).padStart(2,"0");
   const dilLabel = dilMod==="tr" ? "🇹🇷 Türkçe" : dilMod==="hedef" ? `${dil.bayrak} ${dil.ad}` : "🔄 İkidilli";
 
-  return (
+(
     <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",flexDirection:"column",zIndex:8000}}>
       <style>{`.nk{animation:nk 1s var(--d,0s) infinite}@keyframes nk{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}@keyframes tt{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
 
