@@ -16,8 +16,6 @@ const DB = {
   s: (k,v) => { try { localStorage.setItem("la_"+k, JSON.stringify(v)); } catch {} },
   d: k => { try { localStorage.removeItem("la_"+k); } catch {} },
 };
-// ── ELEVENLabs TTS ──
-
 
 // Her hoca için ElevenLabs ses ID'si
 const HOCA_SES = {
