@@ -547,7 +547,7 @@ function AuthModal({ilkMod, kapat, basari}) {
   const recRef = useRef(null);
   const konusmaRef = useRef(false);
   const dersBaslangic = useRef(Date.now());
-  }
+  
   // Geri sayım
   useEffect(() => {
     if (kul?.plan === "Deneme") {
@@ -1828,4 +1828,4 @@ export default function App() {
 
     </div>
   );
-}
+
