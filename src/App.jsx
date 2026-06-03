@@ -622,7 +622,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     if (dilMod === "hedef")
       return temel + "\nSADECE " + dil.ad + " dilinde yanıt ver. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
     return temel + "\nHem Türkçe hem " + dil.ad + " kullan. Hataları MUTLAKA düzelt. Maks 3 paragraf.";
-  };};
+  };
 
   // ── DİL SEÇİM EKRANI ──
   if (!dilMod) {
