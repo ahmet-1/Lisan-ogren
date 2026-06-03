@@ -533,7 +533,7 @@ function AuthModal({ilkMod, kapat, basari}) {
 }
 
 // ─── DERS EKRANI ─────────────────────────────────────────────────────────────
-function DersEkrani({dilId, hoca, kul, kapat}) 
+  function DersEkrani ({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d => d.id === dilId);
   const [msgs, setMsgs]     = useState([]);
   const [yazi, setYazi]     = useState("");
@@ -547,7 +547,7 @@ function DersEkrani({dilId, hoca, kul, kapat})
   const recRef = useRef(null);
   const konusmaRef = useRef(false);
   const dersBaslangic = useRef(Date.now());
-
+  }
   // Geri sayım
   useEffect(() => {
     if (kul?.plan === "Deneme") {
