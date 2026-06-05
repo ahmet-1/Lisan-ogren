@@ -77,13 +77,11 @@ const elevenTTS = async (metin, hocaId, dil_mic) => {
     return browserTTS(metin, dil_mic);
   }
 };
-        style={{width:"100%",padding:"10px 13px",background:K.bg3,
+        style={width:"100%",padding:"10px 13px",background:K.bg3,
           border:`1px solid ${h[k]?K.err:K.bdr}`,borderRadius:9,
-          color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+          color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"}
       {h[k] && <div style={{color:K.errL,fontSize:11,marginTop:3}}>{h[k]}</div>}
-    </div>
-  );
-
+    
   const doGiris = () => {
     const e = {};
     if (!f.email) e.email = "E-posta gerekli";
@@ -221,7 +219,7 @@ const elevenTTS = async (metin, hocaId, dil_mic) => {
       </div>
     </div>
   );
-}
+
 
 // ─── DERS EKRANI ─────────────────────────────────────────────────────────────
 function DersEkrani({dilId, hoca, kul, kapat}) {
@@ -697,7 +695,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       </div>
     </div>
   );
-}
+
 
 // ─── ADMİN PANELİ ────────────────────────────────────────────────────────────
 function AdminPanel({kapat, admCikis}) {
