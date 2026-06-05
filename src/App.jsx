@@ -82,7 +82,7 @@ const elevenTTS = async (metin, hocaId, dil_mic) => {
           color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"}} />
       {h[k] && <div style={{color:K.errL,fontSize:11,marginTop:3}}>{h[k]}</div>}
     </div>
-  );
+  
 
   const doGiris = () => {
     const e = {};
