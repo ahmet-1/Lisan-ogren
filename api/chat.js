@@ -1,4 +1,4 @@
-mkdir -p ~/Desktop/Lisan\ Öğren/api && echo 'export default async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -32,4 +32,4 @@ mkdir -p ~/Desktop/Lisan\ Öğren/api && echo 'export default async function han
   } catch(e) {
     res.status(500).json({error: e.message});
   }
-}' > ~/Desktop/Lisan\ Öğren/api/chat.js
+}
