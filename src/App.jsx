@@ -891,8 +891,13 @@ function AdminPanel({kapat, admCikis}) {
               <div key={o.id} style={{...kd,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div><div style={{color:K.tx,fontWeight:700}}>{o.ad}</div>
                   <div style={{color:K.tx4,fontSize:11}}>{o.email+" • "+o.plan+" • "+o.tarih}</div></div>
-                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
                   <div style={{color:K.warn,fontWeight:700}}>₺{o.tutar}</div>
+                  {o.dekont && (
+                    <img src={o.dekont} style={{width:60,height:40,objectFit:"cover",borderRadius:5,cursor:"pointer",border:"1px solid "+K.bdr}}
+                      onClick={()=>window.open(o.dekont,"_blank")} title="Dekonta tıkla büyüt"/>
+                  )}
+                  {!o.dekont && <span style={{color:K.tx4,fontSize:10}}>Dekont yok</span>}
                   <button onClick={()=>onayOde(o.id)} style={bG}>✓ Onayla</button>
                 </div>
               </div>
@@ -1457,8 +1462,17 @@ export default function App() {
               <div style={{color:K.tx4,fontSize:12,marginBottom:12}}>Mesaj Gönderin</div>
               <input placeholder="Adınız" style={{...gI2,marginBottom:10}}/>
               <input placeholder="E-postanız" type="email" style={{...gI2,marginBottom:10}}/>
-              <textarea placeholder="Mesajınız..." rows={4} style={{...gI2,resize:"vertical",marginBottom:14}}/>
-              <button onClick={()=>alert("Mesajınız alındı!")}
+              <textarea placeholder="Mesajınız..." rows={4} style={{...gI2,resize:"vertical",marginBottom:10}}/>
+              <label style={{display:"block",background:K.bg3,border:"1px dashed "+K.bdr,borderRadius:9,
+                padding:"10px",textAlign:"center",cursor:"pointer",marginBottom:14}}>
+                <input type="file" accept="image/*,application/pdf" style={{display:"none"}}
+                  onChange={e=>{
+                    const f=e.target.files[0];
+                    if(f) e.target.parentElement.querySelector("span").textContent="📎 "+f.name;
+                  }}/>
+                <span style={{color:K.tx3,fontSize:12}}>📎 Dosya veya fotoğraf ekle (isteğe bağlı)</span>
+              </label>
+              <button onClick={()=>alert("Mesajınız alındı! En kısa sürede dönüş yapacağız.")}
                 style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
                   color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14}}>
                 Gönder
@@ -1493,12 +1507,35 @@ export default function App() {
                 </div>
               </div>
             ):<div style={{color:K.tx4,fontSize:13,marginBottom:14,padding:14,background:K.bg3,borderRadius:10}}>IBAN girilmemiş.</div>}
+            <div style={{marginBottom:12}}>
+              <div style={{color:K.tx4,fontSize:12,marginBottom:8}}>📎 Dekont Fotoğrafı (İsteğe Bağlı)</div>
+              <label style={{display:"block",background:K.bg3,border:"1px dashed "+K.bdr2,borderRadius:9,
+                padding:"14px",textAlign:"center",cursor:"pointer"}}>
+                <input type="file" accept="image/*" style={{display:"none"}}
+                  onChange={e=>{
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      window._dekontBase64 = ev.target.result;
+                      document.getElementById("dekontOnizleme").src = ev.target.result;
+                      document.getElementById("dekontOnizleme").style.display = "block";
+                      document.getElementById("dekontLabel").textContent = file.name;
+                    };
+                    reader.readAsDataURL(file);
+                  }}/>
+                <div id="dekontLabel" style={{color:K.tx3,fontSize:12}}>📸 Dekont fotoğrafı seç</div>
+                <img id="dekontOnizleme" style={{display:"none",width:"100%",marginTop:8,borderRadius:6,maxHeight:120,objectFit:"cover"}}/>
+              </label>
+            </div>
             <button onClick={()=>{
               const a=getA();
               const ny={id:Date.now(),ad:kul?.ad||"",email:kul?.email||"",tutar:odePlan.tutar||0,
-                plan:odePlan.ad,tarih:new Date().toLocaleDateString("tr-TR"),d:"bekle"};
+                plan:odePlan.ad,tarih:new Date().toLocaleDateString("tr-TR"),d:"bekle",
+                dekont:window._dekontBase64||null};
               setA({...a,pays:[...(a.pays||[]),ny]});
-              alert("Bildiriminiz alındı! Admin onayından sonra aktifleşir.");
+              window._dekontBase64 = null;
+              alert("✅ Bildiriminiz alındı!\nAdmin onayından sonra (max 2 saat) üyeliğiniz aktifleşir.\nSorularınız için iletişim sayfasından ulaşabilirsiniz.");
               setOdePlan(null);
             }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
               color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:13}}>
