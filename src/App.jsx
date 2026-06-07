@@ -164,52 +164,49 @@ function Av({h, dil, sz=64}) {
 
 async function sesliOku(metin, hocaId, dil_mic) {
   try {
-    // ElevenLabs ses ID - erkek/kadın doğru eşleştirme
-    // Erkek sesler: Adam(pNInz6obpgDQGcFmaJgB), Arnold(VR6AewLTigWG4xSOukaG), Josh(TxGEqnHWrfWFTfGW9XjX)
-    // Kadın sesler: Bella(EXAVITQu4vr4xnSDxMaL), Rachel(21m00Tcm4TlvDq8ikWAM), Elli(MF3mGyEYCl7XYWbV9V6O)
+    // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
+    // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
+    // KADIN: Bella=EXAVITQu4vr4xnSDxMaL, Rachel=21m00Tcm4TlvDq8ikWAM, Elli=MF3mGyEYCl7XYWbV9V6O
+    // ÇOCUK ERKEK: Charlie=IKne3meq5aSn9XLyUdCD
+    // ÇOCUK KIZ: Aria=9BWtsMINqrJLrRacOk9x
     const HOCA_SES = {
-      // Kuran - erkek
-      q1:"pNInz6obpgDQGcFmaJgB", q2:"VR6AewLTigWG4xSOukaG",
-      // Kuran - kadın  
-      q3:"EXAVITQu4vr4xnSDxMaL", q4:"MF3mGyEYCl7XYWbV9V6O",
-      // Kuran çocuk
-      q5:"TxGEqnHWrfWFTfGW9XjX", q6:"EXAVITQu4vr4xnSDxMaL",
-      // Medrese - erkek
-      m1:"TxGEqnHWrfWFTfGW9XjX", m2:"pNInz6obpgDQGcFmaJgB",
-      // Medrese - kadın
-      m3:"21m00Tcm4TlvDq8ikWAM", m4:"EXAVITQu4vr4xnSDxMaL",
-      // Medrese çocuk
-      m5:"TxGEqnHWrfWFTfGW9XjX", m6:"MF3mGyEYCl7XYWbV9V6O",
-      // İngilizce - erkek
-      e1:"jBpfuIE2acCO8z3wKNLl", e2:"VR6AewLTigWG4xSOukaG",
-      // İngilizce - kadın
-      e3:"21m00Tcm4TlvDq8ikWAM", e4:"EXAVITQu4vr4xnSDxMaL",
-      // İngilizce çocuk
-      e5:"TxGEqnHWrfWFTfGW9XjX", e6:"MF3mGyEYCl7XYWbV9V6O",
-      // Almanca
-      g1:"VR6AewLTigWG4xSOukaG", g2:"pNInz6obpgDQGcFmaJgB",
-      g3:"EXAVITQu4vr4xnSDxMaL", g4:"21m00Tcm4TlvDq8ikWAM",
-      // Fransızca
-      f1:"VR6AewLTigWG4xSOukaG", f2:"TxGEqnHWrfWFTfGW9XjX",
-      f3:"EXAVITQu4vr4xnSDxMaL", f4:"21m00Tcm4TlvDq8ikWAM",
-      // Japonca
-      j1:"VR6AewLTigWG4xSOukaG", j2:"pNInz6obpgDQGcFmaJgB",
-      j3:"EXAVITQu4vr4xnSDxMaL", j4:"21m00Tcm4TlvDq8ikWAM",
-      // Korece
-      k1:"EXAVITQu4vr4xnSDxMaL", k2:"pNInz6obpgDQGcFmaJgB",
-      k3:"21m00Tcm4TlvDq8ikWAM", k4:"VR6AewLTigWG4xSOukaG",
-      // Rusça
-      r1:"VR6AewLTigWG4xSOukaG", r2:"pNInz6obpgDQGcFmaJgB",
-      r3:"EXAVITQu4vr4xnSDxMaL", r4:"21m00Tcm4TlvDq8ikWAM",
-      // Türkçe
-      t1:"VR6AewLTigWG4xSOukaG", t2:"pNInz6obpgDQGcFmaJgB",
-      t3:"EXAVITQu4vr4xnSDxMaL", t4:"21m00Tcm4TlvDq8ikWAM",
-      // Arapça
-      a1:"pNInz6obpgDQGcFmaJgB", a2:"VR6AewLTigWG4xSOukaG",
-      a3:"EXAVITQu4vr4xnSDxMaL", a4:"21m00Tcm4TlvDq8ikWAM",
-      // İtalyanca, İspanyolca
-      i1:"VR6AewLTigWG4xSOukaG", i3:"EXAVITQu4vr4xnSDxMaL",
-      s1:"VR6AewLTigWG4xSOukaG", s3:"EXAVITQu4vr4xnSDxMaL",
+      // Kuran (q1,q2=erkek | q3,q4=kadın | q5=çocuk erkek | q6=çocuk kız)
+      q1:"pNInz6obpgDQGcFmaJgB", q2:"VR6AewLTigWG4xSOukaG",  // erkek
+      q3:"EXAVITQu4vr4xnSDxMaL", q4:"MF3mGyEYCl7XYWbV9V6O",  // kadın
+      q5:"IKne3meq5aSn9XLyUdCD", q6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      m1:"TxGEqnHWrfWFTfGW9XjX", m2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      m3:"21m00Tcm4TlvDq8ikWAM", m4:"EXAVITQu4vr4xnSDxMaL",  // kadın
+      m5:"IKne3meq5aSn9XLyUdCD", m6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      e1:"jBpfuIE2acCO8z3wKNLl", e2:"VR6AewLTigWG4xSOukaG",   // erkek
+      e3:"21m00Tcm4TlvDq8ikWAM", e4:"EXAVITQu4vr4xnSDxMaL",  // kadın
+      e5:"IKne3meq5aSn9XLyUdCD", e6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      g1:"VR6AewLTigWG4xSOukaG", g2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      g3:"EXAVITQu4vr4xnSDxMaL", g4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      g5:"IKne3meq5aSn9XLyUdCD", g6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      f1:"VR6AewLTigWG4xSOukaG", f2:"TxGEqnHWrfWFTfGW9XjX",  // erkek
+      f3:"EXAVITQu4vr4xnSDxMaL", f4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      f5:"IKne3meq5aSn9XLyUdCD", f6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      j1:"VR6AewLTigWG4xSOukaG", j2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      j3:"EXAVITQu4vr4xnSDxMaL", j4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      j5:"IKne3meq5aSn9XLyUdCD", j6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      k1:"EXAVITQu4vr4xnSDxMaL", k2:"pNInz6obpgDQGcFmaJgB",  // kadın,erkek
+      k3:"21m00Tcm4TlvDq8ikWAM", k4:"VR6AewLTigWG4xSOukaG",  // kadın,erkek
+      k5:"IKne3meq5aSn9XLyUdCD", k6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      r1:"VR6AewLTigWG4xSOukaG", r2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      r3:"EXAVITQu4vr4xnSDxMaL", r4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      r5:"IKne3meq5aSn9XLyUdCD", r6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      t1:"VR6AewLTigWG4xSOukaG", t2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      t3:"EXAVITQu4vr4xnSDxMaL", t4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      t5:"IKne3meq5aSn9XLyUdCD", t6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      a1:"pNInz6obpgDQGcFmaJgB", a2:"VR6AewLTigWG4xSOukaG",  // erkek
+      a3:"EXAVITQu4vr4xnSDxMaL", a4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      a5:"IKne3meq5aSn9XLyUdCD", a6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      i1:"VR6AewLTigWG4xSOukaG", i2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      i3:"EXAVITQu4vr4xnSDxMaL", i4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      i5:"IKne3meq5aSn9XLyUdCD", i6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      s1:"VR6AewLTigWG4xSOukaG", s2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      s3:"EXAVITQu4vr4xnSDxMaL", s4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      s5:"IKne3meq5aSn9XLyUdCD", s6:"9BWtsMINqrJLrRacOk9x",   // çocuk
       default:"EXAVITQu4vr4xnSDxMaL",
     };
     const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
@@ -236,8 +233,15 @@ function tarayiciSes(metin, lang) {
   return new Promise(resolve => {
     try {
       window.speechSynthesis?.cancel();
-      const u = new SpeechSynthesisUtterance(metin.substring(0,200));
-      u.lang = lang || "tr-TR"; u.rate = 0.85;
+      const u = new SpeechSynthesisUtterance(metin.substring(0,300));
+      u.lang = lang || "tr-TR";
+      u.rate = 0.82;
+      u.pitch = 1.05;
+      u.volume = 1.0;
+      // Daha doğal ses için uygun ses seç
+      const sesler = window.speechSynthesis.getVoices();
+      const uygunSes = sesler.find(s => s.lang.startsWith(lang?.split("-")[0]||"tr") && !s.name.includes("Google"));
+      if (uygunSes) u.voice = uygunSes;
       u.onend = resolve; u.onerror = resolve;
       window.speechSynthesis?.speak(u);
     } catch { resolve(); }
@@ -417,6 +421,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const [mikErr, setMikErr] = useState("");
   const [sure, setSure] = useState(kul?.plan==="Deneme"?1200:0);
   const [dilMod, setDilMod] = useState(null);
+  const [sesliMod, setSesliMod] = useState(false); // true=sesli, false=yazılı
   const [seviye, setSeviye] = useState(() => {
     if (!kul?.id) return "A1";
     const sv = getSV(kul.id, dilId);
@@ -439,7 +444,31 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     if (!dilMod) return;
     const ad = kul?.ad?.split(" ")[0]||"";
     const besmele = BESMELE_DILLER.includes(dilId) ? BESMELE_METNI : "";
-    const txt = besmele + "Merhaba "+ad+"! Ben "+hoca.ad+".\n\nUzmanlığım: "+hoca.uz+"\nSeviyeniz: "+seviye+"\nKonu: "+kategori+"\n\nHazır mısın?";
+    // Önceki ders geçmişini al
+    const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
+    const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
+    const devamMesaj = sonDers 
+      ? "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
+      : "Bu seninle ilk dersimiz. "+seviye+" seviyesinden başlayacağız.\n\n";
+
+    const dersPlani = seviye==="A1" 
+      ? "Bugün temel "+dil.ad+" konularını öğreneceğiz: selamlaşma, kendini tanıtma ve temel kelimeler."
+      : seviye==="A2"
+      ? "Bugün günlük konuşma kalıpları ve basit cümleler üzerinde çalışacağız."
+      : seviye==="B1"
+      ? "Bugün orta seviye konuşma pratiği ve gramer konularını işleyeceğiz."
+      : seviye==="B2"
+      ? "Bugün ileri konuşma ve yazma becerilerini geliştireceğiz."
+      : "Bugün ileri düzey "+dil.ad+" pratiği yapacağız.";
+
+    const txt = besmele + 
+      "Merhaba "+ad+"! Ben "+hoca.ad+", "+hoca.uz+" uzmanıyım.\n\n"+
+      devamMesaj+
+      "📚 Bugünkü Ders Planı:\n"+dersPlani+"\n\n"+
+      "Seviyeniz: "+seviye+" | Konu: "+kategori+"\n\n"+
+      "Hazır olduğunuzda başlayalım. Size ilk soruyu soruyorum:\n\n"+
+      (seviye==="A1" ? "Kendinizi "+dil.ad+" olarak tanıtabilir misiniz? Başlayın lütfen." 
+       : "Bugünkü konuyla ilgili ne biliyorsunuz? Paylaşın lütfen.");
     setMsgs([{r:"ai",t:txt}]);
     if (BESMELE_DILLER.includes(dilId)) {
       setTimeout(async ()=>{
@@ -451,15 +480,41 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   useEffect(()=>{sonRef.current?.scrollIntoView({behavior:"smooth"});},[msgs]);
 
   const getPrompt = () => {
+    const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
+    const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
+    const gecmisInfo = sonDers ? "Öğrencinin son dersi: "+sonDers.tarih+", konu: "+sonDers.kategori+"." : "";
+    const kisiselInfo = kul?.ad ? "Öğrencinin adı: "+kul.ad.split(" ")[0]+". " : "";
     const uyari = " ÖNEMLİ: Müstehcen veya hakaret içerikli mesajlara yanıt verme, uyarı ver.";
     const sv = "Öğrenci seviyesi: "+seviye+". Konu kategorisi: "+kategori+".";
-    const base = "Sen "+hoca.ad+" adlı uzman bir AI dil öğretmenisin. "+hoca.yer+" kökenlisin. Uzmanlık: "+hoca.uz+".\n"+sv+uyari;
+    const base = "Sen "+hoca.ad+" adlı uzman bir AI dil öğretmenisin. "+hoca.yer+" kökenlisin. Uzmanlık: "+hoca.uz+".\n"+kisiselInfo+sv+" "+gecmisInfo+uyari+"\nÖĞRENCİYLE GERÇEK BİR HOCA GİBİ KONUŞ. Cümleleri tam bitir. Kısa ve net yanıt ver. Hataları nazikçe düzelt.";
+    // Çocuk hocanın özel tarzı
+    const cocukTarz = hoca.c ? 
+      "SEN ÇOCUK ÖĞRETMENISIN! Çok eğlenceli, neşeli ve sevimli konuş. Emoji kullan 😊🎉⭐. Kısa ve basit cümleler. Oyun gibi anlat. Asla sıkıcı olma." : "";
+
+    // Dil karışmasını kesinlikle önle
+    const dilKurali = dilMod==="tr" 
+      ? "KURAL: SADECE TÜRKÇE yaz. Başka dil YASAK. Tek bir yabancı kelime bile yazma."
+      : dilMod==="hedef"
+      ? "KURAL: SADECE "+dil.ad+" dilinde yaz. Başka dil YASAK."
+      : "KURAL: Türkçe açıkla, "+dil.ad+" örnekler ver. Rusça, Japonca veya başka dil KARIŞMASIN.";
+
+    // Yazılı/sesli davranış
+    const modTarz = sesliMod
+      ? "Öğrenci seninle SESLI konuşuyor. Kısa ve net yanıt ver, konuşma dili kullan."
+      : "Öğrenci YAZILI mesaj gönderiyor. Yazılı yanıt ver, ses çıkarma.";
+
     if (dilId==="medrese"||dilId==="quran") {
-      return base+"\nTürkçe yanıt ver. Kuran ve Sünnet ışığında cevapla. Uydurma bilgi verme. Maks 3 paragraf.";
+      return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
+        "\nSADECE TÜRKÇE yaz. Kuran ve Sünnet ışığında doğru bilgi ver. Uydurma bilgi verme kesinlikle."+
+        "\nAnlatırken ara sıra 'Anladın mı?' diye sor. Cümleleri TAM bitir. Yarım bırakma.";
     }
-    if (dilMod==="tr") return base+"\nSADECE TÜRKÇE yanıt ver. Samimi ve sıcak konuş. Hataları nazikçe düzelt. Maks 3 paragraf.";
-    if (dilMod==="hedef") return base+"\nSADECE "+dil.ad+" dilinde yanıt ver. Hataları düzelt. Maks 3 paragraf.";
-    return base+"\nHem Türkçe hem "+dil.ad+" kullan. Hataları düzelt. Maks 3 paragraf.";
+    if (dilMod==="tr") return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
+      "\nSADECE TÜRKÇE yaz. Hataları nazikçe düzelt. Cümleleri TAM bitir."+
+      "\nAnlatırken ara sıra 'Anladın mı?' diye sor.";
+    if (dilMod==="hedef") return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
+      "\nSADECE "+dil.ad+" yaz. Hataları düzelt. Cümleleri TAM bitir.";
+    return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
+      "\nTürkçe açıkla, "+dil.ad+" örnekler ver. Cümleleri TAM bitir. DİL KARIŞMASIN.";
   };
 
   const gonder = async (txt) => {
@@ -477,7 +532,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const history = msgs.filter(m=>m.r).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t}));
       const yan = await aiYanit([...history,{role:"user",content:metin}], getPrompt());
       setMsgs(m=>[...m,{r:"ai",t:yan}]);
+      // Sadece sesli moddaysa sesli yanıt ver
+    if (sesliMod) {
       await sesliOku(yan, hoca.id, dilMod==="hedef"?dil.mic:"tr-TR");
+      if (konusmaRef.current) mikDinle();
+    }
       if (konusmaRef.current) mikDinle();
     } catch(e) {
       setMsgs(m=>[...m,{r:"ai",t:"Bağlantı hatası: "+e.message+". Tekrar deneyin."}]);
@@ -502,6 +561,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   };
 
   const mikToggle = () => {
+    setSesliMod(!konusmaRef.current); // Mikrofon açılınca sesli mod
     if (konusmaRef.current) {
       konusmaRef.current=false;
       try{recRef.current?.stop();}catch{}
