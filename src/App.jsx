@@ -417,8 +417,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const temel = "Sen "+hoca.ad+" adlı uzman bir AI dil öğretmenisin. "+hoca.yer+" kökenlisin. Uzmanlık: "+hoca.uz+".\nÖğrencinin seviyesi: "+sv+". Dersini bu seviyeye uygun yap."+hafTxt+guvenlik;
     if(dilMod==="tr") return temel+"\nSADECE TÜRKÇE yanıt ver. Samimi konuş. Hataları nazikçe düzelt. Maks 3 paragraf.";
     if(dilMod==="hedef") return temel+"\nSADECE "+dil.ad+" dilinde yanıt ver. Hataları düzelt. Maks 3 paragraf.";
-    return temel+"\nHem Türkçe hem "+dil.ad+" kullan. Hataları düzelt. Maks 3 paragraf.";
-  };
+    return temel+"\nHem Türkçe hem "+dil.ad+" kullan. Hataları düzelt. Maks 3 paragraf."; };
 
   const gonderMesaj = async (txt) => {
     if(!txt||yukl) return;
