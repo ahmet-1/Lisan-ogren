@@ -1,5 +1,4 @@
-rm -rf ~/Desktop/Lisan\ Öğren/api/chat.js && cat > ~/Desktop/Lisan\ Öğren/api/chat.js << 'EOF'
-export default async function handler(req, res) {
+mkdir -p ~/Desktop/Lisan\ Öğren/api && echo 'export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -33,6 +32,4 @@ export default async function handler(req, res) {
   } catch(e) {
     res.status(500).json({error: e.message});
   }
-}
-EOF
-echo "Tamam"
+}' > ~/Desktop/Lisan\ Öğren/api/chat.js
