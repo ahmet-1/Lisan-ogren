@@ -4,14 +4,11 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
   if (req.method !== "POST") { res.status(405).json({error:"Method not allowed"}); return; }
-
   try {
     const { messages, system } = req.body;
-    
     const groqMessages = [];
     if (system) groqMessages.push({role:"system", content: system});
     groqMessages.push(...messages);
-
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -24,20 +21,14 @@ export default async function handler(req, res) {
         messages: groqMessages
       })
     });
-
     if (!response.ok) {
       const err = await response.json().catch(()=>({}));
-      res.status(response.status).json({error: err.error?.message || "Groq hata: " + response.status});
+      res.status(response.status).json({error: err.error?.message || "Hata: " + response.status});
       return;
     }
-
     const data = await response.json();
     const text = data.choices?.[0]?.message?.content || "";
-    
-    // Anthropic formatında döndür (App.jsx uyumlu)
-    res.status(200).json({
-      content: [{type:"text", text}]
-    });
+    res.status(200).json({content: [{type:"text", text}]});
   } catch(e) {
     res.status(500).json({error: e.message});
   }
