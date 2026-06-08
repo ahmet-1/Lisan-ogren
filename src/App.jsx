@@ -27,7 +27,7 @@ const setSV = (uid,did,sv) => DB.s("sv_"+uid+"_"+did,sv);
 const DILLER = [
   {id:"quran",  ad:"Kur'an-ı Kerim",bayrak:"🕌",renk:"#0d2a14",vurgu:"#f9a825",mic:"ar-SA",mods:["Tecvid","Makam","Hıfz","Sure Mealleri"]},
   {id:"medrese",ad:"Medrese Eğitimi",bayrak:"📖",renk:"#1a0e00",vurgu:"#c8a045",mic:"ar-SA",mods:["Fıkıh","Akaid","Tefsir","Hadis"]},
-  {id:"arabic", ad:"Arapça",         bayrak:"🇸🇦",renk:"#2a0e0e",vurgu:"#ff8f00",mic:"ar-SA",mods:["Nahiv","Sarf","Konuşma","Okuma"]},
+  {id:"arabic", ad:"Arapça",         bayrak:"🇸🇦",renk:"#2a0e0e",vurgu:"#ff8f00",mic:"ar-SA",mods:["Nahiv","Sarf","Konuşma","Okuma"],cats:["Genel","Günlük Hayat","Dini Konular","Seyahat","İş","Medya","Edebiyat"]},
   {id:"english",ad:"İngilizce",       bayrak:"🇬🇧",renk:"#0e1a2a",vurgu:"#ef5350",mic:"en-US",mods:["Grammar","Speaking","Vocabulary","IELTS"],cats:["Genel","Seyahat","İş","Akademik","Tıp","Teknoloji"]},
   {id:"german", ad:"Almanca",         bayrak:"🇩🇪",renk:"#1a1a0e",vurgu:"#fdd835",mic:"de-DE",mods:["Grammatik","Sprechen","Vokabeln","TestDaF"],cats:["Genel","Seyahat","İş","Akademik","Mühendislik"]},
   {id:"french", ad:"Fransızca",       bayrak:"🇫🇷",renk:"#0a1030",vurgu:"#ef5350",mic:"fr-FR",mods:["Grammaire","Conversation","Culture","DELF"],cats:["Genel","Seyahat","Sanat","İş","Mutfak"]},
@@ -414,7 +414,12 @@ function AuthModal({ilkMod, kapat, basari}) {
 
 function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d=>d.id===dilId);
-  const [msgs, setMsgs] = useState([]);
+  // WhatsApp mantığı - önceki ders geçmişini yükle
+  const [msgs, setMsgs] = useState(() => {
+    if (!kul?.id || !dilId) return [];
+    const dg = getDG(kul.id, dilId+"|"+hoca.id);
+    return dg.length > 0 ? dg : [];
+  });
   const [yazi, setYazi] = useState("");
   const [yukl, setYukl] = useState(false);
   const [mikr, setMikr] = useState(false);
@@ -422,6 +427,15 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const [sure, setSure] = useState(kul?.plan==="Deneme"?1200:0);
   const [dilMod, setDilMod] = useState(null);
   const [sesliMod, setSesliMod] = useState(false); // true=sesli, false=yazılı
+  const SEVIYE_ACIKLAMA = {
+    A1: "Başlangıç — Sıfırdan başlıyorum",
+    A2: "Temel — Basit cümleler kurabiliyorum",
+    B1: "Orta Alt — Günlük konuşabilirim",
+    B2: "Orta Üst — Akıcı konuşabiliyorum",
+    C1: "İleri — Neredeyse ana dil gibi",
+    C2: "Uzman — Ana dil seviyesi"
+  };
+
   const [seviye, setSeviye] = useState(() => {
     if (!kul?.id) return "A1";
     const sv = getSV(kul.id, dilId);
@@ -461,14 +475,29 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       ? "Bugün ileri konuşma ve yazma becerilerini geliştireceğiz."
       : "Bugün ileri düzey "+dil.ad+" pratiği yapacağız.";
 
-    const txt = besmele + 
-      "Merhaba "+ad+"! Ben "+hoca.ad+", "+hoca.uz+" uzmanıyım.\n\n"+
-      devamMesaj+
-      "📚 Bugünkü Ders Planı:\n"+dersPlani+"\n\n"+
-      "Seviyeniz: "+seviye+" | Konu: "+kategori+"\n\n"+
-      "Hazır olduğunuzda başlayalım. Size ilk soruyu soruyorum:\n\n"+
-      (seviye==="A1" ? "Kendinizi "+dil.ad+" olarak tanıtabilir misiniz? Başlayın lütfen." 
-       : "Bugünkü konuyla ilgili ne biliyorsunuz? Paylaşın lütfen.");
+    const seviyeAcik = {A1:"Başlangıç",A2:"Temel",B1:"Orta Alt",B2:"Orta Üst",C1:"İleri",C2:"Uzman"};
+    const ilkDersMi = oncekiDersler.length === 0;
+    
+    let karsilamaTxt;
+    if (ilkDersMi) {
+      karsilamaTxt = besmele +
+        "Merhaba "+ad+"! Ben "+hoca.ad+", "+hoca.uz+" uzmanıyım. 👋\n\n"+
+        "Seninle ilk dersimiz! Seni daha iyi tanımak istiyorum.\n\n"+
+        "📋 Birkaç soru sormam gerekiyor:\n"+
+        "1️⃣ Adın "+ad+", peki kaç yaşındasın?\n"+
+        "2️⃣ "+dil.ad+" öğrenmek isteme sebebin nedir?\n"+
+        "3️⃣ Daha önce "+dil.ad+" öğrendin mi?\n\n"+
+        "Seviyeni "+seviye+" ("+seviyeAcik[seviye]+") olarak seçmişsin. Bunu doğrulamak için:\n"+
+        "👉 "+dil.ad+" dilinde kendin hakkında birkaç cümle söyler misin? (bilmiyorsan Türkçe söyleyebilirsin)";
+    } else {
+      karsilamaTxt = besmele +
+        "Tekrar hoş geldin "+ad+"! Ben "+hoca.ad+". 😊\n\n"+
+        "Son dersimizde: "+sonDers.kategori+" konusunu "+sonDers.seviye+" seviyesinde işlemiştik.\n\n"+
+        "📚 Bugün kaldığımız yerden devam ediyoruz:\n"+
+        buSeviyeMufredat+"\n\n"+
+        "Hazır mısın? Başlayalım!\n\n💡 İpucu: 🎤 butona bas sesli konuş, ya da klavyeyle yaz.";
+    }
+    const txt = karsilamaTxt;
     setMsgs([{r:"ai",t:txt}]);
     if (BESMELE_DILLER.includes(dilId)) {
       setTimeout(async ()=>{
@@ -480,58 +509,199 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   useEffect(()=>{sonRef.current?.scrollIntoView({behavior:"smooth"});},[msgs]);
 
   const getPrompt = () => {
+    const ad = kul?.ad?.split(" ")[0] || "Öğrenci";
     const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
-    const gecmisInfo = sonDers ? "Öğrencinin son dersi: "+sonDers.tarih+", konu: "+sonDers.kategori+"." : "";
-    const kisiselInfo = kul?.ad ? "Öğrencinin adı: "+kul.ad.split(" ")[0]+". " : "";
-    const uyari = " ÖNEMLİ: Müstehcen veya hakaret içerikli mesajlara yanıt verme, uyarı ver.";
-    const sv = "Öğrenci seviyesi: "+seviye+". Konu kategorisi: "+kategori+".";
-    const base = "Sen "+hoca.ad+" adlı uzman bir AI dil öğretmenisin. "+hoca.yer+" kökenlisin. Uzmanlık: "+hoca.uz+".\n"+kisiselInfo+sv+" "+gecmisInfo+uyari+"\nÖĞRENCİYLE GERÇEK BİR HOCA GİBİ KONUŞ. Cümleleri tam bitir. Kısa ve net yanıt ver. Hataları nazikçe düzelt.";
-    // Çocuk hocanın özel tarzı
-    const cocukTarz = hoca.c ? 
-      "SEN ÇOCUK ÖĞRETMENISIN! Çok eğlenceli, neşeli ve sevimli konuş. Emoji kullan 😊🎉⭐. Kısa ve basit cümleler. Oyun gibi anlat. Asla sıkıcı olma." : "";
 
-    // Dil karışmasını kesinlikle önle
-    const dilKurali = dilMod==="tr" 
-      ? "KURAL: SADECE TÜRKÇE yaz. Başka dil YASAK. Tek bir yabancı kelime bile yazma."
-      : dilMod==="hedef"
-      ? "KURAL: SADECE "+dil.ad+" dilinde yaz. Başka dil YASAK."
-      : "KURAL: Türkçe açıkla, "+dil.ad+" örnekler ver. Rusça, Japonca veya başka dil KARIŞMASIN.";
+    // MüFREDAT - Her dil için sabit sıra
+    const MUFREDAT = {
+      quran: {
+        A1: "Elif-Ba harfleri, harekeler (fetha, kesre, damme), tenvin öğretimi",
+        A2: "Kısa sureler (Fatiha, İhlas, Felak, Nas), tecvid temelleri",
+        B1: "Amme cüzü, med harfleri, idğam, ihfa kuralları",
+        B2: "Büyük sureler, vakf-ibtida, makam çalışması",
+        C1: "Hıfz programı, kıraat farklılıkları",
+        C2: "Kıraat-ı seb'a, ileri hıfz"
+      },
+      medrese: {
+        A1: "İslam'ın şartları, imanın şartları, abdest, namaz, temel dualar",
+        A2: "Oruç, zekat, hac ibadetleri, helal-haram temelleri",
+        B1: "Fıkıh usulü temelleri, hadis nedir, siyer-i nebi",
+        B2: "İleri fıkıh, tefsir ilimleri, akaid konuları",
+        C1: "Mezhep farklılıkları, fetva usulü, kelam",
+        C2: "İleri din ilimleri, ictihat usulü"
+      },
+      arabic: {
+        A1: "Arap harfleri, harekeler, basit kelimeler ve selamlaşma",
+        A2: "Temel cümleler, isim tamlaması, müzekker-müennes",
+        B1: "Fiil çekimleri, sarf temelleri, nahiv başlangıcı",
+        B2: "İleri nahiv, bağlaçlar, Arapça metin okuma",
+        C1: "Fesahat, belagat, klasik Arapça",
+        C2: "Edebi Arapça, hitabet"
+      },
+      english: {
+        A1: "Selamlaşma, alfabe, sayılar, renkler, 'to be' fiili",
+        A2: "Günlük konuşma, Simple Present, Past Simple, alışveriş diyalogları",
+        B1: "Present Perfect, Conditionals, seyahat ve iş konuşmaları",
+        B2: "Advanced tenses, Passive voice, tartışma ve ikna",
+        C1: "Akademik İngilizce, karmaşık yapılar, IELTS hazırlık",
+        C2: "Ana dil seviyesi, edebi İngilizce"
+      },
+      german: {
+        A1: "Almanca harfler, selamlaşma, sayılar, 'sein' fiili",
+        A2: "Günlük konuşma, Perfekt, Präteritum, alışveriş",
+        B1: "Konjunktiv, Passiv, iş ve seyahat Almancası",
+        B2: "İleri gramer, akademik Almanca",
+        C1: "TestDaF hazırlık, ileri konuşma",
+        C2: "Ana dil seviyesi Almanca"
+      },
+      french: {
+        A1: "Fransız alfabesi, selamlaşma, être-avoir fiilleri",
+        A2: "Passé composé, günlük konuşma, restoran diyalogları",
+        B1: "Subjonctif, conditionnel, DELF B1 hazırlık",
+        B2: "İleri gramer, Fransız kültürü, DELF B2",
+        C1: "Akademik Fransızca, DALF hazırlık",
+        C2: "Ana dil seviyesi"
+      },
+      japanese: {
+        A1: "Hiragana, Katakana öğrenimi, temel selamlaşma",
+        A2: "Temel Kanji, günlük cümleler, JLPT N5",
+        B1: "Orta Kanji, Keigo temelleri, JLPT N4-N3",
+        B2: "İleri Kanji, iş Japonca, JLPT N2",
+        C1: "JLPT N1 hazırlık, klasik Japonca",
+        C2: "Ana dil seviyesi"
+      },
+      korean: {
+        A1: "Hangul alfabesi, temel selamlaşma, sayılar",
+        A2: "Günlük konuşma, temel gramer, TOPIK I",
+        B1: "Orta seviye gramer, K-Pop dili, TOPIK II",
+        B2: "İleri gramer, iş Koreceyi",
+        C1: "TOPIK yüksek skor, ileri konuşma",
+        C2: "Ana dil seviyesi"
+      },
+      russian: {
+        A1: "Kiril alfabesi, temel selamlaşma, sayılar",
+        A2: "Temel gramer, günlük konuşma",
+        B1: "Orta gramer, seyahat Rusçası",
+        B2: "İleri gramer, TORFL hazırlık",
+        C1: "Akademik Rusça",
+        C2: "Ana dil seviyesi"
+      },
+      spanish: {
+        A1: "İspanyol alfabesi, ser-estar, selamlaşma",
+        A2: "Pretérito, günlük konuşma, DELE A2",
+        B1: "Subjuntivo temelleri, DELE B1",
+        B2: "İleri gramer, DELE B2",
+        C1: "Akademik İspanyolca",
+        C2: "Ana dil seviyesi"
+      },
+      italian: {
+        A1: "İtalyan alfabesi, essere-avere, selamlaşma",
+        A2: "Passato prossimo, günlük diyaloglar",
+        B1: "Congiuntivo temelleri, CILS B1",
+        B2: "İleri gramer, CILS B2",
+        C1: "Akademik İtalyanca",
+        C2: "Ana dil seviyesi"
+      },
+      turkish: {
+        A1: "Türk alfabesi, selamlaşma, temel kelimeler",
+        A2: "Temel cümleler, fiil çekimi",
+        B1: "Günlük konuşma, TÖMER B1",
+        B2: "İleri gramer, yazma",
+        C1: "Akademik Türkçe",
+        C2: "Ana dil seviyesi"
+      },
+    };
 
-    // Yazılı/sesli davranış
-    const modTarz = sesliMod
-      ? "Öğrenci seninle SESLI konuşuyor. Kısa ve net yanıt ver, konuşma dili kullan."
-      : "Öğrenci YAZILI mesaj gönderiyor. Yazılı yanıt ver, ses çıkarma.";
+    const buSeviyeMufredat = MUFREDAT[dilId]?.[seviye] || "Temel "+dil.ad+" konuları";
+    const gecmisOzet = sonDers ? "Son ders: "+sonDers.tarih+", konu: "+sonDers.kategori+", seviye: "+sonDers.seviye+"." : "İlk ders.";
 
-    if (dilId==="medrese"||dilId==="quran") {
-      return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
-        "\nSADECE TÜRKÇE yaz. Kuran ve Sünnet ışığında doğru bilgi ver. Uydurma bilgi verme kesinlikle."+
-        "\nAnlatırken ara sıra 'Anladın mı?' diye sor. Cümleleri TAM bitir. Yarım bırakma.";
+    // DİL KURALI - KESİN
+    let dilKurali = "";
+    if (dilMod === "tr") {
+      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Başka hiçbir dil kullanma. Rusça, Japonca, Arapça, İngilizce kelime YASAK. Her cümle Türkçe olacak.";
+    } else if (dilMod === "hedef") {
+      dilKurali = "ZORUNLU KURAL: SADECE "+dil.ad.toUpperCase()+" dilinde yaz. Türkçe dahil başka dil YASAK.";
+    } else {
+      dilKurali = "ZORUNLU KURAL: Açıklamaları TÜRKÇE yap. "+dil.ad+" örnekler ver. ASLA dil karıştırma. Cümlenin yarısı Türkçe yarısı başka dil OLMAZ.";
     }
-    if (dilMod==="tr") return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
-      "\nSADECE TÜRKÇE yaz. Hataları nazikçe düzelt. Cümleleri TAM bitir."+
-      "\nAnlatırken ara sıra 'Anladın mı?' diye sor.";
-    if (dilMod==="hedef") return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
-      "\nSADECE "+dil.ad+" yaz. Hataları düzelt. Cümleleri TAM bitir.";
-    return base+"\n"+cocukTarz+"\n"+dilKurali+"\n"+modTarz+
-      "\nTürkçe açıkla, "+dil.ad+" örnekler ver. Cümleleri TAM bitir. DİL KARIŞMASIN.";
+
+    // ÇOCUK TARZI
+    const cocukTarz = hoca.c ?
+      "SEN BİR ÇOCUK ÖĞRETMENİSİN! Çok eğlenceli, sevimli ve neşeli konuş 😊🌟🎉. Çocuklara hitap et. Basit kelimeler kullan. Her konuyu oyun gibi anlat. Övgü cümleleri ekle (Aferin! Harika! Süper!). Emoji kullan." : "";
+
+    // OKUL MANTIĞI - MüFREDAT TAKİBİ  
+    const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:
+"+
+      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede şu konu işleniyor: "+buSeviyeMufredat+"
+"+
+      "2. "+gecmisOzet+" Kaldığı yerden devam et.
+"+
+      "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır.
+"+
+      "4. Her yanıttan sonra bir pratik soru sor veya alıştırma ver.
+"+
+      "5. Öğrenci hata yaparsa hemen nazikçe düzelt ve doğrusunu söyle.
+"+
+      "6. Cümleleri MUTLAKA tam bitir. Yarım bırakma.
+"+
+      "7. Her zaman aynı doğru bilgiyi ver. Tutarsız olma.";
+
+    // MEDRESE/KURAN ÖZEL KURAL
+    const diniKural = (dilId==="medrese"||dilId==="quran") ?
+      "ÖNEMLİ: Her zaman AYNI DOĞRU BİLGİYİ ver. Medresede sıra: 1.Kuran 2.Arapça 3.Fıkıh 4.Hadis 5.Tefsir 6.Akaid. Bu sıra ASLA değişmez.\n"+
+      "Kuran ayetleri veya sureler hakkında konuşurken KESİNLİKLE uydurma bilgi verme. Bilmiyorsan söyle.\n"+
+      "Ettehiyyatü namazda okunan bir duadır, Kuran suresi DEĞİLDİR. Bunu karıştırma." : "";
+
+    return okulMantigi+"
+"+dilKurali+"
+"+cocukTarz+"
+"+diniKural+
+      "
+Hoca adın: "+hoca.ad+". Uzmanlık: "+hoca.uz+". Kategori: "+kategori+"."+
+      "
+Yazılı/sesli: "+(sesliMod?"Öğrenci sesli konuşuyor, kısa net yanıt ver.":"Öğrenci yazıyor, yazılı yanıt ver.")+
+      "
+
+ŞİMDİ DERSE BAŞLA. Önce "+seviye+" seviyesine göre bugünkü konuyu tanıt, sonra öğrenciye soru sor.";
   };
+
+;
 
   const gonder = async (txt) => {
     if (!txt||!txt.trim()||yukl) return;
     const metin = txt.trim();
     if (uygunsuzMu(metin)) {
-      setMsgs(m=>[...m,{r:"ai",t:"⚠️ UYARI: Bu içerik platform kurallarına aykırı. Tekrarında üyeliğiniz askıya alınabilir."}]);
-      const a=getA();
-      setA({...a,ihtarlar:[...(a.ihtarlar||[]),{id:Date.now(),kulAd:kul?.ad||"",email:kul?.email||"",mesaj:metin,tarih:new Date().toLocaleString("tr-TR")}]});
+      const a = getA();
+      const kulIhtarlar = (a.ihtarlar||[]).filter(x=>x.email===kul?.email).length;
+      const yeniIhtar = {id:Date.now(),kulAd:kul?.ad||"",email:kul?.email||"",mesaj:metin,tarih:new Date().toLocaleString("tr-TR")};
+      setA({...a, ihtarlar:[...(a.ihtarlar||[]), yeniIhtar]});
+      if (kulIhtarlar >= 2) {
+        // 3. uyarı - üyeliği sil
+        setA({...a,
+          users:(a.users||[]).filter(x=>x.email!==kul?.email),
+          ihtarlar:[...(a.ihtarlar||[]), yeniIhtar]
+        });
+        setMsgs(m=>[...m,{r:"ai",t:"🚫 HESABINIZ KALICI OLARAK SİLİNDİ. Uygunsuz içerik politikamızı 3 kez ihlal ettiniz. Bu karar geri alınamaz."}]);
+        setTimeout(()=>{ DB.d("kul"); window.location.reload(); }, 3000);
+      } else {
+        setMsgs(m=>[...m,{r:"ai",t:"⚠️ UYARI "+(kulIhtarlar+1)+"/3: Bu içerik platform kurallarına aykırıdır. 3 uyarıda üyeliğiniz kalıcı olarak silinecektir."}]);
+      }
       return;
     }
     setYazi(""); setYukl(true);
-    setMsgs(m=>[...m,{r:"user",t:metin}]);
+    const yeniMsgs = [...msgs, {r:"user", t:metin}];
+    setMsgs(yeniMsgs);
+    if (kul?.id) setDG(kul.id, dilId+"|"+hoca.id, yeniMsgs.slice(-50));
     try {
       const history = msgs.filter(m=>m.r).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t}));
       const yan = await aiYanit([...history,{role:"user",content:metin}], getPrompt());
-      setMsgs(m=>[...m,{r:"ai",t:yan}]);
+      const guncelMsgs = [...msgs, {r:"user",t:metin}, {r:"ai",t:yan}];
+    setMsgs(m => {
+      const yeni = [...m, {r:"ai",t:yan}];
+      if (kul?.id) setDG(kul.id, dilId+"|"+hoca.id, yeni.slice(-50));
+      return yeni;
+    });
       // Sadece sesli moddaysa sesli yanıt ver
     if (sesliMod) {
       await sesliOku(yan, hoca.id, dilMod==="hedef"?dil.mic:"tr-TR");
@@ -553,7 +723,17 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       r.lang = dilMod==="hedef"?dil.mic:"tr-TR";
       r.continuous=false; r.interimResults=false;
       r.onstart=()=>setMikr(true);
-      r.onresult=e=>{setMikr(false); gonder(e.results[0][0].transcript);};
+      r.onresult=e=>{
+        const transcript = e.results[0][0].transcript;
+        const confidence = e.results[0][0].confidence;
+        setMikr(false);
+        // Güven skoru düşükse kullanıcıya göster ama gönder
+        if (confidence < 0.5) {
+          setYazi(transcript); // Input'a yaz, kullanıcı düzeltebilir
+        } else {
+          gonder(transcript);
+        }
+      };
       r.onerror=e=>{setMikr(false); if(e.error!=="no-speech"&&e.error!=="aborted"){setMikErr("Ses algılanamadı."); setTimeout(()=>setMikErr(""),3000);}};
       r.onend=()=>setMikr(false);
       recRef.current=r; r.start();
@@ -652,7 +832,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           <div style={{color:"#fff",fontWeight:700,fontSize:14}}>{hoca.ad}</div>
           <div style={{color:dil.vurgu,fontSize:11}}>{hoca.yer+" • "+hoca.uz}</div>
         </div>
-        <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:"3px 8px",fontSize:11,color:K.gL,fontWeight:700}}>{seviye}</div>
+        <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:"3px 10px",textAlign:"center"}}>
+          <div style={{fontSize:9,color:"#aaa"}}>SEVİYE</div>
+          <div style={{fontWeight:800,color:K.gL,fontSize:15}}>{seviye}</div>
+          <div style={{fontSize:9,color:"#aaa"}}>{SEVIYE_ACIKLAMA[seviye]?.split("—")[0]}</div>
+        </div>
         <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:"3px 8px",fontSize:11,color:"#fff",cursor:"pointer"}}
           onClick={()=>{setDilMod(null);setMsgs([]);konusmaRef.current=false;}}>{dilLabel} ↺</div>
         {kul?.plan==="Deneme"&&sure>0&&(
