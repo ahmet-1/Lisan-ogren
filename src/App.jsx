@@ -463,7 +463,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;    
        "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
        "Bu seninle ilk dersimiz. "+seviye+" seviyesinden başlayacağız.\n\n";
-    const buSeviyeMufredat = dersPlani;
+    
     const dersPlani = seviye==="A1" 
       ? "Bugün temel "+dil.ad+" konularını öğreneceğiz: selamlaşma, kendini tanıtma ve temel kelimeler."
       : seviye==="A2"
@@ -493,7 +493,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         "Tekrar hoş geldin "+ad+"! Ben "+hoca.ad+". 😊\n\n"+
         "Son dersimizde: "+sonDers.kategori+" konusunu "+sonDers.seviye+" seviyesinde işlemiştik.\n\n"+
         "📚 Bugün kaldığımız yerden devam ediyoruz:\n"+
-        buSeviyeMufredat+"\n\n"+
+        dersPlani+"\n\n"+
         "Hazır mısın? Başlayalım!\n\n💡 İpucu: 🎤 butona bas sesli konuş, ya da klavyeyle yaz.";
     }
     const txt = karsilamaTxt;
