@@ -631,20 +631,13 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       "SEN BİR ÇOCUK ÖĞRETMENİSİN! Çok eğlenceli, sevimli ve neşeli konuş 😊🌟🎉. Çocuklara hitap et. Basit kelimeler kullan. Her konuyu oyun gibi anlat. Övgü cümleleri ekle (Aferin! Harika! Süper!). Emoji kullan." : "";
 
     // OKUL MANTIĞI - MüFREDAT TAKİBİ  
-    const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:
-"+
-      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede şu konu işleniyor: "+buSeviyeMufredat+"
-"+
-      "2. "+gecmisOzet+" Kaldığı yerden devam et.
-"+
-      "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır.
-"+
-      "4. Her yanıttan sonra bir pratik soru sor veya alıştırma ver.
-"+
-      "5. Öğrenci hata yaparsa hemen nazikçe düzelt ve doğrusunu söyle.
-"+
-      "6. Cümleleri MUTLAKA tam bitir. Yarım bırakma.
-"+
+    const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:"+
+      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede şu konu işleniyor: "+buSeviyeMufredat+""+
+      "2. "+gecmisOzet+" Kaldığı yerden devam et."+
+      "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır."+
+      "4. Her yanıttan sonra bir pratik soru sor veya alıştırma ver."+
+      "5. Öğrenci hata yaparsa hemen nazikçe düzelt ve doğrusunu söyle."+
+      "6. Cümleleri MUTLAKA tam bitir. Yarım bırakma."+
       "7. Her zaman aynı doğru bilgiyi ver. Tutarsız olma.";
 
     // MEDRESE/KURAN ÖZEL KURAL
@@ -653,21 +646,13 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       "Kuran ayetleri veya sureler hakkında konuşurken KESİNLİKLE uydurma bilgi verme. Bilmiyorsan söyle.\n"+
       "Ettehiyyatü namazda okunan bir duadır, Kuran suresi DEĞİLDİR. Bunu karıştırma." : "";
 
-    return okulMantigi+"
+    return okulMantigi+"\n" +
 "+dilKurali+"
 "+cocukTarz+"
-"+diniKural+
-      "
-Hoca adın: "+hoca.ad+". Uzmanlık: "+hoca.uz+". Kategori: "+kategori+"."+
-      "
-Yazılı/sesli: "+(sesliMod?"Öğrenci sesli konuşuyor, kısa net yanıt ver.":"Öğrenci yazıyor, yazılı yanıt ver.")+
-      "
-
-ŞİMDİ DERSE BAŞLA. Önce "+seviye+" seviyesine göre bugünkü konuyu tanıt, sonra öğrenciye soru sor.";
-  };
-
-;
-
+"+diniKural+"
+"Hoca adın: +hoca.ad+". Uzmanlık; "+hoca.uz+". Kategori; "+kategori+"
+Yazılı/sesli; +"sesliMod?" ;"Öğrenci sesli konuşuyor, kısa net yanıt ver"; "Öğrenci yazıyor yazılı yanıt ver Öğrenci yazıyor yazılı yanıt ver";
++"ŞİMDİ DERSE BAŞLA. Önce "+seviye+" seviyesine göre bugünkü konuyu tanıt, sonra öğrenciye soru sor."; };
   const gonder = async (txt) => {
     if (!txt||!txt.trim()||yukl) return;
     const metin = txt.trim();
