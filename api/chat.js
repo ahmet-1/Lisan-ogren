@@ -6,9 +6,6 @@ export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({error:"Method not allowed"}); return; }
   try {
     const { messages, system } = req.body;
-    const groqMessages = [];
-    if (system) groqMessages.push({role:"system", content: system});
-    groqMessages.push(...messages);
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -16,9 +13,13 @@ export default async function handler(req, res) {
         "Authorization": "Bearer " + process.env.GROQ_API_KEY
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 800,
-        messages: groqMessages
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        max_tokens: 1200,
+        temperature: 0.7,
+        messages: [
+          {role:"system", content: system},
+          ...messages
+        ]
       })
     });
     if (!response.ok) {
