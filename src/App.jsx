@@ -416,8 +416,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d=>d.id===dilId);
   // WhatsApp mantığı - önceki ders geçmişini yükle
   const [msgs, setMsgs] = useState(() => {
-    if (!kul?.id || !dilId) return [];
-    const dg = getDG(kul.id, dilId+"|"+hoca.id);
+    if (!kul?.id || !dilId || !hoca?.id) return [];
+    const dg = getDG(kul.id, dilId+"_"+hoca.id);
     return dg.length > 0 ? dg : [];
   });
   const [yazi, setYazi] = useState("");
@@ -630,29 +630,34 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const cocukTarz = hoca.c ?
       "SEN BİR ÇOCUK ÖĞRETMENİSİN! Çok eğlenceli, sevimli ve neşeli konuş 😊🌟🎉. Çocuklara hitap et. Basit kelimeler kullan. Her konuyu oyun gibi anlat. Övgü cümleleri ekle (Aferin! Harika! Süper!). Emoji kullan." : "";
 
-    // OKUL MANTIĞI - MüFREDAT TAKİBİ  
-    const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:"+
-      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede şu konu işleniyor: "+buSeviyeMufredat+""+
-      "2. "+gecmisOzet+" Kaldığı yerden devam et."+
-      "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır."+
-      "4. Her yanıttan sonra bir pratik soru sor veya alıştırma ver."+
-      "5. Öğrenci hata yaparsa hemen nazikçe düzelt ve doğrusunu söyle."+
-      "6. Cümleleri MUTLAKA tam bitir. Yarım bırakma."+
-      "7. Her zaman aynı doğru bilgiyi ver. Tutarsız olma.";
+    // OKUL MANTIĞI - MÜFREDAT TAKİBİ
+    const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:\n"+
+      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede konu: "+buSeviyeMufredat+"\n"+
+      "2. "+gecmisOzet+" Kaldığı yerden devam et.\n"+
+      "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır.\n"+
+      "4. Her yanıttan sonra bir pratik soru sor.\n"+
+      "5. Öğrenci hata yaparsa hemen nazikçe düzelt.\n"+
+      "6. Cümleleri MUTLAKA tam bitir. Yarım bırakma.\n"+
+      "7. Her zaman AYNI doğru bilgiyi ver. Tutarsız olma.\n"+
+      "8. Asla Duolingo veya başka uygulama önerme. Sen en iyi öğretmensin.";
 
-    // MEDRESE/KURAN ÖZEL KURAL
+    // DİNİ DERSLER ÖZEL KURAL
     const diniKural = (dilId==="medrese"||dilId==="quran") ?
-      "ÖNEMLİ: Her zaman AYNI DOĞRU BİLGİYİ ver. Medresede sıra: 1.Kuran 2.Arapça 3.Fıkıh 4.Hadis 5.Tefsir 6.Akaid. Bu sıra ASLA değişmez.\n"+
-      "Kuran ayetleri veya sureler hakkında konuşurken KESİNLİKLE uydurma bilgi verme. Bilmiyorsan söyle.\n"+
-      "Ettehiyyatü namazda okunan bir duadır, Kuran suresi DEĞİLDİR. Bunu karıştırma." : "";
+      "DİNİ DERS KURALLARI:\n"+
+      "- Medrese sırası: 1.Kuran 2.Arapça 3.Fıkıh 4.Hadis 5.Tefsir 6.Akaid. Bu ASLA değişmez.\n"+
+      "- Namaz duaları ve ayetleri TAM ver, eksik verme, özetleme.\n"+
+      "- Ettehiyyatü namazda okunan duadır, Kuran suresi DEĞİLDİR.\n"+
+      "- Emin olmadığın bilgiyi üretme, 'bilmiyorum' de.\n"+
+      "- Dua veya sure istenince: Arapça metin + Türkçe okunuş + Anlam + Kaynak ver.\n"+
+      "- Fıkıh konularında önce görüş birliği olan bilgiyi ver." : "";
 
-    return okulMantigi+"\n" +
-"+dilKurali+"
-"+cocukTarz+"
-"+diniKural+"
-"Hoca adın: +hoca.ad+". Uzmanlık; "+hoca.uz+". Kategori; "+kategori+"
-Yazılı/sesli; +"sesliMod?" ;"Öğrenci sesli konuşuyor, kısa net yanıt ver"; "Öğrenci yazıyor yazılı yanıt ver Öğrenci yazıyor yazılı yanıt ver";
-+"ŞİMDİ DERSE BAŞLA. Önce "+seviye+" seviyesine göre bugünkü konuyu tanıt, sonra öğrenciye soru sor."; };
+    return okulMantigi+"\n"+dilKurali+"\n"+cocukTarz+"\n"+diniKural+
+      "\nHoca: "+hoca.ad+". Uzmanlık: "+hoca.uz+". Kategori: "+kategori+"."+
+      "\n"+(sesliMod?"Öğrenci sesli konuşuyor, kısa net yanıt ver.":"Öğrenci yazıyor, yazılı yanıt ver.")+
+      "\nŞİMDİ DERSE BAŞLA. "+seviye+" seviyesine göre bugünkü konuyu tanıt, öğrenciye soru sor.";
+  };
+
+
   const gonder = async (txt) => {
     if (!txt||!txt.trim()||yukl) return;
     const metin = txt.trim();
@@ -677,14 +682,14 @@ Yazılı/sesli; +"sesliMod?" ;"Öğrenci sesli konuşuyor, kısa net yanıt ver"
     setYazi(""); setYukl(true);
     const yeniMsgs = [...msgs, {r:"user", t:metin}];
     setMsgs(yeniMsgs);
-    if (kul?.id) setDG(kul.id, dilId+"|"+hoca.id, yeniMsgs.slice(-50));
+    if (kul?.id) setDG(kul.id, dilId+"_"+hoca.id, yeniMsgs.slice(-50));
     try {
       const history = msgs.filter(m=>m.r).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t}));
       const yan = await aiYanit([...history,{role:"user",content:metin}], getPrompt());
       const guncelMsgs = [...msgs, {r:"user",t:metin}, {r:"ai",t:yan}];
     setMsgs(m => {
       const yeni = [...m, {r:"ai",t:yan}];
-      if (kul?.id) setDG(kul.id, dilId+"|"+hoca.id, yeni.slice(-50));
+      if (kul?.id) setDG(kul.id, dilId+"_"+hoca.id, yeni.slice(-50));
       return yeni;
     });
       // Sadece sesli moddaysa sesli yanıt ver
@@ -768,8 +773,30 @@ Yazılı/sesli; +"sesliMod?" ;"Öğrenci sesli konuşuyor, kısa net yanıt ver"
           <div style={{color:dil.vurgu,fontSize:12,marginBottom:4}}>{hoca.yer}</div>
           <div style={{color:K.tx3,fontSize:13,marginBottom:20}}>{hoca.uz}</div>
 
+          {/* SEVİYE SEÇİMİ */}
+          <div style={{marginBottom:20}}>
+            <div style={{color:K.tx2,fontSize:13,fontWeight:700,marginBottom:10}}>📊 Seviyeni Seç:</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
+              {["A1","A2","B1","B2","C1","C2"].map(sv=>(
+                <button key={sv} onClick={()=>setSeviye(sv)}
+                  style={{padding:"8px 14px",borderRadius:10,cursor:"pointer",fontSize:12,fontWeight:seviye===sv?700:400,
+                    background:seviye===sv?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.bg3,
+                    color:seviye===sv?"#fff":K.tx3,border:"1px solid "+(seviye===sv?K.g3:K.bdr),
+                    textAlign:"center",minWidth:60}}>
+                  <div style={{fontSize:13,fontWeight:700}}>{sv}</div>
+                  <div style={{fontSize:9,opacity:0.8,marginTop:1}}>
+                    {sv==="A1"?"Başlangıç":sv==="A2"?"Temel":sv==="B1"?"Orta":sv==="B2"?"Orta Üst":sv==="C1"?"İleri":"Uzman"}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div style={{textAlign:"center",marginTop:8,color:K.tx4,fontSize:11}}>
+              Mevcut: <strong style={{color:K.gL}}>{seviye}</strong> — {SEVIYE_ACIKLAMA[seviye]}
+            </div>
+          </div>
+
           {dil.cats && <>
-            <div style={{color:K.tx2,fontSize:13,fontWeight:700,marginBottom:10}}>Konu Kategorisi:</div>
+            <div style={{color:K.tx2,fontSize:13,fontWeight:700,marginBottom:10}}>📚 Konu Kategorisi:</div>
             <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:20}}>
               {dil.cats.map(cat=>(
                 <button key={cat} onClick={()=>setKategori(cat)}

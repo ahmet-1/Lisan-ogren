@@ -13,24 +13,24 @@ export default async function handler(req, res) {
         "Authorization": "Bearer " + process.env.GROQ_API_KEY
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "llama-3.3-70b-versatile",
         max_tokens: 1200,
         temperature: 0.7,
         messages: [
-          {role:"system", content: system},
+          { role: "system", content: system },
           ...messages
         ]
       })
     });
     if (!response.ok) {
-      const err = await response.json().catch(()=>({}));
-      res.status(response.status).json({error: err.error?.message || "Hata: " + response.status});
+      const err = await response.json().catch(() => ({}));
+      res.status(response.status).json({ error: err.error?.message || "Hata: " + response.status });
       return;
     }
     const data = await response.json();
     const text = data.choices?.[0]?.message?.content || "";
-    res.status(200).json({content: [{type:"text", text}]});
-  } catch(e) {
-    res.status(500).json({error: e.message});
+    res.status(200).json({ content: [{ type: "text", text }] });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 }
