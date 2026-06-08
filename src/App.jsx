@@ -460,11 +460,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const besmele = BESMELE_DILLER.includes(dilId) ? BESMELE_METNI : "";
     // Önceki ders geçmişini al
     const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
-    const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
-    const devamMesaj = sonDers 
-      ? "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
-      : "Bu seninle ilk dersimiz. "+seviye+" seviyesinden başlayacağız.\n\n";
-
+    const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;    
+       "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
+       "Bu seninle ilk dersimiz. "+seviye+" seviyesinden başlayacağız.\n\n";
+    const buSeviyeMufredat = dersPlani;
     const dersPlani = seviye==="A1" 
       ? "Bugün temel "+dil.ad+" konularını öğreneceğiz: selamlaşma, kendini tanıtma ve temel kelimeler."
       : seviye==="A2"
