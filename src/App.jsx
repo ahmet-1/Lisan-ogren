@@ -15,6 +15,109 @@ const DB = {
   d: k => { try { localStorage.removeItem("la_"+k); } catch {} },
 };
 
+
+// ── MÜFREDAT ────────────────────────────────────────────────────────────────
+const MUFREDAT = {
+  quran: {
+    A1:"Elif-Ba harfleri, harekeler (fetha, kesre, damme), tenvin",
+    A2:"Kısa sureler (Fatiha, İhlas, Felak, Nas), tecvid temelleri",
+    B1:"Amme cüzü, med harfleri, idğam, ihfa kuralları",
+    B2:"Büyük sureler, vakf-ibtida, makam çalışması",
+    C1:"Hıfz programı, kıraat farklılıkları",
+    C2:"Kıraat-ı seb'a, ileri hıfz"
+  },
+  medrese: {
+    A1:"İslam'ın şartları, imanın şartları, abdest, namaz, temel dualar",
+    A2:"Oruç, zekat, hac ibadetleri, helal-haram temelleri",
+    B1:"Fıkıh usulü temelleri, hadis nedir, siyer-i nebi",
+    B2:"İleri fıkıh, tefsir ilimleri, akaid konuları",
+    C1:"Mezhep farklılıkları, fetva usulü, kelam",
+    C2:"İleri din ilimleri, ictihat usulü"
+  },
+  arabic: {
+    A1:"Arap harfleri, harekeler, basit kelimeler, selamlaşma",
+    A2:"Temel cümleler, isim tamlaması, müzekker-müennes",
+    B1:"Fiil çekimleri, sarf temelleri, nahiv başlangıcı",
+    B2:"İleri nahiv, bağlaçlar, Arapça metin okuma",
+    C1:"Fesahat, belagat, klasik Arapça",
+    C2:"Edebi Arapça, hitabet"
+  },
+  english: {
+    A1:"Selamlaşma, alfabe, sayılar, renkler, 'to be' fiili",
+    A2:"Günlük konuşma, Simple Present, Past Simple",
+    B1:"Present Perfect, Conditionals, seyahat konuşmaları",
+    B2:"Advanced tenses, Passive voice, tartışma",
+    C1:"Akademik İngilizce, IELTS hazırlık",
+    C2:"Ana dil seviyesi, edebi İngilizce"
+  },
+  german: {
+    A1:"Almanca harfler, selamlaşma, sayılar",
+    A2:"Günlük konuşma, Perfekt, Präteritum",
+    B1:"Konjunktiv, Passiv, iş Almancası",
+    B2:"İleri gramer, akademik Almanca",
+    C1:"TestDaF hazırlık",
+    C2:"Ana dil seviyesi"
+  },
+  french: {
+    A1:"Fransız alfabesi, selamlaşma, être-avoir",
+    A2:"Passé composé, günlük konuşma",
+    B1:"Subjonctif, conditionnel, DELF B1",
+    B2:"İleri gramer, DELF B2",
+    C1:"Akademik Fransızca, DALF",
+    C2:"Ana dil seviyesi"
+  },
+  italian: {
+    A1:"İtalyan alfabesi, essere-avere, selamlaşma",
+    A2:"Passato prossimo, günlük diyaloglar",
+    B1:"Congiuntivo, CILS B1",
+    B2:"İleri gramer, CILS B2",
+    C1:"Akademik İtalyanca",
+    C2:"Ana dil seviyesi"
+  },
+  spanish: {
+    A1:"İspanyol alfabesi, ser-estar, selamlaşma",
+    A2:"Pretérito, günlük konuşma",
+    B1:"Subjuntivo, DELE B1",
+    B2:"İleri gramer, DELE B2",
+    C1:"Akademik İspanyolca",
+    C2:"Ana dil seviyesi"
+  },
+  japanese: {
+    A1:"Hiragana, Katakana, temel selamlaşma",
+    A2:"Temel Kanji, günlük cümleler, JLPT N5",
+    B1:"Orta Kanji, Keigo, JLPT N4-N3",
+    B2:"İleri Kanji, iş Japonca, JLPT N2",
+    C1:"JLPT N1 hazırlık",
+    C2:"Ana dil seviyesi"
+  },
+  korean: {
+    A1:"Hangul alfabesi, temel selamlaşma, sayılar",
+    A2:"Günlük konuşma, temel gramer, TOPIK I",
+    B1:"Orta gramer, K-Pop dili, TOPIK II",
+    B2:"İleri gramer, iş Koreceyi",
+    C1:"TOPIK yüksek skor",
+    C2:"Ana dil seviyesi"
+  },
+  russian: {
+    A1:"Kiril alfabesi, temel selamlaşma",
+    A2:"Temel gramer, günlük konuşma",
+    B1:"Orta gramer, seyahat Rusçası",
+    B2:"İleri gramer, TORFL",
+    C1:"Akademik Rusça",
+    C2:"Ana dil seviyesi"
+  },
+  turkish: {
+    A1:"Türk alfabesi, selamlaşma, temel kelimeler",
+    A2:"Temel cümleler, fiil çekimi",
+    B1:"Günlük konuşma, TÖMER B1",
+    B2:"İleri gramer, yazma",
+    C1:"Akademik Türkçe",
+    C2:"Ana dil seviyesi"
+  },
+};
+
+const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
+
 const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
@@ -25,7 +128,7 @@ const getSV = (uid,did) => DB.g("sv_"+uid+"_"+did) || "A1";
 const setSV = (uid,did,sv) => DB.s("sv_"+uid+"_"+did,sv);
 
 const DILLER = [
-  {id:"quran",  ad:"Kur'an-ı Kerim",bayrak:"🕌",renk:"#0d2a14",vurgu:"#f9a825",mic:"ar-SA",mods:["Tecvid","Makam","Hıfz","Sure Mealleri"]},
+  {id:"quran",  ad:"Kur'an-ı Kerim",bayrak:"🕌",renk:"#0d2a14",vurgu:"#f9a825",mic:"ar-SA",mods:["Tecvid","Hıfz","Makam","Meal"],cats:["Tecvid","Hıfz","Makam","Sure Mealleri","Kıraat","Akaid"]},
   {id:"medrese",ad:"Medrese Eğitimi",bayrak:"📖",renk:"#1a0e00",vurgu:"#c8a045",mic:"ar-SA",mods:["Fıkıh","Akaid","Tefsir","Hadis"]},
   {id:"arabic", ad:"Arapça",         bayrak:"🇸🇦",renk:"#2a0e0e",vurgu:"#ff8f00",mic:"ar-SA",mods:["Nahiv","Sarf","Konuşma","Okuma"],cats:["Genel","Günlük Hayat","Dini Konular","Seyahat","İş","Medya","Edebiyat"]},
   {id:"english",ad:"İngilizce",       bayrak:"🇬🇧",renk:"#0e1a2a",vurgu:"#ef5350",mic:"en-US",mods:["Grammar","Speaking","Vocabulary","IELTS"],cats:["Genel","Seyahat","İş","Akademik","Tıp","Teknoloji"]},
@@ -460,10 +563,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const besmele = BESMELE_DILLER.includes(dilId) ? BESMELE_METNI : "";
     // Önceki ders geçmişini al
     const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
-    const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;    
-       "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
-       "Bu seninle ilk dersimiz. "+seviye+" seviyesinden başlayacağız.\n\n";
-    
+    const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
+    const devamMesaj = sonDers 
+      ? "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
+      : "Bu seninle ilk dersimiz. "+seviye+" seviyesinden başlayacağız.\n\n";
+
     const dersPlani = seviye==="A1" 
       ? "Bugün temel "+dil.ad+" konularını öğreneceğiz: selamlaşma, kendini tanıtma ve temel kelimeler."
       : seviye==="A2"
@@ -493,15 +597,15 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         "Tekrar hoş geldin "+ad+"! Ben "+hoca.ad+". 😊\n\n"+
         "Son dersimizde: "+sonDers.kategori+" konusunu "+sonDers.seviye+" seviyesinde işlemiştik.\n\n"+
         "📚 Bugün kaldığımız yerden devam ediyoruz:\n"+
-        dersPlani+"\n\n"+
+        getMufredat(dilId, seviye)+"\n\n"+
         "Hazır mısın? Başlayalım!\n\n💡 İpucu: 🎤 butona bas sesli konuş, ya da klavyeyle yaz.";
     }
     const txt = karsilamaTxt;
     setMsgs([{r:"ai",t:txt}]);
     if (BESMELE_DILLER.includes(dilId)) {
       setTimeout(async ()=>{
-        await sesliOku("Bismillahirrahmanirrahim. Rabbi yessir vela tuassir, rabbi temmim bilhayr.", hoca.id, "ar-SA");
-      },1200);
+        await sesliOku("Bismillahirrahmanirrahim. Rabbi yessir vela tuassir.", hoca.id, "ar-SA");
+      },500);
     }
   },[dilMod]);
 
@@ -512,107 +616,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
 
-    // MüFREDAT - Her dil için sabit sıra
-    const MUFREDAT = {
-      quran: {
-        A1: "Elif-Ba harfleri, harekeler (fetha, kesre, damme), tenvin öğretimi",
-        A2: "Kısa sureler (Fatiha, İhlas, Felak, Nas), tecvid temelleri",
-        B1: "Amme cüzü, med harfleri, idğam, ihfa kuralları",
-        B2: "Büyük sureler, vakf-ibtida, makam çalışması",
-        C1: "Hıfz programı, kıraat farklılıkları",
-        C2: "Kıraat-ı seb'a, ileri hıfz"
-      },
-      medrese: {
-        A1: "İslam'ın şartları, imanın şartları, abdest, namaz, temel dualar",
-        A2: "Oruç, zekat, hac ibadetleri, helal-haram temelleri",
-        B1: "Fıkıh usulü temelleri, hadis nedir, siyer-i nebi",
-        B2: "İleri fıkıh, tefsir ilimleri, akaid konuları",
-        C1: "Mezhep farklılıkları, fetva usulü, kelam",
-        C2: "İleri din ilimleri, ictihat usulü"
-      },
-      arabic: {
-        A1: "Arap harfleri, harekeler, basit kelimeler ve selamlaşma",
-        A2: "Temel cümleler, isim tamlaması, müzekker-müennes",
-        B1: "Fiil çekimleri, sarf temelleri, nahiv başlangıcı",
-        B2: "İleri nahiv, bağlaçlar, Arapça metin okuma",
-        C1: "Fesahat, belagat, klasik Arapça",
-        C2: "Edebi Arapça, hitabet"
-      },
-      english: {
-        A1: "Selamlaşma, alfabe, sayılar, renkler, 'to be' fiili",
-        A2: "Günlük konuşma, Simple Present, Past Simple, alışveriş diyalogları",
-        B1: "Present Perfect, Conditionals, seyahat ve iş konuşmaları",
-        B2: "Advanced tenses, Passive voice, tartışma ve ikna",
-        C1: "Akademik İngilizce, karmaşık yapılar, IELTS hazırlık",
-        C2: "Ana dil seviyesi, edebi İngilizce"
-      },
-      german: {
-        A1: "Almanca harfler, selamlaşma, sayılar, 'sein' fiili",
-        A2: "Günlük konuşma, Perfekt, Präteritum, alışveriş",
-        B1: "Konjunktiv, Passiv, iş ve seyahat Almancası",
-        B2: "İleri gramer, akademik Almanca",
-        C1: "TestDaF hazırlık, ileri konuşma",
-        C2: "Ana dil seviyesi Almanca"
-      },
-      french: {
-        A1: "Fransız alfabesi, selamlaşma, être-avoir fiilleri",
-        A2: "Passé composé, günlük konuşma, restoran diyalogları",
-        B1: "Subjonctif, conditionnel, DELF B1 hazırlık",
-        B2: "İleri gramer, Fransız kültürü, DELF B2",
-        C1: "Akademik Fransızca, DALF hazırlık",
-        C2: "Ana dil seviyesi"
-      },
-      japanese: {
-        A1: "Hiragana, Katakana öğrenimi, temel selamlaşma",
-        A2: "Temel Kanji, günlük cümleler, JLPT N5",
-        B1: "Orta Kanji, Keigo temelleri, JLPT N4-N3",
-        B2: "İleri Kanji, iş Japonca, JLPT N2",
-        C1: "JLPT N1 hazırlık, klasik Japonca",
-        C2: "Ana dil seviyesi"
-      },
-      korean: {
-        A1: "Hangul alfabesi, temel selamlaşma, sayılar",
-        A2: "Günlük konuşma, temel gramer, TOPIK I",
-        B1: "Orta seviye gramer, K-Pop dili, TOPIK II",
-        B2: "İleri gramer, iş Koreceyi",
-        C1: "TOPIK yüksek skor, ileri konuşma",
-        C2: "Ana dil seviyesi"
-      },
-      russian: {
-        A1: "Kiril alfabesi, temel selamlaşma, sayılar",
-        A2: "Temel gramer, günlük konuşma",
-        B1: "Orta gramer, seyahat Rusçası",
-        B2: "İleri gramer, TORFL hazırlık",
-        C1: "Akademik Rusça",
-        C2: "Ana dil seviyesi"
-      },
-      spanish: {
-        A1: "İspanyol alfabesi, ser-estar, selamlaşma",
-        A2: "Pretérito, günlük konuşma, DELE A2",
-        B1: "Subjuntivo temelleri, DELE B1",
-        B2: "İleri gramer, DELE B2",
-        C1: "Akademik İspanyolca",
-        C2: "Ana dil seviyesi"
-      },
-      italian: {
-        A1: "İtalyan alfabesi, essere-avere, selamlaşma",
-        A2: "Passato prossimo, günlük diyaloglar",
-        B1: "Congiuntivo temelleri, CILS B1",
-        B2: "İleri gramer, CILS B2",
-        C1: "Akademik İtalyanca",
-        C2: "Ana dil seviyesi"
-      },
-      turkish: {
-        A1: "Türk alfabesi, selamlaşma, temel kelimeler",
-        A2: "Temel cümleler, fiil çekimi",
-        B1: "Günlük konuşma, TÖMER B1",
-        B2: "İleri gramer, yazma",
-        C1: "Akademik Türkçe",
-        C2: "Ana dil seviyesi"
-      },
-    };
-
-    const buSeviyeMufredat = MUFREDAT[dilId]?.[seviye] || "Temel "+dil.ad+" konuları";
+    const buSeviyeMufredat = getMufredat(dilId, seviye);
     const gecmisOzet = sonDers ? "Son ders: "+sonDers.tarih+", konu: "+sonDers.kategori+", seviye: "+sonDers.seviye+"." : "İlk ders.";
 
     // DİL KURALI - KESİN
@@ -631,7 +635,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
     // OKUL MANTIĞI - MÜFREDAT TAKİBİ
     const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:\n"+
-      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede konu: "+buSeviyeMufredat+"\n"+
+      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede konu: "+getMufredat(dilId, seviye)+"\n"+
       "2. "+gecmisOzet+" Kaldığı yerden devam et.\n"+
       "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır.\n"+
       "4. Her yanıttan sonra bir pratik soru sor.\n"+
@@ -996,7 +1000,7 @@ function AdminPanel({kapat, admCikis}) {
 
   const SEKMELER=[
     ["dash","📊","Dashboard"],["kul","👥","Kullanıcılar"],["ode","💳","Ödemeler"],
-    ["iht","⚠️","İhtar Geçmişi"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["set","⚙️","Ayarlar"]
+    ["ders","📡","Aktif Dersler"],["iht","⚠️","İhtar Geçmişi"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["set","⚙️","Ayarlar"]
   ];
 
   return (
@@ -1097,6 +1101,30 @@ function AdminPanel({kapat, admCikis}) {
                 </div>
               </div>
             ))}
+        </>}
+
+        {sekme==="ders"&&<>
+          <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:8}}>📡 Aktif Dersler</div>
+          <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Öğrencilerin aktif derslerini izleyebilirsiniz.</div>
+          {kul.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").length===0
+            ? <div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Şu an aktif ders yok</div>
+            : kul.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").map(u=>(
+              <div key={u.id} style={{...kd,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{color:K.tx,fontWeight:700}}>{u.ad}</div>
+                  <div style={{color:K.tx4,fontSize:11,marginTop:2}}>{u.email} • {u.plan} • {u.durum}</div>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <div style={{background:"rgba(46,125,50,0.12)",color:K.gL,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700}}>{u.durum}</div>
+                  <button onClick={()=>alert(u.ad+" öğrencisinin dersini izlemek için yakında kameralı ders özelliği eklenecek.")}
+                    style={{padding:"7px 12px",borderRadius:7,background:K.bg3,color:K.tL,
+                      border:"1px solid "+K.bdr2,cursor:"pointer",fontSize:11,fontWeight:600}}>
+                    👁 İzle
+                  </button>
+                </div>
+              </div>
+            ))
+          }
         </>}
 
         {sekme==="iht"&&<>
