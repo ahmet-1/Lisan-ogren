@@ -605,7 +605,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     if (BESMELE_DILLER.includes(dilId)) {
       setTimeout(async ()=>{
         await sesliOku("Bismillahirrahmanirrahim. Rabbi yessir vela tuassir.", hoca.id, "ar-SA");
-      },500);
+      },1200);
     }
   },[dilMod]);
 
