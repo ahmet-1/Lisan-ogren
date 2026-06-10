@@ -16,105 +16,119 @@ const DB = {
 };
 
 
-// ── MÜFREDAT ────────────────────────────────────────────────────────────────
+// ── MÜFREDAT - GERÇEK OKUL MÜFREDATı ───────────────────────────────────────
 const MUFREDAT = {
-  quran: {
-    A1:"Elif-Ba harfleri, harekeler (fetha, kesre, damme), tenvin",
-    A2:"Kısa sureler (Fatiha, İhlas, Felak, Nas), tecvid temelleri",
-    B1:"Amme cüzü, med harfleri, idğam, ihfa kuralları",
-    B2:"Büyük sureler, vakf-ibtida, makam çalışması",
-    C1:"Hıfz programı, kıraat farklılıkları",
-    C2:"Kıraat-ı seb'a, ileri hıfz"
-  },
+  // MEDRESE - Klasik usul, gerçek medrese sırası
   medrese: {
-    A1:"İslam'ın şartları, imanın şartları, abdest, namaz, temel dualar",
-    A2:"Oruç, zekat, hac ibadetleri, helal-haram temelleri",
-    B1:"Fıkıh usulü temelleri, hadis nedir, siyer-i nebi",
-    B2:"İleri fıkıh, tefsir ilimleri, akaid konuları",
-    C1:"Mezhep farklılıkları, fetva usulü, kelam",
-    C2:"İleri din ilimleri, ictihat usulü"
+    A1: "Elif-Ba (harf tanıma, mahreçler, harekeler, basit okuma). Tecvid temelleri: medler, ihfa, idğam, iklab, kalkale, vakıf kuralları. Namaz dua ve sureleri: Sübhaneke, Ettehiyyatü, Allahümme Salli, Allahümme Barik, kısa sureler. Temel ilmihal: iman esasları, İslam'ın şartları, abdest, gusül, namaz. Akaid başlangıcı: Allah'ın sıfatları, peygamberlik, ahiret, kader.",
+    A2: "Arapça Sarf: fiil kalıpları, zamirler, isim çekimleri. Arapça Nahiv: irab, cümle yapısı, merfu-mansub-mecrur. Fıkıh temelleri: taharet, ibadetler temelleri.",
+    B1: "Fıkıh orta: alım-satım, nikah, miras hükümleri. Hadis başlangıcı: Kırk Hadis, Riyazü's-Salihin seçmeleri. Hadis usulü temelleri.",
+    B2: "Tefsir: kısa sure tefsirleri, tefsir usulü. Usul ilimleri: Usulü Fıkıh temelleri, Usulü Hadis.",
+    C1: "Kapsamlı tefsir, Belagat, Mantık, ileri fıkıh meseleleri.",
+    C2: "Müderris seviyesi: ictihat usulü, mezhep karşılaştırması, ilmi tartışma."
   },
+  // KURAN - Tecvid ve hıfz yolu
+  quran: {
+    A1: "Elif-Ba: harf tanıma ve mahreçler. Harekeler: fetha, kesre, damme, tenvin, sükun, şedde. Basit kelime okuma.",
+    A2: "Tecvid temelleri: med harfleri, nun sakin ve tenvin kuralları (ihfa, idğam, iklab, izhar). Kısa sureler: Fatiha, İhlas, Felak, Nas, Kevser, Asr.",
+    B1: "Amme cüzü (30. cüz) sureleri. Kalkale, vakf-ibtida kuralları. Medd-i tabii ve medd-i lazım.",
+    B2: "Hıfz programı: Amme cüzü ezberi. Makam çalışması: rast, hicaz, saba makamları.",
+    C1: "İleri hıfz: son 5 cüz. Kıraat farklılıkları, Kıraat-ı Aşere temelleri.",
+    C2: "Kıraat-ı Seb'a ve Aşere. Tam hıfz. İleri makam."
+  },
+  // ARAPÇA - Dil öğrenim yolu
   arabic: {
-    A1:"Arap harfleri, harekeler, basit kelimeler, selamlaşma",
-    A2:"Temel cümleler, isim tamlaması, müzekker-müennes",
-    B1:"Fiil çekimleri, sarf temelleri, nahiv başlangıcı",
-    B2:"İleri nahiv, bağlaçlar, Arapça metin okuma",
-    C1:"Fesahat, belagat, klasik Arapça",
-    C2:"Edebi Arapça, hitabet"
+    A1: "Arap alfabesi, harekeler, basit kelimeler. Selamlaşma: Selam, nasılsın, teşekkür. Sayılar 1-10. Renkler ve temel isimler.",
+    A2: "Temel cümle yapısı. İsim tamlaması (muzaf-muzafun ileyh). Müzekker-müennes. Basit fiil çekimleri (madi fiil). Günlük konuşma kalıpları.",
+    B1: "Sarf: fiil kalıpları (bab sistemi), zamirler. Nahiv: irab, merfu-mansub-mecrur. Günlük konuşma ve okuma.",
+    B2: "İleri nahiv: şartlı cümleler, ism-i fail, ism-i meful. Arapça metin okuma ve anlama.",
+    C1: "Fesahat ve belagat. Klasik Arapça metin analizi. İleri konuşma.",
+    C2: "Edebi Arapça, hitabet, şiir analizi."
   },
+  // İNGİLİZCE - CEFR standardı
   english: {
-    A1:"Selamlaşma, alfabe, sayılar, renkler, 'to be' fiili",
-    A2:"Günlük konuşma, Simple Present, Past Simple",
-    B1:"Present Perfect, Conditionals, seyahat konuşmaları",
-    B2:"Advanced tenses, Passive voice, tartışma",
-    C1:"Akademik İngilizce, IELTS hazırlık",
-    C2:"Ana dil seviyesi, edebi İngilizce"
+    A1: "Alfabe, selamlaşma (Hello/Hi/Goodbye), sayılar 1-100, renkler, hayvanlar. 'To be' fiili: I am, You are, He is. Basit sorular: What is your name? How old are you?",
+    A2: "Simple Present ve Past Simple. Günlük kelime hazinesi: aile, yiyecek, giysi. Present Continuous. Alışveriş ve yön sorma diyalogları.",
+    B1: "Present Perfect, Future tenses. Conditionals (Type 1-2). Seyahat, sağlık, iş konuşmaları. CEFR B1 kelime hazinesi: 1500+ kelime.",
+    B2: "Advanced tenses, Passive voice, Reported speech. Akademik ve iş İngilizcesi. Tartışma ve ikna. IELTS/TOEFL hazırlık.",
+    C1: "Karmaşık gramer yapıları: Inversion, Cleft sentences. Akademik yazı. İleri konuşma. IELTS 7+ hazırlık.",
+    C2: "Ana dil seviyesi. Edebi İngilizce, idiomatic expressions. IELTS 8-9 seviyesi."
   },
+  // ALMANCA - Goethe Enstitüsü standardı
   german: {
-    A1:"Almanca harfler, selamlaşma, sayılar",
-    A2:"Günlük konuşma, Perfekt, Präteritum",
-    B1:"Konjunktiv, Passiv, iş Almancası",
-    B2:"İleri gramer, akademik Almanca",
-    C1:"TestDaF hazırlık",
-    C2:"Ana dil seviyesi"
+    A1: "Almanca harfler ve telaffuz (ä, ö, ü, ß). Selamlaşma: Guten Tag, Wie heißen Sie? Sayılar, renkler. 'Sein' ve 'Haben' fiilleri. Basit cümleler.",
+    A2: "Präsens çekimi. Perfekt ve Präteritum. Artikel (der/die/das). Günlük konuşma: alışveriş, restoran, yön. Zaman ifadeleri.",
+    B1: "Konjunktiv II. Passivsatz. İş ve seyahat Almancası. Modalverben ileri kullanım. Goethe B1 hazırlık.",
+    B2: "İleri gramer: Relativsätze, Konjunktiv I. Akademik Almanca. TestDaF hazırlık.",
+    C1: "Karmaşık metin analizi. İleri yazma. DSH sınavı hazırlık.",
+    C2: "Ana dil seviyesi Almanca."
   },
+  // FRANSIZCA - DELF/DALF standardı
   french: {
-    A1:"Fransız alfabesi, selamlaşma, être-avoir",
-    A2:"Passé composé, günlük konuşma",
-    B1:"Subjonctif, conditionnel, DELF B1",
-    B2:"İleri gramer, DELF B2",
-    C1:"Akademik Fransızca, DALF",
-    C2:"Ana dil seviyesi"
+    A1: "Fransız alfabesi, telaffuz. Être ve Avoir. Selamlaşma: Bonjour, Comment vous appelez-vous? Sayılar, renkler, aile.",
+    A2: "Passé composé, Imparfait. Articles. Günlük konuşma. DELF A2 hazırlık.",
+    B1: "Subjonctif présent. Conditionnel. Seyahat ve iş Fransızcası. DELF B1 hazırlık.",
+    B2: "İleri subjonctif. Discours indirect. Akademik Fransızca. DELF B2.",
+    C1: "İleri yazı ve konuşma. DALF C1 hazırlık.",
+    C2: "Ana dil seviyesi. DALF C2."
   },
+  // İTALYANCA
   italian: {
-    A1:"İtalyan alfabesi, essere-avere, selamlaşma",
-    A2:"Passato prossimo, günlük diyaloglar",
-    B1:"Congiuntivo, CILS B1",
-    B2:"İleri gramer, CILS B2",
-    C1:"Akademik İtalyanca",
-    C2:"Ana dil seviyesi"
+    A1: "İtalyan alfabesi. Essere ve Avere. Selamlaşma: Buongiorno, Come si chiama? Sayılar, renkler.",
+    A2: "Passato prossimo. Imperfetto. Günlük diyaloglar: restoran, alışveriş. CILS A2.",
+    B1: "Congiuntivo présente. Condizionale. CILS B1 hazırlık.",
+    B2: "İleri gramer. Akademik İtalyanca. CILS B2.",
+    C1: "İleri konuşma ve yazma. CILS C1.",
+    C2: "Ana dil seviyesi."
   },
+  // İSPANYOLCA - DELE standardı
   spanish: {
-    A1:"İspanyol alfabesi, ser-estar, selamlaşma",
-    A2:"Pretérito, günlük konuşma",
-    B1:"Subjuntivo, DELE B1",
-    B2:"İleri gramer, DELE B2",
-    C1:"Akademik İspanyolca",
-    C2:"Ana dil seviyesi"
+    A1: "İspanyol alfabesi. Ser ve Estar. Selamlaşma: Hola, ¿Cómo se llama? Sayılar, renkler, aile. DELE A1.",
+    A2: "Pretérito indefinido. Reflexive fiiller. Günlük konuşma. DELE A2.",
+    B1: "Subjuntivo. Condicional. Seyahat ve iş İspanyolcası. DELE B1.",
+    B2: "İleri gramer. Discurso indirecto. DELE B2.",
+    C1: "Akademik İspanyolca. DELE C1.",
+    C2: "Ana dil seviyesi. DELE C2."
   },
+  // JAPONCA - JLPT standardı
   japanese: {
-    A1:"Hiragana, Katakana, temel selamlaşma",
-    A2:"Temel Kanji, günlük cümleler, JLPT N5",
-    B1:"Orta Kanji, Keigo, JLPT N4-N3",
-    B2:"İleri Kanji, iş Japonca, JLPT N2",
-    C1:"JLPT N1 hazırlık",
-    C2:"Ana dil seviyesi"
+    A1: "Hiragana (46 harf). Katakana (46 harf). Temel selamlaşma: こんにちは, ありがとう. Sayılar. JLPT N5 hazırlık.",
+    A2: "Temel Kanji (100 karakter). Temel cümle yapısı: は/が/を. Desu/Masu formu. Günlük konuşma. JLPT N5.",
+    B1: "Te formu, geçmiş zaman, sıfat çekimi. Orta Kanji (300). Keigo temelleri. JLPT N4-N3.",
+    B2: "İleri Kanji (600+). Passive, Causative. İş Japonca. Keigo ileri. JLPT N2.",
+    C1: "JLPT N1 hazırlık. Klasik Japonca temelleri. Akademik dil.",
+    C2: "Ana dil seviyesi. Edebi Japonca."
   },
+  // KORECE - TOPIK standardı
   korean: {
-    A1:"Hangul alfabesi, temel selamlaşma, sayılar",
-    A2:"Günlük konuşma, temel gramer, TOPIK I",
-    B1:"Orta gramer, K-Pop dili, TOPIK II",
-    B2:"İleri gramer, iş Koreceyi",
-    C1:"TOPIK yüksek skor",
-    C2:"Ana dil seviyesi"
+    A1: "Hangul alfabesi (자음/모음). Temel selamlaşma: 안녕하세요, 감사합니다. Sayılar (순수/한자). TOPIK I temelleri.",
+    A2: "Temel gramer: 은/는/이/가/을/를. Zaman ekleri. Günlük konuşma. TOPIK I.",
+    B1: "Orta gramer: 에서/에게/한테. K-Pop ve günlük dil. Yüksek saygı dili (존댓말). TOPIK II başlangıç.",
+    B2: "İleri gramer. İş Koreceyi. Yazılı dil. TOPIK II orta.",
+    C1: "İleri konuşma ve yazma. TOPIK II yüksek.",
+    C2: "Ana dil seviyesi."
   },
+  // RUSÇA
   russian: {
-    A1:"Kiril alfabesi, temel selamlaşma",
-    A2:"Temel gramer, günlük konuşma",
-    B1:"Orta gramer, seyahat Rusçası",
-    B2:"İleri gramer, TORFL",
-    C1:"Akademik Rusça",
-    C2:"Ana dil seviyesi"
+    A1: "Kiril alfabesi (33 harf). Selamlaşma: Привет, Как вас зовут? Sayılar, renkler. Temel fiiller.",
+    A2: "Temel gramer: падежи (isim halleri) temelleri. Zaman çekimi. Günlük konuşma.",
+    B1: "6 isim hali (падежи). Hareket fiilleri. Seyahat Rusçası. TORFL A1.",
+    B2: "İleri gramer. Akademik Rusça. TORFL A2.",
+    C1: "İleri konuşma. Edebi Rusça. TORFL B1.",
+    C2: "Ana dil seviyesi."
   },
+  // TÜRKÇE
   turkish: {
-    A1:"Türk alfabesi, selamlaşma, temel kelimeler",
-    A2:"Temel cümleler, fiil çekimi",
-    B1:"Günlük konuşma, TÖMER B1",
-    B2:"İleri gramer, yazma",
-    C1:"Akademik Türkçe",
-    C2:"Ana dil seviyesi"
+    A1: "Türk alfabesi. Selamlaşma: Merhaba, Adınız ne? Sayılar, renkler. Temel isim ve fiiller.",
+    A2: "Hal ekleri: -e/-de/-den. Zaman çekimi: geniş, geçmiş, gelecek. Günlük konuşma. TÖMER A2.",
+    B1: "İleri ekler: -ki, -ince, -dığı. Günlük konuşma ve yazma. TÖMER B1.",
+    B2: "İleri gramer. Akademik Türkçe. TÖMER B2.",
+    C1: "İleri yazı ve konuşma. YDS/YÖKDİL hazırlık.",
+    C2: "Ana dil seviyesi."
   },
 };
+
+const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
@@ -129,7 +143,7 @@ const setSV = (uid,did,sv) => DB.s("sv_"+uid+"_"+did,sv);
 
 const DILLER = [
   {id:"quran",  ad:"Kur'an-ı Kerim",bayrak:"🕌",renk:"#0d2a14",vurgu:"#f9a825",mic:"ar-SA",mods:["Tecvid","Hıfz","Makam","Meal"],cats:["Tecvid","Hıfz","Makam","Sure Mealleri","Kıraat","Akaid"]},
-  {id:"medrese",ad:"Medrese Eğitimi",bayrak:"📖",renk:"#1a0e00",vurgu:"#c8a045",mic:"ar-SA",mods:["Fıkıh","Akaid","Tefsir","Hadis"]},
+  {id:"medrese",ad:"Medrese Eğitimi",bayrak:"📖",renk:"#1a0e00",vurgu:"#c8a045",mic:"ar-SA",mods:["Fıkıh","Akaid","Tefsir","Hadis"],cats:["Elif-Ba","Tecvid","Namaz Sureleri","İlmihal","Akaid","Sarf-Nahiv","Fıkıh","Hadis","Tefsir"]},
   {id:"arabic", ad:"Arapça",         bayrak:"🇸🇦",renk:"#2a0e0e",vurgu:"#ff8f00",mic:"ar-SA",mods:["Nahiv","Sarf","Konuşma","Okuma"],cats:["Genel","Günlük Hayat","Dini Konular","Seyahat","İş","Medya","Edebiyat"]},
   {id:"english",ad:"İngilizce",       bayrak:"🇬🇧",renk:"#0e1a2a",vurgu:"#ef5350",mic:"en-US",mods:["Grammar","Speaking","Vocabulary","IELTS"],cats:["Genel","Seyahat","İş","Akademik","Tıp","Teknoloji"]},
   {id:"german", ad:"Almanca",         bayrak:"🇩🇪",renk:"#1a1a0e",vurgu:"#fdd835",mic:"de-DE",mods:["Grammatik","Sprechen","Vokabeln","TestDaF"],cats:["Genel","Seyahat","İş","Akademik","Mühendislik"]},
@@ -582,16 +596,24 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const ilkDersMi = oncekiDersler.length === 0;
     
     let karsilamaTxt;
+    // Medrese/Kuran için özel başlangıç sorusu
+    const diniBaslangic = (dilId==="medrese"||dilId==="quran") ? 
+      "\n\n📋 Sana birkaç soru sormam gerekiyor:\n"+
+      "1️⃣ Kur'an harflerini (Elif-Ba) biliyor musun?\n"+
+      "2️⃣ Kur'an okuyabiliyor musun?\n"+
+      "3️⃣ Tecvid biliyor musun?\n"+
+      "4️⃣ Namaz surelerini ve dualarını biliyor musun?\n\n"+
+      "Cevabına göre seni doğru yerden başlatacağım. Türkçe cevapleyebilirsin." : 
+      "\n\n"+dil.ad+" seviyeni doğrulamak için: "+
+      (seviye==="A1"||seviye==="A2" ? dil.ad+" dilinde kendinizi tanıtır mısınız?" : 
+       "Bugünkü "+seviye+" seviyesi konusu hakkında ne biliyorsunuz?");
+
     if (ilkDersMi) {
       karsilamaTxt = besmele +
         "Merhaba "+ad+"! Ben "+hoca.ad+", "+hoca.uz+" uzmanıyım. 👋\n\n"+
-        "Seninle ilk dersimiz! Seni daha iyi tanımak istiyorum.\n\n"+
-        "📋 Birkaç soru sormam gerekiyor:\n"+
-        "1️⃣ Adın "+ad+", peki kaç yaşındasın?\n"+
-        "2️⃣ "+dil.ad+" öğrenmek isteme sebebin nedir?\n"+
-        "3️⃣ Daha önce "+dil.ad+" öğrendin mi?\n\n"+
-        "Seviyeni "+seviye+" ("+seviyeAcik[seviye]+") olarak seçmişsin. Bunu doğrulamak için:\n"+
-        "👉 "+dil.ad+" dilinde kendin hakkında birkaç cümle söyler misin? (bilmiyorsan Türkçe söyleyebilirsin)";
+        "Seninle ilk dersimiz! "+seviye+" ("+seviyeAcik[seviye]+") seviyesini seçmişsin."+
+        diniBaslangic+
+        "\n\n💡 "+dil.ad+" dersine hoş geldin! 🎓";
     } else {
       karsilamaTxt = besmele +
         "Tekrar hoş geldin "+ad+"! Ben "+hoca.ad+". 😊\n\n"+
@@ -602,10 +624,12 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     const txt = karsilamaTxt;
     setMsgs([{r:"ai",t:txt}]);
-    if (BESMELE_DILLER.includes(dilId)) {
+    // Besmele - sadece sesli modda oku
+    if (BESMELE_DILLER.includes(dilId) && sesliMod) {
       setTimeout(async ()=>{
-        await sesliOku("Bismillahirrahmanirrahim. Rabbi yessir vela tuassir.", hoca.id, "ar-SA");
-      },1200);
+        const tamBesmele = "Bismillahirrahmanirrahim. Rabbi yessir vela la tuassir, rabbi temmim bil hayr. Vela hawle vela kuvvete illa billahil aliyyil azim.";
+        await sesliOku(tamBesmele, hoca.id, "ar-SA");
+      },500);
     }
   },[dilMod]);
 
@@ -622,7 +646,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     // DİL KURALI - KESİN
     let dilKurali = "";
     if (dilMod === "tr") {
-      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Başka hiçbir dil kullanma. Rusça, Japonca, Arapça, İngilizce kelime YASAK. Her cümle Türkçe olacak.";
+      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Başka hiçbir dil kullanma. Rusça, Japonca, İngilizce kelime YASAK. ANCAK: Arapça kelimeler öğretilirken doğru Arapça harflerle yaz (örn: كَلَم = Kalem, لا تُعَسِّر = la tuassir). Yanlış Arapça yazma!";
     } else if (dilMod === "hedef") {
       dilKurali = "ZORUNLU KURAL: SADECE "+dil.ad.toUpperCase()+" dilinde yaz. Türkçe dahil başka dil YASAK.";
     } else {
@@ -646,10 +670,12 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
     // DİNİ DERSLER ÖZEL KURAL
     const diniKural = (dilId==="medrese"||dilId==="quran") ?
-      "DİNİ DERS KURALLARI:\n"+
+      "DİNİ DERS KURALLARI - KESİNLİKLE UYULMALI:\n"+
       "- Medrese sırası: 1.Kuran 2.Arapça 3.Fıkıh 4.Hadis 5.Tefsir 6.Akaid. Bu ASLA değişmez.\n"+
       "- Namaz duaları ve ayetleri TAM ver, eksik verme, özetleme.\n"+
       "- Ettehiyyatü namazda okunan duadır, Kuran suresi DEĞİLDİR.\n"+
+      "- Arapça kelimeleri MUTLAKA doğru Arapça harflerle yaz. Kalem = قَلَم (doğru). Kalem = كَلَم (YANLIŞ).\n"+
+      "- Dua ve ayetleri TAM yaz, yarım bırakma. Rabbu yessir duasının tamamı: رَبِّ يَسِّرْ وَلَا تُعَسِّرْ، رَبِّ تَمِّمْ بِالْخَيْرِ\n"+
       "- Emin olmadığın bilgiyi üretme, 'bilmiyorum' de.\n"+
       "- Dua veya sure istenince: Arapça metin + Türkçe okunuş + Anlam + Kaynak ver.\n"+
       "- Fıkıh konularında önce görüş birliği olan bilgiyi ver." : "";
