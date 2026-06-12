@@ -1,3 +1,4 @@
+cat > /mnt/user-data/outputs/api/chat.js << 'EOF'
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -6,31 +7,29 @@ export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({error:"Method not allowed"}); return; }
   try {
     const { messages, system } = req.body;
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.GROQ_API_KEY
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 1200,
-        temperature: 0.7,
-        messages: [
-          { role: "system", content: system },
-          ...messages
-        ]
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2000,
+        system: system,
+        messages: messages
       })
     });
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      res.status(response.status).json({ error: err.error?.message || "Hata: " + response.status });
+      const err = await response.json().catch(()=>({}));
+      res.status(response.status).json({error: err.error?.message || "Hata: "+response.status});
       return;
     }
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
-    res.status(200).json({ content: [{ type: "text", text }] });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    const text = data.content?.[0]?.text || "";
+    res.status(200).json({content:[{type:"text",text}]});
+  } catch(e) {
+    res.status(500).json({error: e.message});
   }
 }
