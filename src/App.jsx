@@ -130,6 +130,8 @@ const MUFREDAT = {
 
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
+const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
+
 const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
@@ -668,13 +670,15 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
     // DİNİ DERSLER ÖZEL KURAL
     const diniKural = (dilId==="medrese"||dilId==="quran") ?
-      "DİNİ DERS KURALLARI - KESİNLİKLE UYULMALI:\n"+
+      "DİNİ DERS KURALLARI - KESİNLİKLE UYULMALI (İHLAL ETME):\n"+
       "- Medrese sırası: 1.Kuran 2.Arapça 3.Fıkıh 4.Hadis 5.Tefsir 6.Akaid. Bu ASLA değişmez.\n"+
       "- Namaz duaları ve ayetleri TAM ver, eksik verme, özetleme.\n"+
       "- Ettehiyyatü namazda okunan duadır, Kuran suresi DEĞİLDİR.\n"+
       "- Arapça kelimeleri MUTLAKA doğru Arapça harflerle yaz. Kalem = قَلَم (doğru). Kalem = كَلَم (YANLIŞ).\n"+
       "- Dua ve ayetleri TAM yaz, yarım bırakma. Rabbu yessir duasının tamamı: رَبِّ يَسِّرْ وَلَا تُعَسِّرْ، رَبِّ تَمِّمْ بِالْخَيْرِ\n"+
-      "- Emin olmadığın bilgiyi üretme, 'bilmiyorum' de.\n"+
+      "- Emin olmadığın bilgiyi KESINLIKLE üretme. Yanlis bilgi vermek haramdır.\n"+
+      "- Kuran ayet numaraları söylerken SADECE emin olduğunu söyle, uydurma.\n"+
+      "- Var olmayan ayet, hadis uydurma. Bilmiyorsan: 'Bu konuda kesin bilgim yok, güvenilir bir kaynaktan doğrulayın' de.\n"+
       "- Dua veya sure istenince: Arapça metin + Türkçe okunuş + Anlam + Kaynak ver.\n"+
       "- Fıkıh konularında önce görüş birliği olan bilgiyi ver." : "";
 
@@ -719,11 +723,13 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       if (kul?.id) setDG(kul.id, dilId+"_"+hoca.id, yeni.slice(-50));
       return yeni;
     });
-      // Sadece sesli moddaysa sesli yanıt ver
-    if (sesliMod) {
-      await sesliOku(yan, hoca.id, dilMod==="hedef"?dil.mic:"tr-TR");
-      if (konusmaRef.current) mikDinle();
+      // Sesli yanıt - her zaman çal (ElevenLabs varsa), yoksa tarayıcı sesi
+    try {
+      await sesliOku(yan.substring(0,600), hoca.id, dilMod==="hedef"?dil.mic:"tr-TR");
+    } catch(sesErr) {
+      console.warn("Ses hatası:", sesErr);
     }
+    if (sesliMod && konusmaRef.current) setTimeout(mikDinle, 800);
       if (konusmaRef.current) mikDinle();
     } catch(e) {
       setMsgs(m=>[...m,{r:"ai",t:"Bağlantı hatası: "+e.message+". Tekrar deneyin."}]);
@@ -738,21 +744,56 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     try {
       const r = new SR();
       r.lang = dilMod==="hedef"?dil.mic:"tr-TR";
-      r.continuous=false; r.interimResults=false;
+      r.continuous=true;
+      r.interimResults=true;
+      r.maxAlternatives=1;
+      if(r.speechRecognitionList) r.serviceURI = "";
       r.onstart=()=>setMikr(true);
+      let birikmisSonuc = "";
+      let sessizlikTimer = null;
+      
       r.onresult=e=>{
-        const transcript = e.results[0][0].transcript;
-        const confidence = e.results[0][0].confidence;
-        setMikr(false);
-        // Güven skoru düşükse kullanıcıya göster ama gönder
-        if (confidence < 0.5) {
-          setYazi(transcript); // Input'a yaz, kullanıcı düzeltebilir
-        } else {
-          gonder(transcript);
+        // Sessizlik timer'ı sıfırla - konuşma devam ediyor
+        if(sessizlikTimer) clearTimeout(sessizlikTimer);
+        
+        let araMetin = "";
+        for(let i=e.resultIndex; i<e.results.length; i++){
+          if(e.results[i].isFinal){
+            birikmisSonuc += e.results[i][0].transcript + " ";
+          } else {
+            araMetin = e.results[i][0].transcript;
+          }
         }
+        setYazi(birikmisSonuc + araMetin);
+        
+        // 2.5 saniye sessizlik sonra gönder (nefes alınca hemen kapanmasın)
+        sessizlikTimer = setTimeout(() => {
+          if(birikmisSonuc.trim()) {
+            r.stop();
+          }
+        }, 2500);
+      };
+      
+      r.onspeechend = () => {
+        // Konuşma bitti ama 2 saniye bekle - belki devam edecek
+        if(sessizlikTimer) clearTimeout(sessizlikTimer);
+        sessizlikTimer = setTimeout(() => {
+          r.stop();
+        }, 2000);
       };
       r.onerror=e=>{setMikr(false); if(e.error!=="no-speech"&&e.error!=="aborted"){setMikErr("Ses algılanamadı."); setTimeout(()=>setMikErr(""),3000);}};
-      r.onend=()=>setMikr(false);
+      r.onend=()=>{
+        if(sessizlikTimer) clearTimeout(sessizlikTimer);
+        setMikr(false);
+        const sonucMetin = birikmisSonuc.trim();
+        if(sonucMetin){
+          birikmisSonuc = "";
+          gonder(sonucMetin);
+        } else if(konusmaRef.current) {
+          // Hiç ses algılanmadıysa tekrar dinle
+          setTimeout(mikDinle, 500);
+        }
+      };
       recRef.current=r; r.start();
     } catch {setMikErr("Mikrofon başlatılamadı.");}
   };
@@ -927,7 +968,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                   <div style={{fontSize:10,color:K.tx4,marginBottom:2,textAlign:m.r==="user"?"right":"left"}}>
                     {m.r==="user"?"Sen":"🤖 "+hoca.ad.split(" ")[0]}
                   </div>
-                  <div style={{padding:"11px 14px",borderRadius:16,color:K.tx,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",
+                  <div style={{padding:"13px 16px",borderRadius:16,color:K.tx,fontSize:15,lineHeight:1.8,whiteSpace:"pre-wrap",
                     background:m.r==="user"?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.card,
                     borderBottomRightRadius:m.r==="user"?4:16,
                     borderBottomLeftRadius:m.r==="ai"?4:16,
@@ -962,7 +1003,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                 onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&gonder(yazi)}
                 placeholder={mikr?"Dinliyorum...":konusmaRef.current?"Konuşuyor veya yaz...":"Mesaj yaz veya 🎤 bas..."}
                 style={{flex:1,background:K.bg3,border:"1px solid "+K.bdr,borderRadius:10,
-                  padding:"12px 14px",color:K.tx,fontSize:13,outline:"none"}}/>
+                  padding:"12px 14px",color:K.tx,fontSize:15,outline:"none"}}/>
               <button onClick={()=>gonder(yazi)} disabled={yukl||!yazi.trim()}
                 style={{padding:"12px 20px",borderRadius:10,fontWeight:700,fontSize:15,border:"none",flexShrink:0,
                   cursor:yukl||!yazi.trim()?"not-allowed":"pointer",
@@ -1338,7 +1379,7 @@ export default function App() {
   const gI2={width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"16px"}}>
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
@@ -1613,7 +1654,7 @@ export default function App() {
                   <div key={dr.id} style={{background:K.bg3,borderRadius:9,padding:"10px 14px",border:"1px solid "+K.bdr,marginBottom:6}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div>
-                        <div style={{color:K.tx,fontSize:12,fontWeight:600}}>{dr.tarih} {dr.saat||""}</div>
+                        <div style={{color:K.tx,fontSize:14,fontWeight:600}}>{dr.tarih} {dr.saat||""}</div>
                         <div style={{color:K.tx4,fontSize:11,marginTop:2}}>{dr.hoca+" • "+dr.sure+" dk • "+dr.kategori}</div>
                       </div>
                       <div style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{dr.seviye}</div>
