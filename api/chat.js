@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     });
     if (!response.ok) {
       const err = await response.json().catch(()=>({}));
-      res.status(response.status).json({error: err.error?.message || "Hata: "+response.status});
+      res.status(response.status).json({error: err.error?.message || "API Hata: "+response.status});
       return;
     }
     const data = await response.json();
