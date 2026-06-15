@@ -131,7 +131,7 @@ const MUFREDAT = {
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
 
-const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
+const getA = () => DB.g("adm") || {pw:"380638",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
 const SEVIYELER = ["A1","A2","B1","B2","C1","C2"];
@@ -376,8 +376,8 @@ async function sesliOku(metin, hocaId, dil_mic) {
       s5:"IKne3meq5aSn9XLyUdCD", s6:"9BWtsMINqrJLrRacOk9x",   // çocuk
       default:"EXAVITQu4vr4xnSDxMaL",
     };
-  const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
-    const res = await fetch("/api/tts", {
+    const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
+    async const res = await fetch("/api/tts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({text:metin.substring(0,500), voiceId})
