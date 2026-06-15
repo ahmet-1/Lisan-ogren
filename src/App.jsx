@@ -279,57 +279,6 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
-  // Kadın hoca mı erkek hoca mı?
-  const KADIN_HOCALAR = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
-    "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
-    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6",
-    "a3","a4","a6"];
-  const COCUK_HOCALAR = ["q5","q6","m5","m6","e5","e6","g5","g6",
-    "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
-  
-  // Ses seç
-  let voiceId;
-  if (COCUK_HOCALAR.includes(hocaId)) {
-    voiceId = KADIN_HOCALAR.includes(hocaId) 
-      ? "9BWtsMINqrJLrRacOk9x"  // çocuk kız
-      : "IKne3meq5aSn9XLyUdCD"; // çocuk erkek
-  } else if (KADIN_HOCALAR.includes(hocaId)) {
-    voiceId = "EXAVITQu4vr4xnSDxMaL"; // kadın - Bella
-  } else {
-    voiceId = "pNInz6obpgDQGcFmaJgB"; // erkek - Adam
-  }
-
-  // Önce ElevenLabs dene
-  try {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        text: metin.substring(0,800), 
-        voiceId,
-        stability: 0.4,
-        similarity_boost: 0.85,
-        style: 0.2,
-        use_speaker_boost: true
-      })
-    });
-    if (res.ok && res.headers.get("content-type")?.includes("audio")) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.volume = 1.0;
-      return new Promise(resolve => {
-        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-        audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
-        audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
-      });
-    }
-    throw new Error("TTS response not audio");
-  } catch {
-    return tarayiciSes(metin, dil_mic);
-  }
-}
- async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -377,7 +326,7 @@ async function sesliOku(metin, hocaId, dil_mic) {
       default:"EXAVITQu4vr4xnSDxMaL",
     };
     const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
-    async const res = await fetch("/api/tts", {
+    const res = await fetch("/api/tts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({text:metin.substring(0,500), voiceId})
