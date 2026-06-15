@@ -1815,6 +1815,7 @@ function AdminPanel({kapat, admCikis}) {
     </div>
   );
 }
+}
 
 // ─── ANA UYGULAMA ─────────────────────────────────────────────────────────────
 export default function App() {
