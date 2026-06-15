@@ -536,6 +536,67 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   useEffect(() => { sonRef.current?.scrollIntoView({behavior:"smooth"}); }, [msgs]);
 
+  // ── VOICE MAPPING (ElevenLabs) ──
+  const voiceMap = {
+    "q1": "onyx",    "q2": "onyx",    "q3": "nova",    "q4": "nova",    "q5": "onyx",    "q6": "nova",
+    "m1": "onyx",    "m2": "onyx",    "m3": "nova",    "m4": "nova",    "m5": "onyx",    "m6": "nova",
+    "a1": "onyx",    "a2": "onyx",    "a3": "nova",    "a4": "nova",
+    "e1": "onyx",    "e3": "onyx",    "e2": "nova",    "e4": "nova",
+    "default": "onyx"
+  };
+
+  const getVoiceId = () => voiceMap[hoca.id] || voiceMap.default;
+
+  // TTS temizleme - özel karakterleri filtrele
+  const cleanForTTS = (text) => {
+    return text
+      .replace(/[\*\[\]\(\)\{\}#_~`|\\]/g, '')  // Özel karakterleri sil
+      .replace(/\?{2,}/g, '?')                  // Çoklu soru işareti
+      .replace(/!{2,}/g, '!')                   // Çoklu ünlem
+      .replace(/\.{3,}/g, '. ')                 // Üç nokta
+      .replace(/\n+/g, ' ')                     // Yeni satırlar
+      .substring(0, 800)                        // Max 800 char
+      .trim();
+  };
+
+  // ElevenLabs TTS çağrısı
+  const callElevenLabsTTS = async (text, hocaId) => {
+    if (!text) return;
+    try {
+      const cleanText = cleanForTTS(text);
+      const voiceId = getVoiceId();
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text: cleanText, voiceId})
+      });
+      if (!response.ok) {
+        console.warn("TTS başarısız, fallback'e dönüyor");
+        fallbackToWebSpeech(cleanText);
+        return;
+      }
+      const blob = await response.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audio.play().catch(e => fallbackToWebSpeech(cleanText));
+    } catch (e) {
+      console.error("TTS hatası:", e);
+      fallbackToWebSpeech(cleanForTTS(text));
+    }
+  };
+
+  // Web Speech API fallback
+  const fallbackToWebSpeech = (text) => {
+    try {
+      window.speechSynthesis?.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+      u.rate = 0.9;
+      window.speechSynthesis?.speak(u);
+    } catch (e) {
+      console.error("Web Speech hata:", e);
+    }
+  };
+
   // Sistem promptu
   const getMedresePrompt = () => {
     if (dilMod === "tr")
@@ -1104,25 +1165,111 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   useEffect(() => { sonRef.current?.scrollIntoView({behavior:"smooth"}); }, [msgs]);
 
-  // Sistem promptu
-  const getMedresePrompt = () => {
-    if (dilMod === "tr")
-      return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi, sabırlı ve şefkatli bir hoca gibi konuş. İslami adap ile başla. Öğrencinin sorularını Kuran ve Sünnet ışığında cevapla. Hataları nazikçe düzelt. Maks 3 paragraf.`;
-    if (dilMod === "hedef")
-      return `أنت ${hoca.ad}، مدرس ديني خبير. تخصصك: ${hoca.uz}. أجب فقط باللغة العربية. كن لطيفًا وصبورًا. صحح الأخطاء بلطف. ثلاث فقرات كحد أقصى.`;
-    return `Sen ${hoca.ad} adlı uzman bir medrese hocasısın. ${hoca.yer} kökenlisin. Uzmanlık: ${hoca.uz}. Hem Türkçe hem Arapça kullan. Açıklamaları Türkçe yap, Arapça ibareleri Türkçe okunuşuyla da ver. Hataları nazikçe düzelt. Maks 3 paragraf.`;
+  // ── VOICE MAPPING (ElevenLabs) ──
+  const voiceMap = {
+    "q1": "onyx",    "q2": "onyx",    "q3": "nova",    "q4": "nova",    "q5": "onyx",    "q6": "nova",
+    "m1": "onyx",    "m2": "onyx",    "m3": "nova",    "m4": "nova",    "m5": "onyx",    "m6": "nova",
+    "a1": "onyx",    "a2": "onyx",    "a3": "nova",    "a4": "nova",
+    "e1": "onyx",    "e3": "onyx",    "e2": "nova",    "e4": "nova",
+    "default": "onyx"
   };
 
-  const getPrompt = () => {
-    if (dilId === "medrese") return getMedresePrompt();
-    // Diğer diller:
-    const guvenlik = " ÖNEMLI: Müstehcen, hakaret veya şiddet içerikli mesajlara yanıt verme. Böyle bir mesaj gelirse: Üyeliğiniz askıya alınabilir de ve dersi bitir.";
-    const seviyeInfo = ` Öğrencinin mevcut seviyesi: ${seviye}. Dersini bu seviyeye uygun yap. A1-A2 için çok basit, B1-B2 için orta, C1-C2 için ileri düzey içerik kullan.`;
+  const getVoiceId = () => voiceMap[hoca.id] || voiceMap.default;
+
+  // TTS temizleme - özel karakterleri filtrele
+  const cleanForTTS = (text) => {
+    return text
+      .replace(/[\*\[\]\(\)\{\}#_~`|\\]/g, '')  // Özel karakterleri sil
+      .replace(/\?{2,}/g, '?')                  // Çoklu soru işareti
+      .replace(/!{2,}/g, '!')                   // Çoklu ünlem
+      .replace(/\.{3,}/g, '. ')                 // Üç nokta
+      .replace(/\n+/g, ' ')                     // Yeni satırlar
+      .substring(0, 800)                        // Max 800 char
+      .trim();
+  };
+
+  // ElevenLabs TTS çağrısı
+  const callElevenLabsTTS = async (text, hocaId) => {
+    if (!text) return;
+    try {
+      const cleanText = cleanForTTS(text);
+      const voiceId = getVoiceId();
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text: cleanText, voiceId})
+      });
+      if (!response.ok) {
+        console.warn("TTS başarısız, fallback'e dönüyor");
+        fallbackToWebSpeech(cleanText);
+        return;
+      }
+      const blob = await response.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audio.play().catch(e => fallbackToWebSpeech(cleanText));
+    } catch (e) {
+      console.error("TTS hatası:", e);
+      fallbackToWebSpeech(cleanForTTS(text));
+    }
+  };
+
+  // Web Speech API fallback
+  const fallbackToWebSpeech = (text) => {
+    try {
+      window.speechSynthesis?.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+      u.rate = 0.9;
+      window.speechSynthesis?.speak(u);
+    } catch (e) {
+      console.error("Web Speech hata:", e);
+    }
+  };
+
+  // Sistem promptu
+  const getMedresePrompt = (inputType="spoken") => {
+    const konusmaTuruYonlendirmesi = inputType === "written"
+      ? "YAZI İLE CEVAP VER. Özel karakter, emoji, yıldız kullanma."
+      : "SESLİ CEVAP İÇİN UYGUN, DOĞAL TÜRKÇENİ kullan.";
+
     if (dilMod === "tr")
-      return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE TÜRKÇE yanıt ver. Samimi ve sıcak bir hoca gibi konuş, tıpkı telefonla konuşur gibi. Öğrencinin yazdığı veya söylediği her şeyi dikkatle analiz et. Telaffuz, yazım ve gramer hatalarını MUTLAKA nazikçe düzelt: önce doğrusunu söyle, sonra kısaca açıkla. Her derste yeni bir şey öğret. Maks 3 paragraf.${guvenlik}`;
+      return `Sen ${hoca.ad} adlı medrese hocanısın, ${hoca.yer} kökenli. Uzmanlık: ${hoca.uz}.
+MUTLAKA KIŞ VE ÖZET CEVAP VER - Sadece sorulan şeye cevap. Maksimum 2 paragraf, her biri 2-3 cümle.
+${konusmaTuruYonlendirmesi}
+Türkçe dilbilgisine dikkat: "Hoş buldun" (değil "hoşgeldin"), "Süresi İklas" şeklinde yaz.
+İslami adap ile başla. Kuran-Sünnet ışığında cevapla. Hataları nazikçe düzelt.`;
     if (dilMod === "hedef")
-      return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. SADECE ${dil.ad} dilinde yanıt ver. Samimi ve sıcak bir hoca gibi konuş. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
-    return `Sen ${hoca.ad} adlı uzman bir AI dil öğretmenisin. ${hoca.yer} kökenlisin. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}. Hem Türkçe hem ${dil.ad} kullan. Açıklamaları Türkçe yap, örnekleri ${dil.ad} dilinde ver. Öğrencinin hatalarını MUTLAKA nazikçe düzelt. Maks 3 paragraf.`;
+      return `أنت ${hoca.ad}، معلم ديني متخصص. تخصصك: ${hoca.uz}.
+أجب بإيجاز - اجب فقط على السؤال. فقرتان كحد أقصى.
+أجب باللغة العربية فقط. صحح الأخطاء بلطف.`;
+    return `Sen ${hoca.ad}, medrese hocanısın. Uzmanlık: ${hoca.uz}.
+KISA VE ÖZET CEVAP - Sadece sorulan şeye. Maksimum 2 paragraf.
+${konusmaTuruYonlendirmesi}
+Hem Türkçe hem Arapça kullan. Hataları nazikçe düzelt.`;
+  };
+
+  const getPrompt = (inputType="spoken") => {
+    if (dilId === "medrese") return getMedresePrompt(inputType);
+    const guvenlik = " ÖNEMLI: Müstehcen, hakaret içerikli mesajlara yanıt verme.";
+    const konusmaTuruYonlendirmesi = inputType === "written"
+      ? "YAZI İLE CEVAP VER. Özel karakter, emoji kullanma."
+      : "SESLİ CEVAP İÇİN UYGUN TÜRKÇE kullan.";
+    const seviyeInfo = ` A1-A2: 1-2 cümle ultra basit | B1-B2: 2-3 cümle orta | C1-C2: 3-4 cümle ileri`;
+
+    if (dilMod === "tr")
+      return `Sen ${hoca.ad} adlı dil öğretmenisin, ${hoca.yer} kökenli. ${dil.ad} öğretiyorsun. Uzmanlık: ${hoca.uz}.
+KISA VE ÖZET CEVAP - Maksimum 2 paragraf, her biri 2-3 cümle.
+${konusmaTuruYonlendirmesi}
+Türkçe dilbilgisine dikkat: "Hoş buldun" (değil hoşgeldin).
+Öğrenci hatalarını nazikçe düzelt: önce doğrusunu söyle, sonra açıkla.${seviyeInfo}${guvenlik}`;
+    if (dilMod === "hedef")
+      return `You are ${hoca.ad}, a ${dil.ad} teacher from ${hoca.yer}. Expertise: ${hoca.uz}.
+ANSWER BRIEFLY - Maximum 2 paragraphs, 2-3 sentences each.
+${inputType === "written" ? "Respond in writing. No special characters or emojis." : "Speak naturally for audio response."}
+Correct mistakes gently. ${seviyeInfo}`;
+    return `Sen ${hoca.ad}, dil öğretmenisin. Uzmanlık: ${hoca.uz}.
+KISA CEVAP - Maksimum 2 paragraf. ${konusmaTuruYonlendirmesi}
+Hataları nazikçe düzelt. Hem Türkçe hem ${dil.ad} kullan.`;
   };
 
   // ── DİL SEÇİM EKRANI ──
@@ -1237,10 +1384,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   const gonderSesli = async (txt) => {
     if (!txt || yukl) return;
-    // Uygunsuz içerik kontrolü
     if (uygunsuzMu(txt)) {
       setMsgs(m => [...m, {r:"ai", t:"⚠️ UYARI: Bu tür içerikler platform kurallarına aykırıdır. Lütfen derse odaklanın. Tekrarında üyeliğiniz askıya alınabilir."}]);
-      // Admin'e bildirim kaydet
       const a = getA();
       const uyari = {id:Date.now(), kulId:kul?.id, kulAd:kul?.ad, email:kul?.email, mesaj:txt, tarih:new Date().toLocaleString("tr-TR"), tip:"uygunsuz"};
       setA({...a, ihtarlar:[...(a.ihtarlar||[]), uyari]});
@@ -1252,8 +1397,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:800,
-          system: getPrompt(),
+          model:"claude-haiku-4-5-20251001", max_tokens:400,
+          system: getPrompt("spoken"),
           messages: [
             ...msgs.filter(m=>m.r).map(m => ({role: m.r==="ai"?"assistant":"user", content:m.t})),
             {role:"user", content:txt}
@@ -1265,27 +1410,15 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const yan = d.content?.[0]?.text;
       if (!yan) throw new Error("Yanıt alınamadı.");
       setMsgs(m => [...m, {r:"ai", t:yan}]);
-      // Hafızaya hata kaydı - AI yanıtında "yanlış" veya "hata" geçiyorsa kaydet
       if (kul?.id && (yan.includes("yanlış") || yan.includes("hata") || yan.includes("doğrusu"))) {
         const h = getHafiza(kul.id, dilId);
         h.toplamDers = (h.toplamDers||0) + 1;
         h.sonDers = new Date().toLocaleDateString("tr-TR");
         setHafiza(kul.id, dilId, h);
       }
-      // Sesli oku - bitince tekrar dinlemeye başla
-      try {
-        window.speechSynthesis?.cancel();
-        const u = new SpeechSynthesisUtterance(yan.substring(0,300));
-        u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
-        u.rate = 0.85; u.pitch = 1.1;
-        u.onend = () => {
-          // Hoca konuşmayı bitirdi, tekrar dinlemeye başla
-          if (konusmaRef.current) setTimeout(mikDinle, 500);
-        };
-        window.speechSynthesis?.speak(u);
-      } catch {
-        if (konusmaRef.current) setTimeout(mikDinle, 500);
-      }
+      // ElevenLabs TTS çağrısı
+      await callElevenLabsTTS(yan, hoca.id);
+      if (konusmaRef.current) setTimeout(mikDinle, 500);
     } catch(e) {
       setMsgs(m => [...m, {r:"ai", t:`Bağlantı hatası: ${e.message}`}]);
       if (konusmaRef.current) setTimeout(mikDinle, 500);
@@ -1309,8 +1442,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:800,
-          system: getPrompt(),
+          model:"claude-haiku-4-5-20251001", max_tokens:400,
+          system: getPrompt("written"),
           messages: [
             ...msgs.filter(m=>m.r).map(m => ({role: m.r==="ai"?"assistant":"user", content:m.t})),
             {role:"user", content:txt}
@@ -1322,13 +1455,6 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const yan = d.content?.[0]?.text;
       if (!yan) throw new Error("Yanıt alınamadı.");
       setMsgs(m => [...m, {r:"ai", t:yan}]);
-      try {
-        window.speechSynthesis?.cancel();
-        const u = new SpeechSynthesisUtterance(yan.substring(0,200));
-        u.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
-        u.rate = 0.85; u.pitch = 1.1;
-        window.speechSynthesis?.speak(u);
-      } catch {}
     } catch(e) {
       setMsgs(m => [...m, {r:"ai", t:`Bağlantı hatası: ${e.message}. İnternet bağlantınızı kontrol edip tekrar deneyin.`}]);
     }
@@ -1343,8 +1469,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:800,
-          system: getPrompt(),
+          model:"claude-haiku-4-5-20251001", max_tokens:400,
+          system: getPrompt("written"),
           messages: [
             ...msgs.filter(m=>m.r).map(m => ({role: m.r==="ai"?"assistant":"user", content:m.t})),
             {role:"user", content:txt}
