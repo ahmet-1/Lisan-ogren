@@ -130,6 +130,7 @@ const MUFREDAT = {
 
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
+
 const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
@@ -278,6 +279,56 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
+  // Kadın hoca mı erkek hoca mı?
+  const KADIN_HOCALAR = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
+    "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
+    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6",
+    "a3","a4","a6"];
+  const COCUK_HOCALAR = ["q5","q6","m5","m6","e5","e6","g5","g6",
+    "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
+  
+  // Ses seç
+  let voiceId;
+  if (COCUK_HOCALAR.includes(hocaId)) {
+    voiceId = KADIN_HOCALAR.includes(hocaId) 
+      ? "9BWtsMINqrJLrRacOk9x"  // çocuk kız
+      : "IKne3meq5aSn9XLyUdCD"; // çocuk erkek
+  } else if (KADIN_HOCALAR.includes(hocaId)) {
+    voiceId = "EXAVITQu4vr4xnSDxMaL"; // kadın - Bella
+  } else {
+    voiceId = "pNInz6obpgDQGcFmaJgB"; // erkek - Adam
+  }
+
+  // Önce ElevenLabs dene
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        text: metin.substring(0,800), 
+        voiceId,
+        stability: 0.4,
+        similarity_boost: 0.85,
+        style: 0.2,
+        use_speaker_boost: true
+      })
+    });
+    if (res.ok && res.headers.get("content-type")?.includes("audio")) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.volume = 1.0;
+      return new Promise(resolve => {
+        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+        audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
+      });
+    }
+    throw new Error("TTS response not audio");
+  } catch {
+    return tarayiciSes(metin, dil_mic);
+  }
+}ync function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -530,11 +581,23 @@ function AuthModal({ilkMod, kapat, basari}) {
 function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d=>d.id===dilId);
   // WhatsApp mantığı - önceki ders geçmişini yükle
+  // WhatsApp mantığı - hoca+dil bazlı ders geçmişi yükle
+  const DERS_KEY = kul?.id ? "msg_"+kul.id+"_"+dilId+"_"+hoca.id : null;
   const [msgs, setMsgs] = useState(() => {
-    if (!kul?.id || !dilId || !hoca?.id) return [];
-    const dg = getDG(kul.id, dilId+"_"+hoca.id);
-    return dg.length > 0 ? dg : [];
+    if (!DERS_KEY) return [];
+    try {
+      const kayit = localStorage.getItem(DERS_KEY);
+      return kayit ? JSON.parse(kayit) : [];
+    } catch { return []; }
   });
+
+  // Mesajları otomatik kaydet
+  const msgKaydet = (yeniMsgs) => {
+    setMsgs(yeniMsgs);
+    if (DERS_KEY) {
+      try { localStorage.setItem(DERS_KEY, JSON.stringify(yeniMsgs.slice(-100))); } catch {}
+    }
+  };
   const [yazi, setYazi] = useState("");
   const [yukl, setYukl] = useState(false);
   const [mikr, setMikr] = useState(false);
@@ -622,12 +685,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     const txt = karsilamaTxt;
     setMsgs([{r:"ai",t:txt}]);
-    // Besmele - sadece sesli modda oku
-    if (BESMELE_DILLER.includes(dilId) && sesliMod) {
-      setTimeout(async ()=>{
-        const tamBesmele = "Bismillahirrahmanirrahim. Rabbi yessir vela la tuassir, rabbi temmim bil hayr. Vela hawle vela kuvvete illa billahil aliyyil azim.";
-        await sesliOku(tamBesmele, hoca.id, "ar-SA");
-      },500);
+    // Besmele - sesli modda oku (sesli/yazılı her ikisinde de yaz, ama sadece sesli modda çal)
+    if (BESMELE_DILLER.includes(dilId)) {
+      if(sesliMod) {
+        setTimeout(async ()=>{
+          const tamBesmele = "Bismillahirrahmanirrahim. Rabbi yessir vela tuassir, rabbi temmim bil hayr.";
+          await sesliOku(tamBesmele, hoca.id, "ar-SA");
+        },800);
+      }
     }
   },[dilMod]);
 
@@ -644,11 +709,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     // DİL KURALI - KESİN
     let dilKurali = "";
     if (dilMod === "tr") {
-      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Başka hiçbir dil kullanma. Rusça, Japonca, İngilizce kelime YASAK. ANCAK: Arapça kelimeler öğretilirken doğru Arapça harflerle yaz (örn: كَلَم = Kalem, لا تُعَسِّر = la tuassir). Yanlış Arapça yazma!";
+      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Tek bir İngilizce, Rusça, Japonca veya başka dil kelimesi YASAK. Türkçe öğretiyorsan SADECE Türkçe yaz. Arapça öğretiyorsan Türkçe açıkla Arapça harflerle doğru yaz.";
     } else if (dilMod === "hedef") {
-      dilKurali = "ZORUNLU KURAL: SADECE "+dil.ad.toUpperCase()+" dilinde yaz. Türkçe dahil başka dil YASAK.";
+      dilKurali = "ZORUNLU KURAL: SADECE "+dil.ad+" dilinde yaz. Türkçe dahil BAŞKA DİL YASAK. Tek kelime bile karıştırma.";
     } else {
-      dilKurali = "ZORUNLU KURAL: Açıklamaları TÜRKÇE yap. "+dil.ad+" örnekler ver. ASLA dil karıştırma. Cümlenin yarısı Türkçe yarısı başka dil OLMAZ.";
+      dilKurali = "KURAL: Açıklamaları Türkçe yap, "+dil.ad+" örnekler ver. Cümle içinde dil karıştırma YASAK. Türkçe cümle içine "+dil.ad+" kelime SERPIŞTIRME.";
     }
 
     // ÇOCUK TARZI
@@ -710,24 +775,37 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     }
     setYazi(""); setYukl(true);
     const yeniMsgs = [...msgs, {r:"user", t:metin}];
-    setMsgs(yeniMsgs);
-    if (kul?.id) setDG(kul.id, dilId+"_"+hoca.id, yeniMsgs.slice(-50));
+    msgKaydet(yeniMsgs);
     try {
       const history = msgs.filter(m=>m.r).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t}));
       const yan = await aiYanit([...history,{role:"user",content:metin}], getPrompt());
       const guncelMsgs = [...msgs, {r:"user",t:metin}, {r:"ai",t:yan}];
-    setMsgs(m => {
-      const yeni = [...m, {r:"ai",t:yan}];
-      if (kul?.id) setDG(kul.id, dilId+"_"+hoca.id, yeni.slice(-50));
-      return yeni;
-    });
-      // Sesli yanıt - her zaman çal (ElevenLabs varsa), yoksa tarayıcı sesi
-    try {
-      await sesliOku(yan.substring(0,600), hoca.id, dilMod==="hedef"?dil.mic:"tr-TR");
-    } catch(sesErr) {
-      console.warn("Ses hatası:", sesErr);
+    const temizYanEkran = yan
+      .replace(/\*+/g, '')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/[🎯🤔😊😀🎉✅❌⭐🔴🟢📚🎓👋🙏✨🌟💡]/gu, '')
+      .trim();
+    msgKaydet([...msgs, {r:"user",t:metin}, {r:"ai",t:temizYanEkran}]);
+      // Metni temizle - yıldız, emoji, parantez, noktalama fazlalıkları kaldır
+    const metinTemizle = (txt) => txt
+      .replace(/\*+/g, '')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[🎯🤔😊😀🎉✅❌⭐🔴🟢📚🎓👋🙏✨🌟💡]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    const temizYan = metinTemizle(yan);
+    
+    // Sesli modda ses çal
+    if (sesliMod || konusmaRef.current) {
+      const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
+      sesliOku(temizYan.substring(0,800), hoca.id, sesDil).then(()=>{
+        if(konusmaRef.current) setTimeout(mikDinle, 600);
+      }).catch(()=>{
+        if(konusmaRef.current) setTimeout(mikDinle, 600);
+      });
     }
-    if (sesliMod && konusmaRef.current) setTimeout(mikDinle, 800);
       if (konusmaRef.current) mikDinle();
     } catch(e) {
       setMsgs(m=>[...m,{r:"ai",t:"Bağlantı hatası: "+e.message+". Tekrar deneyin."}]);
@@ -737,63 +815,76 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   const mikDinle = () => {
     if (!konusmaRef.current) return;
-    const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-    if (!SR) { setMikErr("Ses girişi desteklenmiyor."); return; }
+    setMikErr("");
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setMikErr("Tarayıcınız sesi desteklemiyor."); konusmaRef.current=false; return; }
+    
     try {
       const r = new SR();
-      r.lang = dilMod==="hedef"?dil.mic:"tr-TR";
-      r.continuous=true;
-      r.interimResults=true;
-      r.maxAlternatives=1;
-      if(r.speechRecognitionList) r.serviceURI = "";
-      r.onstart=()=>setMikr(true);
-      let birikmisSonuc = "";
-      let sessizlikTimer = null;
       
-      r.onresult=e=>{
-        // Sessizlik timer'ı sıfırla - konuşma devam ediyor
-        if(sessizlikTimer) clearTimeout(sessizlikTimer);
+      // Dil ayarı - karışmasın diye net belirle
+      r.lang = dilMod==="hedef" ? dil.mic : "tr-TR";
+      r.continuous = false;      // false daha stabil çalışır
+      r.interimResults = false;  // false = sadece final sonuç, yanlış algılama azalır
+      r.maxAlternatives = 3;     // 3 alternatif - en iyisini seç
+      
+      recRef.current = r;
+      
+      r.onstart = () => {
+        setMikr(true);
+        setYazi("🎤 Dinliyorum...");
+      };
+      
+      let sonucGonderildi = false;
+      r.onresult = (e) => {
+        if (sonucGonderildi) return; // Çift gönderimi önle
         
-        let araMetin = "";
-        for(let i=e.resultIndex; i<e.results.length; i++){
-          if(e.results[i].isFinal){
-            birikmisSonuc += e.results[i][0].transcript + " ";
-          } else {
-            araMetin = e.results[i][0].transcript;
+        let enIyi = "";
+        let enGuven = 0;
+        for (let i = 0; i < e.results[0].length; i++) {
+          if (e.results[0][i].confidence > enGuven) {
+            enGuven = e.results[0][i].confidence;
+            enIyi = e.results[0][i].transcript;
           }
         }
-        setYazi(birikmisSonuc + araMetin);
+        if (!enIyi.trim()) return;
         
-        // 2.5 saniye sessizlik sonra gönder (nefes alınca hemen kapanmasın)
-        sessizlikTimer = setTimeout(() => {
-          if(birikmisSonuc.trim()) {
-            r.stop();
-          }
-        }, 2500);
-      };
-      
-      r.onspeechend = () => {
-        // Konuşma bitti ama 2 saniye bekle - belki devam edecek
-        if(sessizlikTimer) clearTimeout(sessizlikTimer);
-        sessizlikTimer = setTimeout(() => {
-          r.stop();
-        }, 2000);
-      };
-      r.onerror=e=>{setMikr(false); if(e.error!=="no-speech"&&e.error!=="aborted"){setMikErr("Ses algılanamadı."); setTimeout(()=>setMikErr(""),3000);}};
-      r.onend=()=>{
-        if(sessizlikTimer) clearTimeout(sessizlikTimer);
+        sonucGonderildi = true;
+        setYazi(enIyi);
         setMikr(false);
-        const sonucMetin = birikmisSonuc.trim();
-        if(sonucMetin){
-          birikmisSonuc = "";
-          gonder(sonucMetin);
-        } else if(konusmaRef.current) {
-          // Hiç ses algılanmadıysa tekrar dinle
-          setTimeout(mikDinle, 500);
+        r.stop();
+        gonder(enIyi.trim());
+      };
+      
+      r.onerror = (e) => {
+        setMikr(false);
+        setYazi("");
+        if (e.error === "no-speech") {
+          // Sessizlik - tekrar dinle
+          if (konusmaRef.current) setTimeout(mikDinle, 300);
+        } else if (e.error === "not-allowed") {
+          setMikErr("Mikrofon izni reddedildi. Tarayıcı ayarlarından izin ver.");
+          konusmaRef.current = false;
+        } else if (e.error === "aborted") {
+          // Normal kapanma
+        } else {
+          if (konusmaRef.current) setTimeout(mikDinle, 500);
         }
       };
-      recRef.current=r; r.start();
-    } catch {setMikErr("Mikrofon başlatılamadı.");}
+      
+      r.onend = () => {
+        setMikr(false);
+        // Konuşma bitti, tekrar dinlemeye başla (telefon modu)
+        if (konusmaRef.current && !yukl) {
+          setTimeout(mikDinle, 400);
+        }
+      };
+      
+      r.start();
+    } catch (err) {
+      setMikErr("Mikrofon başlatılamadı: " + err.message);
+      konusmaRef.current = false;
+    }
   };
 
   const mikToggle = () => {
@@ -931,8 +1022,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           <div style={{background:K.card,borderRadius:10,padding:12,border:"1px solid "+K.bdr2,textAlign:"center"}}>
             <div style={{fontSize:9,color:K.tx4,marginBottom:8,fontWeight:700,letterSpacing:1}}>AI HOCAN</div>
             <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Av h={hoca} dil={dil} sz={72}/></div>
-            <div style={{color:K.tx,fontWeight:700,fontSize:12}}>{hoca.ad}</div>
-            <div style={{color:dil.vurgu,fontSize:10,marginTop:2}}>{hoca.yer}</div>
+            <div style={{color:K.tx,fontWeight:700,fontSize:14}}>{hoca.ad}</div>
+            <div style={{color:dil.vurgu,fontSize:12,marginTop:2}}>{hoca.yer}</div>
             <div style={{color:K.gL,fontSize:16,fontWeight:900,marginTop:6}}>{seviye}</div>
             {yukl&&<div style={{marginTop:6,color:K.gL,fontSize:10,animation:"tt 1s infinite"}}>Yanıt yazıyor...</div>}
           </div>
@@ -966,7 +1057,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                   <div style={{fontSize:10,color:K.tx4,marginBottom:2,textAlign:m.r==="user"?"right":"left"}}>
                     {m.r==="user"?"Sen":"🤖 "+hoca.ad.split(" ")[0]}
                   </div>
-                  <div style={{padding:"13px 16px",borderRadius:16,color:K.tx,fontSize:15,lineHeight:1.8,whiteSpace:"pre-wrap",
+                  <div style={{padding:"14px 18px",borderRadius:16,color:K.tx,fontSize:16,lineHeight:1.9,whiteSpace:"pre-wrap",
                     background:m.r==="user"?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.card,
                     borderBottomRightRadius:m.r==="user"?4:16,
                     borderBottomLeftRadius:m.r==="ai"?4:16,
@@ -1377,7 +1468,7 @@ export default function App() {
   const gI2={width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"16px"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
