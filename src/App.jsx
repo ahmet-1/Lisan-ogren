@@ -328,7 +328,7 @@ async function sesliOku(metin, hocaId, dil_mic) {
   } catch {
     return tarayiciSes(metin, dil_mic);
   }
-}ync function sesliOku(metin, hocaId, dil_mic) {
+}async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
