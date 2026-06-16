@@ -131,7 +131,7 @@ const MUFREDAT = {
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
 
-const getA = () => DB.g("adm") || {pw:"380638",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
+const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
 const SEVIYELER = ["A1","A2","B1","B2","C1","C2"];
@@ -279,6 +279,56 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
+  // Kadın hoca mı erkek hoca mı?
+  const KADIN_HOCALAR = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
+    "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
+    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6",
+    "a3","a4","a6"];
+  const COCUK_HOCALAR = ["q5","q6","m5","m6","e5","e6","g5","g6",
+    "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
+  
+  // Ses seç
+  let voiceId;
+  if (COCUK_HOCALAR.includes(hocaId)) {
+    voiceId = KADIN_HOCALAR.includes(hocaId) 
+      ? "9BWtsMINqrJLrRacOk9x"  // çocuk kız
+      : "IKne3meq5aSn9XLyUdCD"; // çocuk erkek
+  } else if (KADIN_HOCALAR.includes(hocaId)) {
+    voiceId = "EXAVITQu4vr4xnSDxMaL"; // kadın - Bella
+  } else {
+    voiceId = "pNInz6obpgDQGcFmaJgB"; // erkek - Adam
+  }
+
+  // Önce ElevenLabs dene
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        text: metin.substring(0,800), 
+        voiceId,
+        stability: 0.4,
+        similarity_boost: 0.85,
+        style: 0.2,
+        use_speaker_boost: true
+      })
+    });
+    if (res.ok && res.headers.get("content-type")?.includes("audio")) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.volume = 1.0;
+      return new Promise(resolve => {
+        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+        audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
+      });
+    }
+    throw new Error("TTS response not audio");
+  } catch {
+    return tarayiciSes(metin, dil_mic);
+  }
+}ync function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -698,6 +748,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     return okulMantigi+"\n"+dilKurali+"\n"+cocukTarz+"\n"+diniKural+
       "\nHoca: "+hoca.ad+". Uzmanlık: "+hoca.uz+". Kategori: "+kategori+"."+
       "\n"+(sesliMod?"Öğrenci sesli konuşuyor, kısa net yanıt ver.":"Öğrenci yazıyor, yazılı yanıt ver.")+
+      "\nCEVAP UZUNLUĞU: Basit soru/selamlaşmaya 1-2 cümle yeterli. Konu anlatımı gerekiyorsa 3-5 cümle. Gereksiz uzun örnek verme, lafı uzatma, soruya göre cevap ver."+
+      "\nTELAFFUZ GERİ BİLDİRİMİ: Öğrencinin yazdığı/söylediği kelimede harf hatası varsa belirt, doğrusunu göster ve nasıl çıkarılacağını söyle (örn: bu harf gırtlaktan/boğazdan çıkar)."+
       "\nŞİMDİ DERSE BAŞLA. "+seviye+" seviyesine göre bugünkü konuyu tanıt, öğrenciye soru sor.";
   };
 
@@ -1062,6 +1114,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 function AdminPanel({kapat, admCikis}) {
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg] = useState(getA());
+  const [secilenKullanici, setSecilenKullanici] = useState(null);
   const [kayd, setKayd] = useState(false);
   const [hE,setHE]=useState(""); const [hT,setHT]=useState("7 Gün"); const [hOk,setHOk]=useState(false); const [hErr,setHErr]=useState("");
   const [p1,setP1]=useState(""); const [p2,setP2]=useState(""); const [pMsg,setPMsg]=useState("");
@@ -1159,12 +1212,12 @@ function AdminPanel({kapat, admCikis}) {
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Kullanıcılar ({toplam})</div>
           {kul.length===0?<div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Henüz kayıtlı kullanıcı yok</div>:(
             <div style={{...kd,padding:0,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr",padding:"9px 14px",
+              <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr 0.6fr",padding:"9px 14px",
                 background:K.bg3,fontSize:9,color:K.tx4,fontWeight:700}}>
-                {["AD / E-POSTA","TEL / TC","PLAN","DURUM","GELİR"].map(h=><div key={h}>{h}</div>)}
+                {["AD / E-POSTA","TEL / TC","PLAN","DURUM","GELİR","DERSLER"].map(h=><div key={h}>{h}</div>)}
               </div>
               {kul.map(u=>(
-                <div key={u.id} style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr",
+                <div key={u.id} style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr 0.6fr",
                   padding:"11px 14px",borderTop:"1px solid "+K.bdr,alignItems:"center"}}>
                   <div><div style={{color:K.tx,fontSize:12,fontWeight:600}}>{u.ad}</div>
                     <div style={{color:K.tx4,fontSize:10}}>{u.email}</div>
@@ -1176,8 +1229,48 @@ function AdminPanel({kapat, admCikis}) {
                     background:u.durum==="Aktif"?"rgba(46,125,50,0.18)":u.durum==="Deneme"?"rgba(249,168,37,0.15)":"rgba(198,40,40,0.15)",
                     color:u.durum==="Aktif"?K.gL:u.durum==="Deneme"?K.warn:K.errL}}>{u.durum}</div>
                   <div style={{color:K.warn,fontSize:12,fontWeight:700}}>{u.odeme}</div>
+                  <button onClick={()=>setSecilenKullanici(u)}
+                    style={{padding:"5px 10px",borderRadius:6,background:K.bg3,color:K.tL,
+                      border:"1px solid "+K.bdr2,cursor:"pointer",fontSize:11}}>📚 Gör</button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {secilenKullanici && (
+            <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",
+              alignItems:"center",justifyContent:"center",zIndex:9999,padding:20}}>
+              <div style={{background:K.card,borderRadius:18,padding:24,width:600,maxHeight:"80vh",
+                overflowY:"auto",border:"1px solid "+K.bdr3}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+                  <div>
+                    <div style={{color:K.tx,fontSize:18,fontWeight:700}}>{secilenKullanici.ad}</div>
+                    <div style={{color:K.tx4,fontSize:12}}>{secilenKullanici.email}</div>
+                  </div>
+                  <button onClick={()=>setSecilenKullanici(null)}
+                    style={{background:"none",border:"none",color:K.tx4,fontSize:20,cursor:"pointer"}}>✕</button>
+                </div>
+                <div style={{color:K.tx,fontWeight:700,fontSize:14,marginBottom:12}}>📚 Ders Geçmişi</div>
+                {DILLER.map(d => {
+                  const dersler = getDG(secilenKullanici.id, d.id);
+                  if(dersler.length===0) return null;
+                  return (
+                    <div key={d.id} style={{background:K.bg3,borderRadius:10,padding:12,marginBottom:8}}>
+                      <div style={{color:K.tx,fontWeight:600,fontSize:13,marginBottom:6}}>
+                        {d.bayrak} {d.ad} — {getSV(secilenKullanici.id, d.id)} seviye
+                      </div>
+                      {dersler.slice(-3).map(dr => (
+                        <div key={dr.id} style={{color:K.tx3,fontSize:11,padding:"4px 0"}}>
+                          {dr.tarih} • {dr.hoca} • {dr.kategori} • {dr.sure}dk
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                {DILLER.every(d => getDG(secilenKullanici.id, d.id).length === 0) && (
+                  <div style={{color:K.tx4,textAlign:"center",padding:20}}>Bu kullanıcının henüz ders geçmişi yok.</div>
+                )}
+              </div>
             </div>
           )}
         </>}
@@ -1715,6 +1808,34 @@ export default function App() {
               Henüz ders geçmişin yok. Hemen başla! 🚀
             </div>
           )}
+
+          {/* ŞİFRE DEĞİŞTİRME */}
+          <div style={{background:K.card,borderRadius:14,padding:18,border:"1px solid "+K.bdr,marginTop:20}}>
+            <div style={{color:K.tx,fontWeight:700,fontSize:15,marginBottom:14}}>🔐 Şifre Değiştir</div>
+            <input type="password" id="kulP1" placeholder="Yeni şifre (min 6 karakter)"
+              style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
+                borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+            <input type="password" id="kulP2" placeholder="Yeni şifreyi tekrar girin"
+              style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
+                borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+            <button onClick={()=>{
+              const p1 = document.getElementById("kulP1").value;
+              const p2 = document.getElementById("kulP2").value;
+              if(!p1 || p1.length<6){ alert("Şifre en az 6 karakter olmalı!"); return; }
+              if(p1!==p2){ alert("Şifreler eşleşmiyor!"); return; }
+              const a = getA();
+              const yeniUsers = a.users.map(u => u.email===kul.email ? {...u, pw:p1} : u);
+              setA({...a, users:yeniUsers});
+              const yeniKul = {...kul, pw:p1};
+              setKul(yeniKul); DB.s("kul", yeniKul);
+              document.getElementById("kulP1").value="";
+              document.getElementById("kulP2").value="";
+              alert("✅ Şifreniz güncellendi!");
+            }} style={{width:"100%",padding:11,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+              color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>
+              Şifreyi Güncelle
+            </button>
+          </div>
         </div>
       )}
 
