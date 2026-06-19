@@ -307,9 +307,9 @@ async function sesliOku(metin, hocaId, dil_mic) {
       body: JSON.stringify({
         text: metin.substring(0,800), 
         voiceId,
-        stability: 0.4,
-        similarity_boost: 0.85,
-        style: 0.2,
+        stability: 0.35,
+        similarity_boost: 0.9,
+        style: 0.35,
         use_speaker_boost: true
       })
     });
@@ -328,7 +328,6 @@ async function sesliOku(metin, hocaId, dil_mic) {
   } catch {
     return tarayiciSes(metin, dil_mic);
   }
-}async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -657,17 +656,20 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const ilkDersMi = oncekiDersler.length === 0;
     
     let karsilamaTxt;
-    // Medrese/Kuran için özel başlangıç sorusu
+    // PLACEMENT TEST - dile göre başlangıç seviye sorusu
     const diniBaslangic = (dilId==="medrese"||dilId==="quran") ? 
-      "\n\n📋 Sana birkaç soru sormam gerekiyor:\n"+
-      "1️⃣ Kur'an harflerini (Elif-Ba) biliyor musun?\n"+
-      "2️⃣ Kur'an okuyabiliyor musun?\n"+
-      "3️⃣ Tecvid biliyor musun?\n"+
-      "4️⃣ Namaz surelerini ve dualarını biliyor musun?\n\n"+
-      "Cevabına göre seni doğru yerden başlatacağım. Türkçe cevapleyebilirsin." : 
-      "\n\n"+dil.ad+" seviyeni doğrulamak için: "+
-      (seviye==="A1"||seviye==="A2" ? dil.ad+" dilinde kendinizi tanıtır mısınız?" : 
-       "Bugünkü "+seviye+" seviyesi konusu hakkında ne biliyorsunuz?");
+      "\n\n📋 Seni doğru seviyeden başlatmak için birkaç kısa soru:\n"+
+      "1️⃣ Arap harflerini (Elif-Ba) tanıyor musun?\n"+
+      "2️⃣ Hareke biliyor musun?\n"+
+      "3️⃣ Kur'an okuyabiliyor musun?\n"+
+      "4️⃣ Tecvid biliyor musun?\n\n"+
+      "Kısaca cevapla, sana göre başlangıç noktasını belirleyeceğim." :
+      dilId==="arabic" ?
+      "\n\n📋 Birkaç kısa soru:\n1️⃣ Arap harflerini tanıyor musun?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Konuşabiliyor musun?\n\nCevabına göre başlayalım." :
+      (dilId==="japanese"||dilId==="korean"||dilId==="russian") ?
+      "\n\n📋 Birkaç kısa soru:\n1️⃣ "+dil.ad+" alfabesini biliyor musun?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Daha önce öğrendin mi?\n\nCevabına göre başlayalım." :
+      "\n\n📋 Birkaç kısa soru:\n1️⃣ "+dil.ad+"'yi daha önce öğrendin mi?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Konuşabiliyor musun?\n\n"+
+      (seviye==="A1"||seviye==="A2" ? dil.ad+" dilinde kendini tanıtmayı dener misin?" : "Cevabına göre başlayalım.");
 
     if (ilkDersMi) {
       karsilamaTxt = besmele +
@@ -709,7 +711,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     // DİL KURALI - KESİN
     let dilKurali = "";
     if (dilMod === "tr") {
-      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Tek bir İngilizce, Rusça, Japonca veya başka dil kelimesi YASAK. Türkçe öğretiyorsan SADECE Türkçe yaz. Arapça öğretiyorsan Türkçe açıkla Arapça harflerle doğru yaz.";
+      dilKurali = "ZORUNLU KURAL: SADECE TÜRKÇE YAZ. Tek bir İngilizce, Rusça, Japonca veya başka dil kelimesi YASAK. Doğru ve doğal Türkçe kullan: 'Hoş geldin/Hoş geldiniz' karşılığı 'Hoş bulduk/Hoş buldum'dur (asla 'hoş geldin' deme cevap olarak). Sure isimlerini doğru yaz: İhlas (İklas değil), Fatiha, Felak, Nas, Kevser, Asr. Akıcı, doğal, samimi Türkçe konuş, çeviri gibi durmasın.";
     } else if (dilMod === "hedef") {
       dilKurali = "ZORUNLU KURAL: SADECE "+dil.ad+" dilinde yaz. Türkçe dahil BAŞKA DİL YASAK. Tek kelime bile karıştırma.";
     } else {
@@ -718,7 +720,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
     // ÇOCUK TARZI
     const cocukTarz = hoca.c ?
-      "SEN BİR ÇOCUK ÖĞRETMENİSİN! Çok eğlenceli, sevimli ve neşeli konuş 😊🌟🎉. Çocuklara hitap et. Basit kelimeler kullan. Her konuyu oyun gibi anlat. Övgü cümleleri ekle (Aferin! Harika! Süper!). Emoji kullan." : "";
+      "SEN ÇOK SEVİMLİ BİR ÇOCUK ÖĞRETMENİSİN! Resmi, ciddi, ağır bir dil KESİNLİKLE kullanma. Tıpkı çocuklarla oynayan eğlenceli bir abla/abi gibi konuş. Çok basit, kısa, neşeli cümleler kur. 'Hadi bakalım!', 'Süpersin!', 'Çok iyi gidiyorsun!' gibi teşvik et. Oyun ve hikaye gibi anlat, asla yetişkin gibi resmi konuşma. 5-10 yaş çocuğuyla konuşur gibi konuş." : 
+      "Yetişkin bir öğrenciyle konuşuyorsun, profesyonel ama sıcak bir dil kullan.";
 
     // OKUL MANTIĞI - MÜFREDAT TAKİBİ
     const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:\n"+
@@ -748,7 +751,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     return okulMantigi+"\n"+dilKurali+"\n"+cocukTarz+"\n"+diniKural+
       "\nHoca: "+hoca.ad+". Uzmanlık: "+hoca.uz+". Kategori: "+kategori+"."+
       "\n"+(sesliMod?"Öğrenci sesli konuşuyor, kısa net yanıt ver.":"Öğrenci yazıyor, yazılı yanıt ver.")+
-      "\nCEVAP UZUNLUĞU: Basit soru/selamlaşmaya 1-2 cümle yeterli. Konu anlatımı gerekiyorsa 3-5 cümle. Gereksiz uzun örnek verme, lafı uzatma, soruya göre cevap ver."+
+      "\nCEVAP UZUNLUĞU: Basit soru/selamlaşmaya 1-2 cümle yeterli. Konu anlatımı gerekiyorsa 3-5 cümle. Öğrenci kısa soru sorarsa KISA cevap ver (örn: 'Patates nasıl kızartılır?' sorusuna sadece pratik adımları ver, tarımsal bilgi gibi gereksiz arka plan ANLATMA). Soru ne kadar detaylıysa cevap o kadar detaylı olsun, değilse net ve öz kal."+
+      "\nYANLIŞ DÜZELTME TARZI: Öğrenci hata yaparsa asla doğrudan 'yanlış' deme. Şöyle yumuşak düzelt: 'Yaklaştın, ama burada ... biraz farklı' gibi. Sabırlı, motive edici, nazik ol. Öğrenciyi küçümseme."+
       "\nTELAFFUZ GERİ BİLDİRİMİ: Öğrencinin yazdığı/söylediği kelimede harf hatası varsa belirt, doğrusunu göster ve nasıl çıkarılacağını söyle (örn: bu harf gırtlaktan/boğazdan çıkar)."+
       "\nŞİMDİ DERSE BAŞLA. "+seviye+" seviyesine göre bugünkü konuyu tanıt, öğrenciye soru sor.";
   };
