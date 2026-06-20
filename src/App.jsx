@@ -328,72 +328,7 @@ async function sesliOku(metin, hocaId, dil_mic) {
   } catch {
     return tarayiciSes(metin, dil_mic);
   }
-  try {
-    // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
-    // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
-    // KADIN: Bella=EXAVITQu4vr4xnSDxMaL, Rachel=21m00Tcm4TlvDq8ikWAM, Elli=MF3mGyEYCl7XYWbV9V6O
-    // ÇOCUK ERKEK: Charlie=IKne3meq5aSn9XLyUdCD
-    // ÇOCUK KIZ: Aria=9BWtsMINqrJLrRacOk9x
-    const HOCA_SES = {
-      // Kuran (q1,q2=erkek | q3,q4=kadın | q5=çocuk erkek | q6=çocuk kız)
-      q1:"pNInz6obpgDQGcFmaJgB", q2:"VR6AewLTigWG4xSOukaG",  // erkek
-      q3:"EXAVITQu4vr4xnSDxMaL", q4:"MF3mGyEYCl7XYWbV9V6O",  // kadın
-      q5:"IKne3meq5aSn9XLyUdCD", q6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      m1:"TxGEqnHWrfWFTfGW9XjX", m2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      m3:"21m00Tcm4TlvDq8ikWAM", m4:"EXAVITQu4vr4xnSDxMaL",  // kadın
-      m5:"IKne3meq5aSn9XLyUdCD", m6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      e1:"jBpfuIE2acCO8z3wKNLl", e2:"VR6AewLTigWG4xSOukaG",   // erkek
-      e3:"21m00Tcm4TlvDq8ikWAM", e4:"EXAVITQu4vr4xnSDxMaL",  // kadın
-      e5:"IKne3meq5aSn9XLyUdCD", e6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      g1:"VR6AewLTigWG4xSOukaG", g2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      g3:"EXAVITQu4vr4xnSDxMaL", g4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      g5:"IKne3meq5aSn9XLyUdCD", g6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      f1:"VR6AewLTigWG4xSOukaG", f2:"TxGEqnHWrfWFTfGW9XjX",  // erkek
-      f3:"EXAVITQu4vr4xnSDxMaL", f4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      f5:"IKne3meq5aSn9XLyUdCD", f6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      j1:"VR6AewLTigWG4xSOukaG", j2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      j3:"EXAVITQu4vr4xnSDxMaL", j4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      j5:"IKne3meq5aSn9XLyUdCD", j6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      k1:"EXAVITQu4vr4xnSDxMaL", k2:"pNInz6obpgDQGcFmaJgB",  // kadın,erkek
-      k3:"21m00Tcm4TlvDq8ikWAM", k4:"VR6AewLTigWG4xSOukaG",  // kadın,erkek
-      k5:"IKne3meq5aSn9XLyUdCD", k6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      r1:"VR6AewLTigWG4xSOukaG", r2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      r3:"EXAVITQu4vr4xnSDxMaL", r4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      r5:"IKne3meq5aSn9XLyUdCD", r6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      t1:"VR6AewLTigWG4xSOukaG", t2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      t3:"EXAVITQu4vr4xnSDxMaL", t4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      t5:"IKne3meq5aSn9XLyUdCD", t6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      a1:"pNInz6obpgDQGcFmaJgB", a2:"VR6AewLTigWG4xSOukaG",  // erkek
-      a3:"EXAVITQu4vr4xnSDxMaL", a4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      a5:"IKne3meq5aSn9XLyUdCD", a6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      i1:"VR6AewLTigWG4xSOukaG", i2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      i3:"EXAVITQu4vr4xnSDxMaL", i4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      i5:"IKne3meq5aSn9XLyUdCD", i6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      s1:"VR6AewLTigWG4xSOukaG", s2:"pNInz6obpgDQGcFmaJgB",  // erkek
-      s3:"EXAVITQu4vr4xnSDxMaL", s4:"21m00Tcm4TlvDq8ikWAM",  // kadın
-      s5:"IKne3meq5aSn9XLyUdCD", s6:"9BWtsMINqrJLrRacOk9x",   // çocuk
-      default:"EXAVITQu4vr4xnSDxMaL",
-    };
-    const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
-    const res = await fetch("/api/tts", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text:metin.substring(0,500), voiceId})
-    });
-    if (!res.ok) throw new Error("tts hata");
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    return new Promise(resolve => {
-      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-      audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
-      audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
-    });
-  } catch {
-    return tarayiciSes(metin, dil_mic);
-  }
 }
-
 function tarayiciSes(metin, lang) {
   return new Promise(resolve => {
     try {
@@ -532,7 +467,7 @@ function AuthModal({ilkMod, kapat, basari}) {
             <button style={btnG} onClick={kapat}>Ana Sayfaya Dön</button>
           </div>
         ) : <>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Ahmet Yılmaz")}
+          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","İsim Soyisim")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>{inp("email","email","ornek@mail.com")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Telefon</div>{inp("tel","tel","05XX XXX XXXX")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>T.C. Kimlik No</div>{inp("tc","text","12345678901")}
@@ -2056,4 +1991,4 @@ export default function App() {
       )}
     </div>
   );
-}
+} 
