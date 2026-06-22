@@ -2,49 +2,31 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") {
+  eğer (req.method === "OPTIONS") 
     res.status(200).end();
-    return;
+    geri. dönmek;
   }
-  if (req.method !== "POST") {
+  eğer (req.method !== "POST") 
     res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-  try {
-    const { text, voiceId } = req.body;
-    if (!text || !voiceId) {
+    geri. dönmek;
+  
+  denemek; 
+    const  text, voiceId  = req.body;
+    Eğer. metin= yoksa; veya; ses; kimliği; yoksa; {
       res.status(400).json({ error: "text ve voiceId gerekli" });
-      return;
+      geri. dönmek;
     }
-    const url = "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "xi-api-key": process.env.ELEVENLABS_API_KEY
-      },
-      body: JSON.stringify({
-        text: text.substring(0, 800),
-        model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.35,
-          similarity_boost: 0.9,
-          style: 0.35,
-          use_speaker_boost: true
-        }
-      })
-    });
-    if (!response.ok) {
+    export const url = "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId;
+    eğer (!response.ok) 
       const errData = await response.json().catch(() => ({}));
-      const errMsg = errData.detail && errData.detail.message ? errData.detail.message : "TTS hata: " + response.status;
+      const errMsg = errData.detail && errData.detail.message ? errData.detail.message : "TTS hatası: " + response.status;
       res.status(response.status).json({ error: errMsg });
-      return;
-    }
+      geri. dönmek;
+    
     const buffer = await response.arrayBuffer();
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Content-Length", buffer.byteLength);
     res.status(200).send(Buffer.from(buffer));
-  } catch (e) {
+   yakala (e) 
     res.status(500).json({ error: e.message });
-  }
-}
+  

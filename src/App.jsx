@@ -292,6 +292,46 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
+  const KADIN = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
+    "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
+    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6","a3","a4","a6"];
+  const COCUK = ["q5","q6","m5","m6","e5","e6","g5","g6",
+    "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
+
+  let voiceId;
+  if (COCUK.includes(hocaId)) {
+    voiceId = KADIN.includes(hocaId) ? "9BWtsMINqrJLrRacOk9x" : "IKne3meq5aSn9XLyUdCD";
+  } else if (KADIN.includes(hocaId)) {
+    voiceId = "EXAVITQu4vr4xnSDxMaL";
+  } else {
+    voiceId = "pNInz6obpgDQGcFmaJgB";
+  }
+
+  try {
+    const response = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: metin.substring(0, 800), voiceId: voiceId })
+    });
+    if (response.ok) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("audio")) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.volume = 1.0;
+        return new Promise(function(resolve) {
+          audio.onended = function() { URL.revokeObjectURL(url); resolve(); };
+          audio.onerror = function() { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+          audio.play().catch(function() { tarayiciSes(metin, dil_mic).then(resolve); });
+        });
+      }
+    }
+    return tarayiciSes(metin, dil_mic);
+  } catch (err) {
+    return tarayiciSes(metin, dil_mic);
+  }
+}async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -571,7 +611,9 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const [mikErr, setMikErr] = useState("");
   const [sure, setSure] = useState(kul?.plan==="Deneme"?1200:0);
   const [dilMod, setDilMod] = useState(null);
-  const [sesliMod, setSesliMod] = useState(false); // true=sesli, false=yazılı
+  const [sesliMod, setSesliMod] = useState(false);
+  const [sinavEkrani, setSinavEkrani] = useState(null); // null | "mid" | "final"
+  const [sinavSonuc, setSinavSonuc] = useState(null); // true=sesli, false=yazılı
   const SEVIYE_ACIKLAMA = {
     A1: "Başlangıç — Sıfırdan başlıyorum",
     A2: "Temel — Basit cümleler kurabiliyorum",
@@ -625,19 +667,31 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     let karsilamaTxt;
     // PLACEMENT TEST - dile göre başlangıç seviye sorusu
+    // Seviyeye göre placement test soruları
+    const seviyeSorulari = {
+      A1: "Hiç bilgin var mı? Alfabeyi biliyor musun? Daha önce öğrendin mi?",
+      A2: "Basit cümleler kurabilir misin? Kendini tanıtabilir misin?",
+      B1: "Günlük konuşma yapabiliyor musun? Gramer temellerini biliyor musun?",
+      B2: "Akıcı konuşabiliyor musun? Karmaşık konuları anlayabiliyor musun?",
+      C1: "İleri düzey metinleri anlayabiliyor musun? Akademik dil kullanabiliyor musun?",
+      C2: "Ana dil seviyesinde mi? Edebi metinleri anlayabiliyor musun?"
+    };
+    const seviyeKontrol = "\n\n"+seviye+" seviyesini seçtin. Seni doğru yerden başlatmak için: "+seviyeSorulari[seviye];
+
     const diniBaslangic = (dilId==="medrese"||dilId==="quran") ? 
       "\n\n📋 Seni doğru seviyeden başlatmak için birkaç kısa soru:\n"+
       "1️⃣ Arap harflerini (Elif-Ba) tanıyor musun?\n"+
       "2️⃣ Hareke biliyor musun?\n"+
       "3️⃣ Kur'an okuyabiliyor musun?\n"+
       "4️⃣ Tecvid biliyor musun?\n\n"+
-      "Kısaca cevapla, sana göre başlangıç noktasını belirleyeceğim." :
+      seviyeKontrol+
+      "\n\nKısaca cevapla, sana göre başlangıç noktasını belirleyeceğim." :
       dilId==="arabic" ?
-      "\n\n📋 Birkaç kısa soru:\n1️⃣ Arap harflerini tanıyor musun?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Konuşabiliyor musun?\n\nCevabına göre başlayalım." :
+      "\n\n📋 Birkaç kısa soru:\n1️⃣ Arap harflerini tanıyor musun?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Konuşabiliyor musun?\n"+seviyeKontrol+"\n\nCevabına göre başlayalım." :
       (dilId==="japanese"||dilId==="korean"||dilId==="russian") ?
-      "\n\n📋 Birkaç kısa soru:\n1️⃣ "+dil.ad+" alfabesini biliyor musun?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Daha önce öğrendin mi?\n\nCevabına göre başlayalım." :
-      "\n\n📋 Birkaç kısa soru:\n1️⃣ "+dil.ad+"'yi daha önce öğrendin mi?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Konuşabiliyor musun?\n\n"+
-      (seviye==="A1"||seviye==="A2" ? dil.ad+" dilinde kendini tanıtmayı dener misin?" : "Cevabına göre başlayalım.");
+      "\n\n📋 Birkaç kısa soru:\n1️⃣ "+dil.ad+" alfabesini biliyor musun?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Daha önce öğrendin mi?\n"+seviyeKontrol+"\n\nCevabına göre başlayalım." :
+      "\n\n📋 Birkaç kısa soru:\n1️⃣ "+dil.ad+"'yi daha önce öğrendin mi?\n2️⃣ Okuyabiliyor musun?\n3️⃣ Konuşabiliyor musun?\n"+seviyeKontrol+
+      (seviye==="A1"||seviye==="A2" ? "\n\n"+dil.ad+" dilinde kendini tanıtmayı dener misin?" : "\n\nCevabına göre başlayalım.");
 
     if (ilkDersMi) {
       karsilamaTxt = besmele +
@@ -918,6 +972,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     konusmaRef.current=false;
     try{recRef.current?.stop();}catch{}
     if (kul?.id && dilMod) {
+      const dersSayisi = getDG(kul.id, dilId).length + 1;
+      if (dersSayisi % 20 === 0) {
+        setTimeout(()=>setSinavEkrani("final"), 500);
+      } else if (dersSayisi % 10 === 0) {
+        setTimeout(()=>setSinavEkrani("mid"), 500);
+      }
+    }
+    if (kul?.id && dilMod) {
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
       const gecmis = getDG(kul.id,dilId);
       setDG(kul.id,dilId,[...gecmis,{id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
@@ -934,6 +996,98 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const mm = String(Math.floor(sure/60)).padStart(2,"0");
   const ss = String(sure%60).padStart(2,"0");
   const dilLabel = dilMod==="tr"?"🇹🇷 Türkçe":dilMod==="hedef"?dil.bayrak+" "+dil.ad:"🔄 İkidilli";
+
+  const klavyeGerekli = ["arabic","japanese","korean","russian"].includes(dilId);
+  const klavyeTalimat = {
+    arabic:"iOS: Ayarlar → Genel → Klavye → Yeni Klavye Ekle → Arapça\nAndroid: Ayarlar → Genel Yönetim → Klavye → Dil Ekle → Arapça",
+    japanese:"iOS: Ayarlar → Genel → Klavye → Yeni Klavye Ekle → Japonca\nAndroid: Ayarlar → Genel Yönetim → Klavye → Dil Ekle → Japonca",
+    korean:"iOS: Ayarlar → Genel → Klavye → Yeni Klavye Ekle → Korece\nAndroid: Ayarlar → Genel Yönetim → Klavye → Dil Ekle → Korece",
+    russian:"iOS: Ayarlar → Genel → Klavye → Yeni Klavye Ekle → Rusça\nAndroid: Ayarlar → Genel Yönetim → Klavye → Dil Ekle → Rusça"
+  };
+
+  // MID-EXAM EKRANI
+  if (sinavEkrani === "mid") {
+    return (
+      <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",alignItems:"center",justifyContent:"center",zIndex:8000,padding:20}}>
+        <div style={{background:K.card,borderRadius:22,padding:28,maxWidth:480,width:"100%",border:"1px solid "+K.bdr3}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:40,marginBottom:8}}>📝</div>
+            <div style={{color:K.tx,fontSize:20,fontWeight:800}}>Orta Seviye Kontrolü</div>
+            <div style={{color:K.tx4,fontSize:13,marginTop:6}}>{seviye} seviyesi — 10. ders tamamlandı</div>
+          </div>
+          <div style={{background:K.bg3,borderRadius:12,padding:16,marginBottom:16}}>
+            <div style={{color:K.tx2,fontSize:13,fontWeight:700,marginBottom:10}}>Bu kontrolde ölçülecekler:</div>
+            {["📖 Okuma — Metni anlayabiliyor musun?","✍️ Yazma — Doğru cümle kurabilir misin?","👂 Anlama — Soruları cevaplayabiliyor musun?","🗣️ Telaffuz — Kelimeleri doğru söylüyor musun?"].map((m,i)=>(
+              <div key={i} style={{color:K.tx3,fontSize:12,padding:"5px 0",borderBottom:i<3?"1px solid "+K.bdr:"none"}}>{m}</div>
+            ))}
+          </div>
+          <div style={{color:K.tx4,fontSize:11,marginBottom:16,textAlign:"center"}}>
+            Sınav, hocanla normal ders gibi yapılacak. Hoca sana test soruları soracak.
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setSinavEkrani(null)}
+              style={{flex:1,padding:12,background:"transparent",color:K.tx4,border:"1px solid "+K.bdr,borderRadius:10,cursor:"pointer",fontWeight:600}}>
+              Sonra Yap
+            </button>
+            <button onClick={()=>{
+              setSinavEkrani(null);
+              const sinavPrompt = "ŞİMDİ ORTA SEVİYE SINAVI YAPIYORSUN. Öğrenciye "+seviye+" seviyesinde 5 soru sor: 1 okuma, 1 yazma, 1 anlama, 1 kelime, 1 cümle tamamlama. Her soruyu cevapladıktan sonra değerlendir ve skor ver (0-100). Sonunda genel skor söyle.";
+              const sinavMesaj = {r:"ai", t:"📝 Orta Seviye Kontrolü başlıyor! "+seviye+" seviyende olduğunu görmek için sana 5 soru soracağım. Hazır mısın?"};
+              msgKaydet([...msgs, sinavMesaj]);
+            }}
+              style={{flex:1,padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700}}>
+              Sınava Başla
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FINAL SINAV EKRANI
+  if (sinavEkrani === "final") {
+    return (
+      <div style={{position:"fixed",inset:0,background:K.bg,display:"flex",alignItems:"center",justifyContent:"center",zIndex:8000,padding:20}}>
+        <div style={{background:K.card,borderRadius:22,padding:28,maxWidth:480,width:"100%",border:"1px solid "+K.bdr3}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:40,marginBottom:8}}>🎓</div>
+            <div style={{color:K.tx,fontSize:20,fontWeight:800}}>Seviye Sonu Sınavı</div>
+            <div style={{color:K.tx4,fontSize:13,marginTop:6}}>{seviye} seviyesi tamamlandı!</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+            {[
+              {ad:"📖 Okuma",puan:25},
+              {ad:"👂 Dinleme",puan:25},
+              {ad:"✍️ Yazma",puan:25},
+              {ad:"🗣️ Konuşma",puan:25},
+            ].map((b,i)=>(
+              <div key={i} style={{background:K.bg3,borderRadius:10,padding:14,textAlign:"center"}}>
+                <div style={{color:K.tx,fontSize:13,fontWeight:700}}>{b.ad}</div>
+                <div style={{color:K.gL,fontSize:22,fontWeight:900,marginTop:4}}>{b.puan}</div>
+                <div style={{color:K.tx4,fontSize:10}}>puan</div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"rgba(46,125,50,0.1)",borderRadius:10,padding:12,textAlign:"center",marginBottom:16}}>
+            <div style={{color:K.tx4,fontSize:11}}>Toplam: <strong style={{color:K.gL,fontSize:18}}>100</strong> puan</div>
+            <div style={{color:K.tx4,fontSize:10,marginTop:4}}>85+ geç • 70-84 şartlı • 70 altı tekrar</div>
+          </div>
+          <button onClick={()=>{
+            setSinavEkrani(null);
+            const sinavMesaj = {r:"ai", t:"🎓 "+seviye+" Seviye Final Sınavı başlıyor! Sana Reading, Listening, Writing ve Speaking bölümlerinden sorular soracağım. Her bölüm 25 puan. Hazır mısın?"};
+            msgKaydet([...msgs, sinavMesaj]);
+          }}
+            style={{width:"100%",padding:13,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:15}}>
+            Final Sınavına Başla
+          </button>
+          <button onClick={()=>setSinavEkrani(null)}
+            style={{width:"100%",padding:10,background:"transparent",color:K.tx4,border:"none",cursor:"pointer",fontSize:12,marginTop:8}}>
+            Sonra Yap
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!dilMod) {
     return (
@@ -996,6 +1150,20 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
               <div style={{color:K.tx3,fontSize:12,marginTop:3}}>{s.a}</div>
             </div>
           ))}
+          {klavyeGerekli && (
+            <div style={{background:"rgba(249,168,37,0.1)",border:"1px solid "+K.warn+"55",borderRadius:10,
+              padding:"12px 16px",marginBottom:14,textAlign:"left"}}>
+              <div style={{color:K.warn,fontWeight:700,fontSize:12,marginBottom:6}}>
+                ⌨️ Bu ders için {dil.ad} klavyesi önerilir
+              </div>
+              <div style={{color:K.tx4,fontSize:11,lineHeight:1.7,whiteSpace:"pre-line"}}>
+                {klavyeTalimat[dilId]}
+              </div>
+              <div style={{color:K.tx4,fontSize:10,marginTop:6}}>
+                Klavye olmadan da ders yapabilirsiniz — sesli mod kullanın veya Latin harfleriyle yazın.
+              </div>
+            </div>
+          )}
           <button onClick={kapat} style={{marginTop:10,padding:"9px 24px",background:"transparent",
             color:K.tx4,border:"1px solid "+K.bdr,borderRadius:9,cursor:"pointer",fontSize:13}}>← Geri</button>
         </div>
@@ -1060,6 +1228,45 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           </div>
           <div style={{background:K.card,borderRadius:10,padding:10,textAlign:"center"}}>
             <div style={{color:K.tx4,fontSize:10}}>{konusmaRef.current?"🔴 Dinliyorum":"🎤 Mikrofon kapalı"}</div>
+          <div style={{marginTop:6}}>
+            <button onClick={async ()=>{
+              const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+              if(!SR){alert("Tarayıcınız ses desteklemiyor.");return;}
+              const r = new SR();
+              r.lang = dilMod==="hedef"?dil.mic:"tr-TR";
+              r.continuous=false; r.interimResults=false;
+              r.onresult = async (e) => {
+                const metin = e.results[0][0].transcript;
+                if(!metin.trim()) return;
+                try {
+                  const resp = await fetch("/api/pronunciation", {
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({
+                      audioBase64: btoa(metin),
+                      referenceText: metin,
+                      language: dilMod==="hedef"?dil.mic:"tr-TR"
+                    })
+                  });
+                  const data = await resp.json();
+                  if(data.pronScore!==null){
+                    const skor = Math.round(data.pronScore);
+                    const mesaj = skor>=85?"✅ Mükemmel telaffuz! Skor: "+skor+"/100":
+                      skor>=70?"⚠️ İyi ama gelişebilir. Skor: "+skor+"/100":
+                      "❌ Tekrar dene. Skor: "+skor+"/100";
+                    alert("Telaffuz Skoru: "+skor+"/100 "+mesaj);
+                  }
+                } catch(err) {
+                  console.log("Pronunciation API:", err);
+                }
+              };
+              r.start();
+              alert("Söylemek istediğiniz cümleyi okuyun...");
+            }} style={{width:"100%",padding:"6px",borderRadius:7,background:"rgba(0,105,92,0.2)",
+              color:K.tL,border:"1px solid "+K.t2+"44",cursor:"pointer",fontSize:10,fontWeight:600,marginTop:4}}>
+              🎯 Telaffuz Test
+            </button>
+          </div>
           </div>
 
           <button onClick={()=>{
