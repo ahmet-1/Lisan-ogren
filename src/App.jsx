@@ -300,7 +300,6 @@ async function sesliOku(metin, hocaId, dil_mic) {
   }
 
   // Önce ElevenLabs dene
-  try {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
@@ -325,10 +324,8 @@ async function sesliOku(metin, hocaId, dil_mic) {
       });
     }
     throw new Error("TTS response not audio");
-  } catch {
-    return tarayiciSes(metin, dil_mic);
   }
-}
+
 function tarayiciSes(metin, lang) {
   return new Promise(resolve => {
     try {
@@ -404,7 +401,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     if(!f.onay) e.onay="Zorunlu";
     if(Object.keys(e).length){setH(e);return;}
     const a=getA();
-    if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta kayıtlı"});return;}
+    if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta  ıtlı"});return;}
     const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,tc:f.tc,dogum:f.dogum,
       sehir:f.sehir,pw:f.sifre,plan:"Deneme",durum:"Deneme",
       tarih:new Date().toLocaleDateString("tr-TR"),odeme:"₺0",trialStart:Date.now(),hediye:false};
@@ -467,7 +464,7 @@ function AuthModal({ilkMod, kapat, basari}) {
             <button style={btnG} onClick={kapat}>Ana Sayfaya Dön</button>
           </div>
         ) : <>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","İsim Soyisim")}
+          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Adınız Soyadınız")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>{inp("email","email","ornek@mail.com")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Telefon</div>{inp("tel","tel","05XX XXX XXXX")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>T.C. Kimlik No</div>{inp("tc","text","12345678901")}
@@ -1991,4 +1988,4 @@ export default function App() {
       )}
     </div>
   );
-} 
+}
