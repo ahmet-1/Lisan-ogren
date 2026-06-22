@@ -2,50 +2,40 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
+  eğer (req.method === "OPTIONS") {
     res.status(200).end();
-    return;
+    geri dönmek;
   }
-
-  if (req.method !== "POST") {
+  eğer (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
-    return;
+    geri dönmek;
   }
-
-  try {
+  denemek {
     const { messages, system } = req.body;
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
+      yöntem: "POST",
+      başlıklar: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
+        "antropik-versiyon": "2023-06-01"
       },
-      body: JSON.stringify({
+      gövde: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
-        system,
-        messages
+        maksimum_token sayısı: 600,
+        sistem: sistem,
+        mesajlar: mesajlar
       })
     });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      res.status(response.status).json({
-        error: err.error?.message || "API Hata: " + response.status
-      });
-      return;
+    eğer (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.error && errData.error.message ? errData.error.message : "API Hatası: " + response.status;
+      res.status(response.status).json({ error: errMsg });
+      geri dönmek;
     }
-
     const data = await response.json();
-    const text = data.content?.[0]?.text || "";
-
-    res.status(200).json({
-      content: [{ type: "text", text }]
-    });
-  } catch (e) {
+    const text = data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+    res.status(200).json({ content: [{ type: "text", text: text }] });
+  } yakala (e) {
     res.status(500).json({ error: e.message });
   }
 }

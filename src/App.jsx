@@ -140,6 +140,19 @@ const setDG = (uid,did,d) => DB.s("dg_"+uid+"_"+did,d);
 const getSV = (uid,did) => DB.g("sv_"+uid+"_"+did) || "A1";
 const setSV = (uid,did,sv) => DB.s("sv_"+uid+"_"+did,sv);
 
+// SINAV SİSTEMİ - her 10 derste mid-exam, her 20 derste final-exam
+const getSinavDurumu = (uid, did) => {
+  const dersSayisi = getDG(uid, did).length;
+  if (dersSayisi > 0 && dersSayisi % 20 === 0) return "final";
+  if (dersSayisi > 0 && dersSayisi % 10 === 0) return "mid";
+  return null;
+};
+const getSinavSonuclari = (uid, did) => DB.g("sinav_"+uid+"_"+did) || [];
+const setSinavSonucu = (uid, did, sonuc) => {
+  const onceki = getSinavSonuclari(uid, did);
+  DB.s("sinav_"+uid+"_"+did, [...onceki, sonuc]);
+};
+
 const DILLER = [
   {id:"quran",  ad:"Kur'an-ı Kerim",bayrak:"🕌",renk:"#0d2a14",vurgu:"#f9a825",mic:"ar-SA",mods:["Tecvid","Hıfz","Makam","Meal"],cats:["Tecvid","Hıfz","Makam","Sure Mealleri","Kıraat","Akaid"]},
   {id:"medrese",ad:"Medrese Eğitimi",bayrak:"📖",renk:"#1a0e00",vurgu:"#c8a045",mic:"ar-SA",mods:["Fıkıh","Akaid","Tefsir","Hadis"],cats:["Elif-Ba","Tecvid","Namaz Sureleri","İlmihal","Akaid","Sarf-Nahiv","Fıkıh","Hadis","Tefsir"]},
@@ -279,52 +292,111 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
-  // Kadın hoca mı erkek hoca mı?
-  const KADIN_HOCALAR = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
+  const KADIN = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
     "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
-    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6",
-    "a3","a4","a6"];
-  const COCUK_HOCALAR = ["q5","q6","m5","m6","e5","e6","g5","g6",
+    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6","a3","a4","a6"];
+  const COCUK = ["q5","q6","m5","m6","e5","e6","g5","g6",
     "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
-  
-  // Ses seç
+
   let voiceId;
-  if (COCUK_HOCALAR.includes(hocaId)) {
-    voiceId = KADIN_HOCALAR.includes(hocaId) 
-      ? "9BWtsMINqrJLrRacOk9x"  // çocuk kız
-      : "IKne3meq5aSn9XLyUdCD"; // çocuk erkek
-  } else if (KADIN_HOCALAR.includes(hocaId)) {
-    voiceId = "EXAVITQu4vr4xnSDxMaL"; // kadın - Bella
+  if (COCUK.includes(hocaId)) {
+    voiceId = KADIN.includes(hocaId) ? "9BWtsMINqrJLrRacOk9x" : "IKne3meq5aSn9XLyUdCD";
+  } else if (KADIN.includes(hocaId)) {
+    voiceId = "EXAVITQu4vr4xnSDxMaL";
   } else {
-    voiceId = "pNInz6obpgDQGcFmaJgB"; // erkek - Adam
+    voiceId = "pNInz6obpgDQGcFmaJgB";
   }
 
-  // Önce ElevenLabs dene
-    const res = await fetch("/api/tts", {
+  try {
+    const response = await fetch("/api/tts", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        text: metin.substring(0,800), 
-        voiceId,
-        stability: 0.35,
-        similarity_boost: 0.9,
-        style: 0.35,
-        use_speaker_boost: true
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: metin.substring(0, 800), voiceId: voiceId })
     });
-    if (res.ok && res.headers.get("content-type")?.includes("audio")) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.volume = 1.0;
-      return new Promise(resolve => {
-        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-        audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
-        audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
-      });
+    if (response.ok) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("audio")) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.volume = 1.0;
+        return new Promise(function(resolve) {
+          audio.onended = function() { URL.revokeObjectURL(url); resolve(); };
+          audio.onerror = function() { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+          audio.play().catch(function() { tarayiciSes(metin, dil_mic).then(resolve); });
+        });
+      }
     }
-    throw new Error("TTS response not audio");
+    return tarayiciSes(metin, dil_mic);
+  } catch (err) {
+    return tarayiciSes(metin, dil_mic);
   }
+}async function sesliOku(metin, hocaId, dil_mic) {
+  try {
+    // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
+    // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
+    // KADIN: Bella=EXAVITQu4vr4xnSDxMaL, Rachel=21m00Tcm4TlvDq8ikWAM, Elli=MF3mGyEYCl7XYWbV9V6O
+    // ÇOCUK ERKEK: Charlie=IKne3meq5aSn9XLyUdCD
+    // ÇOCUK KIZ: Aria=9BWtsMINqrJLrRacOk9x
+    const HOCA_SES = {
+      // Kuran (q1,q2=erkek | q3,q4=kadın | q5=çocuk erkek | q6=çocuk kız)
+      q1:"pNInz6obpgDQGcFmaJgB", q2:"VR6AewLTigWG4xSOukaG",  // erkek
+      q3:"EXAVITQu4vr4xnSDxMaL", q4:"MF3mGyEYCl7XYWbV9V6O",  // kadın
+      q5:"IKne3meq5aSn9XLyUdCD", q6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      m1:"TxGEqnHWrfWFTfGW9XjX", m2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      m3:"21m00Tcm4TlvDq8ikWAM", m4:"EXAVITQu4vr4xnSDxMaL",  // kadın
+      m5:"IKne3meq5aSn9XLyUdCD", m6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      e1:"jBpfuIE2acCO8z3wKNLl", e2:"VR6AewLTigWG4xSOukaG",   // erkek
+      e3:"21m00Tcm4TlvDq8ikWAM", e4:"EXAVITQu4vr4xnSDxMaL",  // kadın
+      e5:"IKne3meq5aSn9XLyUdCD", e6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      g1:"VR6AewLTigWG4xSOukaG", g2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      g3:"EXAVITQu4vr4xnSDxMaL", g4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      g5:"IKne3meq5aSn9XLyUdCD", g6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      f1:"VR6AewLTigWG4xSOukaG", f2:"TxGEqnHWrfWFTfGW9XjX",  // erkek
+      f3:"EXAVITQu4vr4xnSDxMaL", f4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      f5:"IKne3meq5aSn9XLyUdCD", f6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      j1:"VR6AewLTigWG4xSOukaG", j2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      j3:"EXAVITQu4vr4xnSDxMaL", j4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      j5:"IKne3meq5aSn9XLyUdCD", j6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      k1:"EXAVITQu4vr4xnSDxMaL", k2:"pNInz6obpgDQGcFmaJgB",  // kadın,erkek
+      k3:"21m00Tcm4TlvDq8ikWAM", k4:"VR6AewLTigWG4xSOukaG",  // kadın,erkek
+      k5:"IKne3meq5aSn9XLyUdCD", k6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      r1:"VR6AewLTigWG4xSOukaG", r2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      r3:"EXAVITQu4vr4xnSDxMaL", r4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      r5:"IKne3meq5aSn9XLyUdCD", r6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      t1:"VR6AewLTigWG4xSOukaG", t2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      t3:"EXAVITQu4vr4xnSDxMaL", t4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      t5:"IKne3meq5aSn9XLyUdCD", t6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      a1:"pNInz6obpgDQGcFmaJgB", a2:"VR6AewLTigWG4xSOukaG",  // erkek
+      a3:"EXAVITQu4vr4xnSDxMaL", a4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      a5:"IKne3meq5aSn9XLyUdCD", a6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      i1:"VR6AewLTigWG4xSOukaG", i2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      i3:"EXAVITQu4vr4xnSDxMaL", i4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      i5:"IKne3meq5aSn9XLyUdCD", i6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      s1:"VR6AewLTigWG4xSOukaG", s2:"pNInz6obpgDQGcFmaJgB",  // erkek
+      s3:"EXAVITQu4vr4xnSDxMaL", s4:"21m00Tcm4TlvDq8ikWAM",  // kadın
+      s5:"IKne3meq5aSn9XLyUdCD", s6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      default:"EXAVITQu4vr4xnSDxMaL",
+    };
+    const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
+    const res = await fetch("/api/tts", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text:metin.substring(0,500), voiceId})
+    });
+    if (!res.ok) throw new Error("tts hata");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    return new Promise(resolve => {
+      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+      audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+      audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
+    });
+  } catch {
+    return tarayiciSes(metin, dil_mic);
+  }
+}
 
 function tarayiciSes(metin, lang) {
   return new Promise(resolve => {
@@ -401,7 +473,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     if(!f.onay) e.onay="Zorunlu";
     if(Object.keys(e).length){setH(e);return;}
     const a=getA();
-    if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta  ıtlı"});return;}
+    if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta kayıtlı"});return;}
     const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,tc:f.tc,dogum:f.dogum,
       sehir:f.sehir,pw:f.sifre,plan:"Deneme",durum:"Deneme",
       tarih:new Date().toLocaleDateString("tr-TR"),odeme:"₺0",trialStart:Date.now(),hediye:false};
@@ -464,7 +536,7 @@ function AuthModal({ilkMod, kapat, basari}) {
             <button style={btnG} onClick={kapat}>Ana Sayfaya Dön</button>
           </div>
         ) : <>
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Adınız Soyadınız")}
+          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Ahmet Yılmaz")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>{inp("email","email","ornek@mail.com")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Telefon</div>{inp("tel","tel","05XX XXX XXXX")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>T.C. Kimlik No</div>{inp("tc","text","12345678901")}
@@ -532,6 +604,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const [yazi, setYazi] = useState("");
   const [yukl, setYukl] = useState(false);
   const [mikr, setMikr] = useState(false);
+  const [telaffuzSonuc, setTelaffuzSonuc] = useState(null);
+  const [telaffuzAcik, setTelaffuzAcik] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const [mikErr, setMikErr] = useState("");
   const [sure, setSure] = useState(kul?.plan==="Deneme"?1200:0);
   const [dilMod, setDilMod] = useState(null);
@@ -683,7 +759,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     return okulMantigi+"\n"+dilKurali+"\n"+cocukTarz+"\n"+diniKural+
       "\nHoca: "+hoca.ad+". Uzmanlık: "+hoca.uz+". Kategori: "+kategori+"."+
       "\n"+(sesliMod?"Öğrenci sesli konuşuyor, kısa net yanıt ver.":"Öğrenci yazıyor, yazılı yanıt ver.")+
-      "\nCEVAP UZUNLUĞU: Basit soru/selamlaşmaya 1-2 cümle yeterli. Konu anlatımı gerekiyorsa 3-5 cümle. Öğrenci kısa soru sorarsa KISA cevap ver (örn: 'Patates nasıl kızartılır?' sorusuna sadece pratik adımları ver, tarımsal bilgi gibi gereksiz arka plan ANLATMA). Soru ne kadar detaylıysa cevap o kadar detaylı olsun, değilse net ve öz kal."+
+      "\nKESIN CEVAP UZUNLUĞU KURALI: Maksimum 4-5 cümle yaz, asla daha uzun yazma. Soruyla doğrudan ilgili olmayan hiçbir bilgi ekleme. Sadece sorulan şeyi cevapla, arka plan/tarih/gereksiz detay YASAK. Örnek: 'Patates nasıl kızartılır?' sorusuna SADECE pratik adımları ver (yıka, soy, dilimle, kızgın yağda kızart), tarımsal süreç gibi alakasız bilgi KESİNLİKLE verme. Konuyu öğretirken bile kısa ve öz ol, tek seferde 1 kavram anlat, sonra öğrenciye sor."+
       "\nYANLIŞ DÜZELTME TARZI: Öğrenci hata yaparsa asla doğrudan 'yanlış' deme. Şöyle yumuşak düzelt: 'Yaklaştın, ama burada ... biraz farklı' gibi. Sabırlı, motive edici, nazik ol. Öğrenciyi küçümseme."+
       "\nTELAFFUZ GERİ BİLDİRİMİ: Öğrencinin yazdığı/söylediği kelimede harf hatası varsa belirt, doğrusunu göster ve nasıl çıkarılacağını söyle (örn: bu harf gırtlaktan/boğazdan çıkar)."+
       "\nŞİMDİ DERSE BAŞLA. "+seviye+" seviyesine göre bugünkü konuyu tanıt, öğrenciye soru sor.";
@@ -735,13 +811,13 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     const temizYan = metinTemizle(yan);
     
-    // Sesli modda ses çal
-    if (sesliMod || konusmaRef.current) {
+    // Ses SADECE sesliMod true ise çal (mikrofonla girdiyse)
+    if (sesliMod) {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
-      sesliOku(temizYan.substring(0,800), hoca.id, sesDil).then(()=>{
-        if(konusmaRef.current) setTimeout(mikDinle, 600);
+      sesliOku(temizYan.substring(0,600), hoca.id, sesDil).then(()=>{
+        if(konusmaRef.current) setTimeout(mikDinle, 700);
       }).catch(()=>{
-        if(konusmaRef.current) setTimeout(mikDinle, 600);
+        if(konusmaRef.current) setTimeout(mikDinle, 700);
       });
     }
       if (konusmaRef.current) mikDinle();
@@ -822,6 +898,47 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     } catch (err) {
       setMikErr("Mikrofon başlatılamadı: " + err.message);
       konusmaRef.current = false;
+    }
+  };
+
+  // Telaffuz testi - Azure ile (sadece seviye sınavlarında kullanılır, kredi tasarrufu için)
+  const telaffuzTesti = async (referenceText) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = reader.result.split(",")[1];
+          try {
+            const res = await fetch("/api/pronunciation", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                audioBase64: base64Audio,
+                referenceText: referenceText,
+                language: dilMod === "hedef" ? dil.mic : "tr-TR"
+              })
+            });
+            const data = await res.json();
+            setTelaffuzSonuc(data);
+          } catch (e) {
+            setTelaffuzSonuc({ error: "Telaffuz testi şu an çalışmıyor." });
+          }
+        };
+        reader.readAsDataURL(audioBlob);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setTimeout(() => mediaRecorder.stop(), 5000); // 5 saniye kayıt
+    } catch (e) {
+      setTelaffuzSonuc({ error: "Mikrofon erişimi gerekli." });
     }
   };
 
@@ -984,6 +1101,17 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           <div style={{background:K.card,borderRadius:10,padding:10,textAlign:"center"}}>
             <div style={{color:K.tx4,fontSize:10}}>{konusmaRef.current?"🔴 Dinliyorum":"🎤 Mikrofon kapalı"}</div>
           </div>
+
+          <button onClick={()=>{
+            const sonMesaj = [...msgs].reverse().find(m=>m.r==="ai");
+            const testMetni = sonMesaj ? sonMesaj.t.split(".")[0] : "Merhaba";
+            setTelaffuzAcik(true);
+            setTelaffuzSonuc(null);
+            telaffuzTesti(testMetni);
+          }} style={{padding:"9px",borderRadius:9,background:"rgba(249,168,37,0.12)",
+            color:K.warn,border:"1px solid "+K.warn+"44",cursor:"pointer",fontSize:11,fontWeight:600}}>
+            🎯 Telaffuzumu Test Et
+          </button>
         </div>
 
         <div style={{flex:1,display:"flex",flexDirection:"column"}}>
@@ -1026,12 +1154,12 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                   boxShadow:konusmaRef.current?"0 0 20px "+K.errL+"55":"none"}}>
                 {mikr?"🔴":konusmaRef.current?"🟢":"🎤"}
               </button>
-              <input value={yazi} onChange={e=>setYazi(e.target.value)}
+              <input value={yazi} onChange={e=>{setYazi(e.target.value); setSesliMod(false);}}
                 onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&gonder(yazi)}
                 placeholder={mikr?"Dinliyorum...":konusmaRef.current?"Konuşuyor veya yaz...":"Mesaj yaz veya 🎤 bas..."}
                 style={{flex:1,background:K.bg3,border:"1px solid "+K.bdr,borderRadius:10,
                   padding:"12px 14px",color:K.tx,fontSize:15,outline:"none"}}/>
-              <button onClick={()=>gonder(yazi)} disabled={yukl||!yazi.trim()}
+              <button onClick={()=>{setSesliMod(false); gonder(yazi);}} disabled={yukl||!yazi.trim()}
                 style={{padding:"12px 20px",borderRadius:10,fontWeight:700,fontSize:15,border:"none",flexShrink:0,
                   cursor:yukl||!yazi.trim()?"not-allowed":"pointer",
                   background:yukl||!yazi.trim()?K.bg3:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
@@ -1043,6 +1171,66 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           </div>
         </div>
       </div>
+
+      {telaffuzAcik && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",
+          alignItems:"center",justifyContent:"center",zIndex:9999,padding:20}}>
+          <div style={{background:K.card,borderRadius:18,padding:24,width:380,border:"1px solid "+K.bdr3}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+              <div style={{color:K.tx,fontSize:16,fontWeight:700}}>🎯 Telaffuz Testi</div>
+              <button onClick={()=>{setTelaffuzAcik(false);setTelaffuzSonuc(null);}}
+                style={{background:"none",border:"none",color:K.tx4,fontSize:20,cursor:"pointer"}}>✕</button>
+            </div>
+            {!telaffuzSonuc ? (
+              <div style={{textAlign:"center",padding:20}}>
+                <div style={{fontSize:40,marginBottom:12}}>🎤</div>
+                <div style={{color:K.tx2,fontSize:13}}>Dinleniyor... (5 saniye)</div>
+              </div>
+            ) : telaffuzSonuc.error ? (
+              <div style={{color:K.errL,textAlign:"center",padding:20,fontSize:13}}>{telaffuzSonuc.error}</div>
+            ) : (
+              <div>
+                <div style={{textAlign:"center",marginBottom:16}}>
+                  <div style={{fontSize:36,fontWeight:900,color:
+                    telaffuzSonuc.pronScore>=85?K.gL:telaffuzSonuc.pronScore>=70?K.warn:K.errL}}>
+                    {Math.round(telaffuzSonuc.pronScore||0)}
+                  </div>
+                  <div style={{color:K.tx4,fontSize:11}}>Genel Telaffuz Skoru</div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                  <div style={{background:K.bg3,borderRadius:8,padding:10,textAlign:"center"}}>
+                    <div style={{color:K.gL,fontWeight:700}}>{Math.round(telaffuzSonuc.accuracyScore||0)}</div>
+                    <div style={{color:K.tx4,fontSize:10}}>Doğruluk</div>
+                  </div>
+                  <div style={{background:K.bg3,borderRadius:8,padding:10,textAlign:"center"}}>
+                    <div style={{color:K.gL,fontWeight:700}}>{Math.round(telaffuzSonuc.fluencyScore||0)}</div>
+                    <div style={{color:K.tx4,fontSize:10}}>Akıcılık</div>
+                  </div>
+                </div>
+                {telaffuzSonuc.words && telaffuzSonuc.words.length>0 && (
+                  <div style={{marginBottom:10}}>
+                    <div style={{color:K.tx3,fontSize:11,marginBottom:6}}>Kelime Bazlı:</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                      {telaffuzSonuc.words.map((w,i)=>(
+                        <span key={i} style={{padding:"3px 8px",borderRadius:6,fontSize:11,
+                          background:w.accuracyScore>=80?"rgba(46,125,50,0.2)":"rgba(198,40,40,0.2)",
+                          color:w.accuracyScore>=80?K.gL:K.errL}}>
+                          {w.word} ({Math.round(w.accuracyScore||0)})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button onClick={()=>{setTelaffuzAcik(false);setTelaffuzSonuc(null);}}
+                  style={{width:"100%",padding:10,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                    color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,marginTop:8}}>
+                  Tamam
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

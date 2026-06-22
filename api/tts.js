@@ -1,6 +1,3 @@
-cd /mnt/user-data/outputs
-
-cat > Lisan-Ogren-Guncel/api/tts.js << 'EOF'
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -38,8 +35,9 @@ export default async function handler(req, res) {
       })
     });
     if (!response.ok) {
-      const errText = await response.text();
-      res.status(response.status).json({ error: "TTS hata: " + errText });
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.detail && errData.detail.message ? errData.detail.message : "TTS hata: " + response.status;
+      res.status(response.status).json({ error: errMsg });
       return;
     }
     const buffer = await response.arrayBuffer();
@@ -50,4 +48,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: e.message });
   }
 }
-EOF
