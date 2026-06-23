@@ -16,24 +16,7 @@ export default async function handler(req, res) {
       res.status(400).json({ error: "text ve voiceId gerekli" });
       geri. dönmek;
     }
-    const url = "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId;
-    sabit. yanıt = await fetch(url, {
-      yöntem: "POST",
-      başlıklar: {
-        "Content-Type": "application/json",
-        "xi-api-key": process.env.ELEVENLABS_API_KEY
-      },
-      gövde: JSON.stringify({
-        metin: metin.altdize(0, 800),
-        model_id: "eleven_multilingual_v2",
-        ses_ayarları: {
-          kararlılık: 0.35,
-          benzerlik:  artışı, 0.9
-           stil,  0.35:
-          hoparlör, güçlendirmesini, kullan: doğru
-        }
-      })
-    });
+    export const url = "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId;
     eğer (!response.ok) 
       const errData = await response.json().catch(() => ({}));
       const errMsg = errData.detail && errData.detail.message ? errData.detail.message : "TTS hatası: " + response.status;

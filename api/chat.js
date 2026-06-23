@@ -1,3 +1,5 @@
+import { url } from "./tts";
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -39,3 +41,18 @@ export default async function handler(req, res) {
     res.status(500).json({ error: e.message });
   }
 }
+sabit.yanıt = await fetch(url, {
+  yöntem: "POST",
+  başlıklar: {
+    "Content-Type": "application/json",
+    "xi-api-key": process.env.ELEVENLABS_API_KEY
+  },
+  gövde: JSON.stringify({
+    metin: metin.altdize(0, 800),
+    model_id: "eleven_multilingual_v2",
+    ses_ayarları: {
+      kararlılık: 0.35,
+      benzerlik: artışı, 0.9: stil, 0.35: hoparlör, güçlendirmesini, kullan: doğru
+    }
+  })
+});
