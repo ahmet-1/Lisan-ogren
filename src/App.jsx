@@ -292,6 +292,48 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
+  const KADIN = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
+    "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
+    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6","a3","a4","a6"];
+  const COCUK = ["q5","q6","m5","m6","e5","e6","g5","g6",
+    "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
+
+  let voiceId;
+  if (COCUK.includes(hocaId)) {
+    voiceId = KADIN.includes(hocaId) ? "9BWtsMINqrJLrRacOk9x" : "IKne3meq5aSn9XLyUdCD";
+  } else if (KADIN.includes(hocaId)) {
+    voiceId = "EXAVITQu4vr4xnSDxMaL";
+  } else {
+    voiceId = "pNInz6obpgDQGcFmaJgB";
+  }
+
+  try {
+    const response = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: metin.substring(0, 800), voiceId: voiceId })
+    });
+    if (response.ok) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("audio")) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.volume = 1.0;
+        return new Promise(function(resolve) {
+          audio.onended = function() { URL.revokeObjectURL(url); resolve(); };
+          audio.onerror = function() { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+          audio.play().catch(function() { tarayiciSes(metin, dil_mic).then(resolve); });
+        });
+      }
+    }
+    return tarayiciSes(metin, dil_mic);
+  } catch (err) {
+    // ElevenLabs hatası - tarayıcı sesine geç
+    console.log("ElevenLabs hata, tarayici sesine gecildi:", err.message);
+    return tarayiciSes(metin, dil_mic);
+  }
+}async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -362,17 +404,20 @@ function tarayiciSes(metin, lang) {
   return new Promise(resolve => {
     try {
       window.speechSynthesis?.cancel();
-      const u = new SpeechSynthesisUtterance(metin.substring(0,300));
+      const temiz = metin.replace(/[*#_~`>]/g,"").replace(/\s+/g," ").trim();
+      const u = new SpeechSynthesisUtterance(temiz.substring(0,400));
       u.lang = lang || "tr-TR";
-      u.rate = 0.82;
-      u.pitch = 1.05;
+      u.rate = 0.88;
+      u.pitch = 1.0;
       u.volume = 1.0;
-      // Daha doğal ses için uygun ses seç
       const sesler = window.speechSynthesis.getVoices();
-      const uygunSes = sesler.find(s => s.lang.startsWith(lang?.split("-")[0]||"tr") && !s.name.includes("Google"));
+      const dilKodu = (lang||"tr-TR").split("-")[0];
+      const uygunSes = sesler.find(s=>s.lang.startsWith(dilKodu)&&s.localService) ||
+                       sesler.find(s=>s.lang.startsWith(dilKodu));
       if (uygunSes) u.voice = uygunSes;
-      u.onend = resolve; u.onerror = resolve;
-      window.speechSynthesis?.speak(u);
+      u.onend = resolve;
+      u.onerror = () => resolve();
+      setTimeout(()=>window.speechSynthesis?.speak(u), 100);
     } catch { resolve(); }
   });
 }
@@ -668,7 +713,23 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         "Hazır mısın? Başlayalım!\n\n💡 İpucu: 🎤 butona bas sesli konuş, ya da klavyeyle yaz.";
     }
     const txt = karsilamaTxt;
-    setMsgs([{r:"ai",t:txt}]);
+    // WhatsApp mantığı: önceki mesajlar varsa koru, sadece yeni karşılama ekle
+    const mevcutMesajlar = DERS_KEY ? (() => {
+      try {
+        const k = localStorage.getItem(DERS_KEY);
+        return k ? JSON.parse(k) : [];
+      } catch { return []; }
+    })() : [];
+
+    if (mevcutMesajlar.length > 0) {
+      // Önceki ders var - geçmişi koru, devam mesajı ekle
+      const devamMsg = {r:"ai", t:"Tekrar hoş geldin "+ad+"! 👋 Kaldığımız yerden devam ediyoruz. "+getMufredat(dilId,seviye)};
+      const yeniMsgs = [...mevcutMesajlar, devamMsg];
+      msgKaydet(yeniMsgs);
+    } else {
+      // İlk ders - karşılama mesajını göster
+      msgKaydet([{r:"ai",t:txt}]);
+    }
     // Besmele - sesli modda oku (sesli/yazılı her ikisinde de yaz, ama sadece sesli modda çal)
     if (BESMELE_DILLER.includes(dilId)) {
       if(sesliMod) {
@@ -705,16 +766,23 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       "SEN ÇOK SEVİMLİ BİR ÇOCUK ÖĞRETMENİSİN! Resmi, ciddi, ağır bir dil KESİNLİKLE kullanma. Tıpkı çocuklarla oynayan eğlenceli bir abla/abi gibi konuş. Çok basit, kısa, neşeli cümleler kur. 'Hadi bakalım!', 'Süpersin!', 'Çok iyi gidiyorsun!' gibi teşvik et. Oyun ve hikaye gibi anlat, asla yetişkin gibi resmi konuşma. 5-10 yaş çocuğuyla konuşur gibi konuş." : 
       "Yetişkin bir öğrenciyle konuşuyorsun, profesyonel ama sıcak bir dil kullan.";
 
+    // Öğrenci mesaj sayısına göre hafıza
+    const kulMesajSayisi = msgs.filter(m=>m.r==="user").length;
+    const hafizaKurali = kulMesajSayisi === 0 
+      ? "Bu öğrenciyle ilk derssin, seviyesini test et."
+      : kulMesajSayisi < 10
+      ? "Bu öğrenciyle "+kulMesajSayisi+" mesajlaştın, seviyesini ölçmeye devam et."
+      : "Bu öğrenciyi tanıyorsun, "+kulMesajSayisi+" mesajlık geçmişin var. Kişiliğine ve seviyesine göre davran.";
+
     // OKUL MANTIĞI - MÜFREDAT TAKİBİ
-    const okulMantigi = "Sen bir "+dil.ad+" öğretmenisin, okul mantığında ders yap:\n"+
-      "1. "+ad+" öğrencinin seviyesi "+seviye+". Bu seviyede konu: "+getMufredat(dilId, seviye)+"\n"+
-      "2. "+gecmisOzet+" Kaldığı yerden devam et.\n"+
-      "3. Önce bu dersin konusunu anlat, sonra öğrenciye alıştırma yaptır.\n"+
-      "4. Her yanıttan sonra bir pratik soru sor.\n"+
-      "5. Öğrenci hata yaparsa hemen nazikçe düzelt.\n"+
-      "6. Cümleleri MUTLAKA tam bitir. Yarım bırakma.\n"+
-      "7. Her zaman AYNI doğru bilgiyi ver. Tutarsız olma.\n"+
-      "8. Asla Duolingo veya başka uygulama önerme. Sen en iyi öğretmensin.";
+    const okulMantigi = "Sen "+hoca.ad+" adlı uzman bir AI dil öğretmenisin. "+hoca.yer+" kökenlisin. Uzmanlık: "+hoca.uz+".\n"+
+      "Öğrenci: "+ad+". Seviye: "+seviye+". Konu: "+getMufredat(dilId, seviye)+"\n"+
+      hafizaKurali+"\n"+
+      gecmisOzet+" Kaldığı yerden devam et.\n"+
+      "SEVİYE TESPİTİ: Öğrenci seçtiği seviyeden düşükse (basit hatalar, temel eksiklik) nazikçe belirt ve bir alt seviye öner. Yüksekse üst seviyeyi öner.\n"+
+      "KISA SORU=KISA CEVAP. Uzun konu=orta uzunlukta anlatım. Gereksiz arka plan anlatma.\n"+
+      "Hataları: 'Yaklaştın, ama...' şeklinde nazikçe düzelt.\n"+
+      "Cümleleri TAM bitir. AYNI doğru bilgiyi ver. Başka uygulama önerme.";
 
     // DİNİ DERSLER ÖZEL KURAL
     const diniKural = (dilId==="medrese"||dilId==="quran") ?
@@ -931,7 +999,9 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const dersKapat = () => {
     konusmaRef.current=false;
     try{recRef.current?.stop();}catch{}
-    if (kul?.id && dilMod) {
+    // Sadece en az 5 mesaj varsa gerçek ders sayıl
+    const gercekDers = msgs.filter(m=>m.r==="user").length >= 3;
+    if (kul?.id && dilMod && gercekDers) {
       const dersSayisi = getDG(kul.id, dilId).length + 1;
       if (dersSayisi % 20 === 0) {
         setTimeout(()=>setSinavEkrani("final"), 500);
@@ -939,7 +1009,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setTimeout(()=>setSinavEkrani("mid"), 500);
       }
     }
-    if (kul?.id && dilMod) {
+    if (kul?.id && dilMod && gercekDers) {
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
       const gecmis = getDG(kul.id,dilId);
       setDG(kul.id,dilId,[...gecmis,{id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
@@ -2140,7 +2210,7 @@ export default function App() {
                 Banka: <strong style={{color:K.tx}}>{adm.bank}</strong>
               </div>
               <div style={{background:"rgba(46,125,50,0.08)",borderRadius:8,padding:10,marginTop:10}}>
-                <div style={{color:K.tx4,fontSize:11}}>Açıklama: e-postanızı yazın. Onaydan sonra aktifleşir (max 2 saat).</div>
+                <div style={{color:K.tx4,fontSize:11}}>Havaleyi yaptıktan sonra dekontu buradan yükleyin(max 2 saat).</div>
               </div>
             </div>
           )}

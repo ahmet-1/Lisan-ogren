@@ -2,73 +2,73 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") {
+  eğer (req.method === "OPTIONS") {
     res.status(200).end();
-    return;
+    geri dönmek;
   }
-  if (req.method !== "POST") {
+  eğer (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
-    return;
+    geri dönmek;
   }
-  try {
+  denemek {
     const { audioBase64, referenceText, language } = req.body;
-    if (!audioBase64 || !referenceText) {
+    Eğer (!audioBase64 || !referenceText) ise {
       res.status(400).json({ error: "audioBase64 ve referenceText gerekli" });
-      return;
+      geri dönmek;
     }
     const region = process.env.AZURE_SPEECH_REGION || "eastus";
-    const key = process.env.AZURE_SPEECH_KEY;
-    if (!key) {
-      res.status(500).json({ error: "Azure key tanimli degil" });
-      return;
+    sabit anahtar = process.env.AZURE_SPEECH_KEY;
+    eğer (anahtar) değilse {
+      res.status(500).json({ error: "Azure key tanimli değil" });
+      geri dönmek;
     }
-    const assessmentConfig = {
-      ReferenceText: referenceText,
-      GradingSystem: "HundredMark",
-      Granularity: "Phoneme",
-      Dimension: "Comprehensive",
+    sabit assessmentConfig = {
+      ReferansMetni: referansMetni,
+      Notlandırma Sistemi: "Yüz Puan",
+      Granülerlik: "Fonem",
+      Boyut: "Kapsamlı",
       EnableMiscue: true
     };
     const pronAssessmentHeader = Buffer.from(JSON.stringify(assessmentConfig)).toString("base64");
     const audioBuffer = Buffer.from(audioBase64, "base64");
-    const lang = language || "tr-TR";
+    sabit dil = dil || "tr-TR";
     const url = "https://" + region + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=" + lang;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": key,
+    sabit yanıt = await fetch(url, {
+      yöntem: "POST",
+      başlıklar: {
+        "Ocp-Apim-Subscription-Key": anahtar,
         "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
-        "Pronunciation-Assessment": pronAssessmentHeader,
-        "Accept": "application/json"
+        "Telaffuz Değerlendirmesi": pronAssessmentHeader,
+        "Kabul Et": "application/json"
       },
-      body: audioBuffer
+      gövde: ses arabelleği
     });
-    if (!response.ok) {
+    eğer (!response.ok) {
       const errText = await response.text();
-      res.status(response.status).json({ error: "Azure hata: " + errText });
-      return;
+      res.status(response.status).json({ error: "Azure hatası: " + errText });
+      geri dönmek;
     }
     const data = await response.json();
     const nbest = data.NBest && data.NBest[0] ? data.NBest[0] : null;
     const pa = nbest && nbest.PronunciationAssessment ? nbest.PronunciationAssessment : {};
     const words = nbest && nbest.Words ? nbest.Words : [];
-    const result = {
-      recognizedText: data.DisplayText || "",
-      accuracyScore: pa.AccuracyScore !== undefined ? pa.AccuracyScore : null,
-      fluencyScore: pa.FluencyScore !== undefined ? pa.FluencyScore : null,
-      completenessScore: pa.CompletenessScore !== undefined ? pa.CompletenessScore : null,
+    sabit sonuç = {
+      tanınanMetin: data.DisplayText || "",
+      doğrulukSkoru: pa.AccuracyScore !== undefined ? pa.AccuracyScore : null,
+      akıcılıkSkoru: pa.AkıcılıkSkoru !== tanımsız ? pa.AkıcılıkSkoru : null,
+      Tamamlanma Puanı: pa.CompletenessScore !== undefined ? pa.CompletenessScore : null,
       pronScore: pa.PronScore !== undefined ? pa.PronScore : null,
-      words: words.map(function (w) {
+      kelimeler: kelimeler.map(fonksiyon (w) {
         const wpa = w.PronunciationAssessment || {};
-        return {
-          word: w.Word,
+        geri dönmek {
+          kelime: w.Word,
           accuracyScore: wpa.AccuracyScore !== undefined ? wpa.AccuracyScore : null,
-          errorType: wpa.ErrorType || "None"
+          hataTürü: wpa.ErrorType || "Yok"
         };
       })
     };
     res.status(200).json(result);
-  } catch (e) {
+  } yakala (e) {
     res.status(500).json({ error: e.message });
   }
 }
