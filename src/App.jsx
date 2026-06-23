@@ -428,7 +428,6 @@ function AuthModal({ilkMod, kapat, basari}) {
     if(!f.ad.trim()) e.ad="Zorunlu";
     if(!f.email.includes("@")) e.email="Geçerli e-posta";
     if(!f.tel.trim()) e.tel="Zorunlu";
-    if(f.tc.length!==11||!/^\d+$/.test(f.tc)) e.tc="11 haneli TC";
     if(!f.dogum) e.dogum="Zorunlu";
     if(!f.sehir.trim()) e.sehir="Zorunlu";
     if(f.sifre.length<6) e.sifre="En az 6 karakter";
@@ -437,7 +436,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     if(Object.keys(e).length){setH(e);return;}
     const a=getA();
     if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta kayıtlı"});return;}
-    const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,tc:f.tc,dogum:f.dogum,
+    const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,dogum:f.dogum,
       sehir:f.sehir,pw:f.sifre,plan:"Deneme",durum:"Deneme",
       tarih:new Date().toLocaleDateString("tr-TR"),odeme:"₺0",trialStart:Date.now(),hediye:false};
     setA({...a,users:[...(a.users||[]),yeni]});
