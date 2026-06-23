@@ -2168,7 +2168,7 @@ export default function App() {
                 Banka: <strong style={{color:K.tx}}>{adm.bank}</strong>
               </div>
               <div style={{background:"rgba(46,125,50,0.08)",borderRadius:8,padding:10,marginTop:10}}>
-                <div style={{color:K.tx4,fontSize:11}}>Havaleyi yaptıktan sonra iletişim bölümünden dekontu yükleyip gönderin, (max 2 saat).</div>
+                <div style={{color:K.tx4,fontSize:11}}>Havaleyi yaptıktan sonra iletişim bölümünden dekontu yükleyip gönderin, (max 2 saat içinde aktif olur).</div>
               </div>
             </div>
           )}
