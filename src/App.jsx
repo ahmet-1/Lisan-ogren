@@ -292,6 +292,48 @@ function Av({h, dil, sz=64}) {
 }
 
 async function sesliOku(metin, hocaId, dil_mic) {
+  const KADIN = ["q3","q4","q6","m3","m4","m6","e3","e4","e6",
+    "g3","g4","g6","f3","f4","f6","i3","i4","i6","s3","s4","s6",
+    "j3","j4","j6","k1","k3","k5","r3","r4","r6","t3","t4","t6","a3","a4","a6"];
+  const COCUK = ["q5","q6","m5","m6","e5","e6","g5","g6",
+    "f5","f6","i5","i6","s5","s6","j5","j6","k5","k6","r5","r6","t5","t6","a5","a6"];
+
+  let voiceId;
+  if (COCUK.includes(hocaId)) {
+    voiceId = KADIN.includes(hocaId) ? "9BWtsMINqrJLrRacOk9x" : "IKne3meq5aSn9XLyUdCD";
+  } else if (KADIN.includes(hocaId)) {
+    voiceId = "EXAVITQu4vr4xnSDxMaL";
+  } else {
+    voiceId = "pNInz6obpgDQGcFmaJgB";
+  }
+
+  try {
+    const response = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: metin.substring(0, 800), voiceId: voiceId })
+    });
+    if (response.ok) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("audio")) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.volume = 1.0;
+        return new Promise(function(resolve) {
+          audio.onended = function() { URL.revokeObjectURL(url); resolve(); };
+          audio.onerror = function() { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
+          audio.play().catch(function() { tarayiciSes(metin, dil_mic).then(resolve); });
+        });
+      }
+    }
+    return tarayiciSes(metin, dil_mic);
+  } catch (err) {
+    // ElevenLabs hatası - tarayıcı sesine geç
+    console.log("ElevenLabs hata, tarayici sesine gecildi:", err.message);
+    return tarayiciSes(metin, dil_mic);
+  }
+}async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -2168,7 +2210,7 @@ export default function App() {
                 Banka: <strong style={{color:K.tx}}>{adm.bank}</strong>
               </div>
               <div style={{background:"rgba(46,125,50,0.08)",borderRadius:8,padding:10,marginTop:10}}>
-                <div style={{color:K.tx4,fontSize:11}}>Havaleyi yaptıktan sonra dekontu buradan yükleyin(max 2 saat).</div>
+                <div style={{color:K.tx4,fontSize:11}}>Havaleyi yaptıktan sonra dekontu buradan yükleyin, (max 2 saat).</div>
               </div>
             </div>
           )}
