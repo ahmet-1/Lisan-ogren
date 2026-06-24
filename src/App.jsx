@@ -430,7 +430,7 @@ async function sesliOku(metin, hocaId, dil_mic) {
     console.log("ElevenLabs hata, tarayici sesine gecildi:", err.message);
     return tarayiciSes(metin, dil_mic);
   }
-}ync function sesliOku(metin, hocaId, dil_mic) {
+}async function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -1399,8 +1399,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                     const mesaj = skor>=85?"✅ Mükemmel telaffuz! Skor: "+skor+"/100":
                       skor>=70?"⚠️ İyi ama gelişebilir. Skor: "+skor+"/100":
                       "❌ Tekrar dene. Skor: "+skor+"/100";
-                    alert("Telaffuz Skoru: "+skor+"/100
-"+mesaj);
+                    alert("Telaffuz Skoru: "+skor+"/100 "+mesaj);
                   }
                 } catch(err) {
                   console.log("Pronunciation API:", err);
