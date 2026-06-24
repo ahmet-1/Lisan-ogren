@@ -1411,7 +1411,6 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
               color:K.tL,border:"1px solid "+K.t2+"44",cursor:"pointer",fontSize:10,fontWeight:600,marginTop:4}}>
               🎯 Telaffuz Test
             </button>
-            
           </div>
           </div>
 
