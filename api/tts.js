@@ -1,74 +1,74 @@
 const ttsRequests = {};
 
-fonksiyon checkTtsLimit(ip) {
+function checkTtsLimit(ip) {
   const now = Date.now();
   if (!ttsRequests[ip]) ttsRequests[ip] = [];
   ttsRequests[ip] = ttsRequests[ip].filter(t => now - t < 60000);
   if (ttsRequests[ip].length >= 20) return false;
   ttsRequests[ip].push(now);
-  true döndür;
+  return true;
 }
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  Eğer `req.method` "OPTIONS" ise, `res.status(200).end();` değerini döndürün.
-  Eğer `req.method` "POST" değilse, `res.status(405).json({ error: "Method not allowed" });` mesajı gönderilip işlem sonlandırılır.
+  if (req.method === "OPTIONS") { res.status(200).end(); return; }
+  if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
 
   const ip = req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown";
   if (!checkTtsLimit(ip)) {
     res.status(429).json({ error: "Çok fazla ses isteği" });
-    geri dönmek;
+    return;
   }
 
   const { text, voiceId } = req.body || {};
-  Eğer metin yoksa veya ses kimliği yoksa {
+  if (!text || !voiceId) {
     res.status(400).json({ error: "text ve voiceId gerekli" });
-    geri dönmek;
+    return;
   }
 
   if (!process.env.ELEVENLABS_API_KEY) {
     res.status(500).json({ error: "TTS yapılandırma hatası" });
-    geri dönmek;
+    return;
   }
 
-  // Tehlikeli karakterler silinir
-  const temizMetin = metin
+  // Tehlikeli karakterleri temizle
+  const temizMetin = text
     .replace(/[<>\"']/g, "")
     .replace(/javascript:/gi, "")
-    .altdize(0, 800);
+    .substring(0, 800);
 
-  denemek {
+  try {
     const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
-      yöntem: "POST",
-      başlıklar: {
+      method: "POST",
+      headers: {
         "Content-Type": "application/json",
         "xi-api-key": process.env.ELEVENLABS_API_KEY
       },
-      gövde: JSON.stringify({
-        metin: temizMetin,
+      body: JSON.stringify({
+        text: temizMetin,
         model_id: "eleven_multilingual_v2",
-        ses_ayarları: {
-          kararlılık: 0,35,
-          benzerlik artışı: 0,9,
-          stil: 0.35,
-          hoparlör güçlendirmesini kullan: doğru
+        voice_settings: {
+          stability: 0.35,
+          similarity_boost: 0.9,
+          style: 0.35,
+          use_speaker_boost: true
         }
       })
     });
 
-    eğer (!response.ok) {
+    if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      res.status(response.status).json({ error: errData.detail?.message || "TTS hatası: " + response.status });
-      geri dönmek;
+      res.status(response.status).json({ error: errData.detail?.message || "TTS hata: " + response.status });
+      return;
     }
 
     const buffer = await response.arrayBuffer();
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Content-Length", buffer.byteLength);
     res.status(200).send(Buffer.from(buffer));
-  } yakala (e) {
-    res.status(500).json({ error: "Ses servisi işlemi" });
+  } catch (e) {
+    res.status(500).json({ error: "Ses servisi hatası" });
   }
 }

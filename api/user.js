@@ -1,139 +1,63 @@
-import bcrypt from 'bcryptjs';
-import { sql } from '@vercel/postgres';
-import { verifyToken } from './middleware.js';
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-function withCors(res) {
-  Object.entries(CORS_HEADERS).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
-  return res;
-}
-
-async function getProfile(req, res) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const payload = verifyToken(token);
-
-  if (!payload) {
-    return withCors(res).status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    const result = await sql`
-      SELECT id, email, name, phone, country, birth_date, plan, status, created_at, trial_end
-      FROM users WHERE id = ${payload.userId}
-    `;
-
-    if (result.rows.length === 0) {
-      return withCors(res).status(404).json({ error: 'User not found' });
-    }
-
-    return withCors(res).status(200).json({ user: result.rows[0] });
-  } catch (err) {
-    console.error('Get profile error:', err);
-    return withCors(res).status(500).json({ error: 'Failed to get profile' });
-  }
-}
-
-async function updateProfile(req, res) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const payload = verifyToken(token);
-
-  if (!payload) {
-    return withCors(res).status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    const { name, phone, country, birth_date } = req.body;
-
-    const result = await sql`
-      UPDATE users
-      SET
-        name = COALESCE(${name || null}, name),
-        phone = COALESCE(${phone || null}, phone),
-        country = COALESCE(${country || null}, country),
-        birth_date = COALESCE(${birth_date || null}, birth_date)
-      WHERE id = ${payload.userId}
-      RETURNING id, email, name, phone, country, birth_date, plan, status
-    `;
-
-    if (result.rows.length === 0) {
-      return withCors(res).status(404).json({ error: 'User not found' });
-    }
-
-    return withCors(res).status(200).json({ user: result.rows[0] });
-  } catch (err) {
-    console.error('Update profile error:', err);
-    return withCors(res).status(500).json({ error: 'Failed to update profile' });
-  }
-}
-
-async function changePassword(req, res) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const payload = verifyToken(token);
-
-  if (!payload) {
-    return withCors(res).status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    const { oldPassword, newPassword } = req.body;
-
-    if (!oldPassword || !newPassword) {
-      return withCors(res).status(400).json({ error: 'Missing password fields' });
-    }
-
-    const result = await sql`
-      SELECT password_hash FROM users WHERE id = ${payload.userId}
-    `;
-
-    if (result.rows.length === 0) {
-      return withCors(res).status(404).json({ error: 'User not found' });
-    }
-
-    const passwordMatch = await bcrypt.compare(oldPassword, result.rows[0].password_hash);
-    if (!passwordMatch) {
-      return withCors(res).status(401).json({ error: 'Incorrect password' });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await sql`
-      UPDATE users
-      SET password_hash = ${hashedPassword}
-      WHERE id = ${payload.userId}
-    `;
-
-    return withCors(res).status(200).json({ message: 'Password changed successfully' });
-  } catch (err) {
-    console.error('Change password error:', err);
-    return withCors(res).status(500).json({ error: 'Failed to change password' });
-  }
-}
+import { dbFetch } from "./db.js";
 
 export default async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    return withCors(res).status(200).end();
-  }
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  Eğer `req.method` "OPTIONS" ise, `res.status(200).end();` değerini döndürün.
 
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  denemek {
+    if (req.method === "GET") {
+      const { email } = req.query;
+      eğer (e-posta) {
+        const data = await dbFetch("kullanicilar?email=eq." + encodeURIComponent(email));
+        res.status(200).json(data?.[0] || null);
+      } başka {
+        const data = await dbFetch("kullanicilar?order=created_at.desc");
+        res.status(200).json(data || []);
+      }
 
-  if (url.pathname === '/api/user/profile') {
-    if (req.method === 'GET') {
-      return getProfile(req, res);
-    } else if (req.method === 'PATCH') {
-      return updateProfile(req, res);
+    } aksi takdirde eğer (req.method === "POST") {
+      sabit kullanıcı = istek gövdesi;
+      const data = await dbFetch("kullanıcılar", "POST", {
+        id: user.id,
+        reklam: kullanıcı.reklam,
+        e-posta: kullanıcı.e-posta,
+        tel: user.tel,
+        şehir: kullanıcı.şehir,
+        şifre: kullanıcı şifresi,
+        plan: user.plan || "Deneme",
+        durum: user.durum || "Deneme",
+        deneme_başlangıcı: kullanıcı.denemeBaşlangıcı,
+        created_at: new Date().toISOString()
+      });
+      res.status(200).json(data?.[0] || {});
+
+    } aksi takdirde eğer (req.method === "PUT") {
+      const { id, ...güncellemeler } = req.body;
+      await fetch(process.env.SUPABASE_URL + "/rest/v1/kullanicilar?id=eq." + id, {
+        yöntem: "PATCH",
+        başlıklar: {
+          "Content-Type": "application/json",
+          "apikey": process.env.SUPABASE_SERVICE_KEY,
+          "Yetkilendirme": "Taşıyıcı" + process.env.SUPABASE_SERVICE_KEY
+        },
+        gövde: JSON.stringify(güncellemeler)
+      });
+      res.status(200).json({ ok: true });
+
+    } aksi takdirde eğer (req.method === "DELETE") {
+      const { id } = req.query;
+      await fetch(process.env.SUPABASE_URL + "/rest/v1/kullanicilar?id=eq." + id, {
+        yöntem: "SİL",
+        başlıklar: {
+          "apikey": process.env.SUPABASE_SERVICE_KEY,
+          "Yetkilendirme": "Taşıyıcı" + process.env.SUPABASE_SERVICE_KEY
+        }
+      });
+      res.status(200).json({ ok: true });
     }
-  } else if (url.pathname === '/api/user/password') {
-    if (req.method === 'PATCH') {
-      return changePassword(req, res);
-    }
+  } yakala (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  return withCors(res).status(404).json({ error: 'Not found' });
 }

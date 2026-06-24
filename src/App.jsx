@@ -185,6 +185,47 @@ HATA DÜZELTMESİ:
 DERS SONU (her 5 mesajda bir):
 3 soru, 1 tekrar, 1 küçük ödev ver.`;
 
+
+// ── SUPABASE - Tüm cihazlarda çalışan veri senkronizasyonu ─────────────────
+const SB_URL = "/api/messages";
+const SB_USR = "/api/users";
+
+// Mesajları Supabase'den yükle
+async function loadMsgsFromDB(userId, dilId, hocaId) {
+  try {
+    const res = await fetch(SB_URL + "?userId=" + userId + "&dilId=" + dilId + "&hocaId=" + hocaId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.map(d => ({ r: d.role, t: d.content }));
+  } catch { return null; }
+}
+
+// Mesajları Supabase'e kaydet
+async function saveMsgsToDB(userId, dilId, hocaId, messages) {
+  try {
+    await fetch(SB_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, dilId, hocaId, messages })
+    });
+  } catch (e) {
+    console.log("DB kayıt hatası:", e.message);
+  }
+}
+
+// Kullanıcıyı Supabase'e kaydet
+async function saveUserToDB(user) {
+  try {
+    await fetch(SB_USR, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user)
+    });
+  } catch (e) {
+    console.log("Kullanıcı kayıt hatası:", e.message);
+  }
+}
+
 const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
@@ -389,7 +430,7 @@ async function sesliOku(metin, hocaId, dil_mic) {
     console.log("ElevenLabs hata, tarayici sesine gecildi:", err.message);
     return tarayiciSes(metin, dil_mic);
   }
-}async function sesliOku(metin, hocaId, dil_mic) {
+}ync function sesliOku(metin, hocaId, dil_mic) {
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -526,7 +567,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     if(!f.ad.trim()) e.ad="Zorunlu";
     if(!f.email.includes("@")) e.email="Geçerli e-posta";
     if(!f.tel.trim()) e.tel="Zorunlu";
-    if(f.tc.length!==11||!/^\d+$/.test(f.tc)) e.tc="11 haneli TC";
+    
     if(!f.dogum) e.dogum="Zorunlu";
     if(!f.sehir.trim()) e.sehir="Zorunlu";
     if(f.sifre.length<6) e.sifre="En az 6 karakter";
@@ -535,7 +576,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     if(Object.keys(e).length){setH(e);return;}
     const a=getA();
     if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta kayıtlı"});return;}
-    const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,tc:f.tc,dogum:f.dogum,
+    const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,dogum:f.dogum,
       sehir:f.sehir,pw:f.sifre,plan:"Deneme",durum:"Deneme",
       tarih:new Date().toLocaleDateString("tr-TR"),odeme:"₺0",trialStart:Date.now(),hediye:false,
       kayitZamani:new Date().toLocaleString("tr-TR")};
@@ -551,6 +592,8 @@ function AuthModal({ilkMod, kapat, basari}) {
       users:[...(a.users||[]),yeni],
       bildirimler:[...(a.bildirimler||[]),yeniBildirim]
     });
+    // Supabase'e kaydet
+    saveUserToDB(yeni);
     setTamam(true);
     basari(yeni);
   };
@@ -612,7 +655,6 @@ function AuthModal({ilkMod, kapat, basari}) {
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Ad Soyad</div>{inp("ad","text","Ahmet Yılmaz")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>{inp("email","email","ornek@mail.com")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Telefon</div>{inp("tel","tel","05XX XXX XXXX")}
-          <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>T.C. Kimlik No</div>{inp("tc","text","12345678901")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Doğum Tarihi</div>{inp("dogum","date","")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şehir</div>{inp("sehir","text","İstanbul")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şifre</div>{inp("sifre","password","min 6 karakter")}
@@ -1357,7 +1399,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                     const mesaj = skor>=85?"✅ Mükemmel telaffuz! Skor: "+skor+"/100":
                       skor>=70?"⚠️ İyi ama gelişebilir. Skor: "+skor+"/100":
                       "❌ Tekrar dene. Skor: "+skor+"/100";
-                    alert("Telaffuz Skoru: "+skor+"/100 "+mesaj);
+                    alert("Telaffuz Skoru: "+skor+"/100
+"+mesaj);
                   }
                 } catch(err) {
                   console.log("Pronunciation API:", err);
@@ -1628,7 +1671,7 @@ function AdminPanel({kapat, admCikis}) {
                     <div style={{color:K.tx4,fontSize:10}}>{u.email}</div>
                     <div style={{color:K.tx4,fontSize:10}}>{u.tarih}</div></div>
                   <div><div style={{color:K.tx2,fontSize:11}}>{u.tel||"—"}</div>
-                    <div style={{color:K.tx4,fontSize:10}}>{u.tc?"TC: "+u.tc:""}</div></div>
+                    </div>
                   <div style={{color:K.tx2,fontSize:11}}>{u.plan}{u.hediye&&<span style={{color:K.gL}}> 🎁</span>}</div>
                   <div style={{display:"inline-block",borderRadius:5,padding:"2px 7px",fontSize:10,fontWeight:600,
                     background:u.durum==="Aktif"?"rgba(46,125,50,0.18)":u.durum==="Deneme"?"rgba(249,168,37,0.15)":"rgba(198,40,40,0.15)",
