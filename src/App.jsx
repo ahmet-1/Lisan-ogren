@@ -600,7 +600,17 @@ function AuthModal({ilkMod, kapat, basari}) {
 
   const doSifre = () => {
     if(!f.email.includes("@")){setH({email:"Geçerli e-posta girin"});return;}
-    setMesaj("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
+    const a = getA();
+    const kul = (a.users||[]).find(u=>u.email.toLowerCase()===f.email.toLowerCase());
+    if(!kul){setH({email:"Bu e-posta kayıtlı değil"});return;}
+    // Admin'e bildirim gönder
+    const bildirim = {
+      id:Date.now(), tip:"sifreSifirla", okundu:false,
+      mesaj:"🔑 Şifre sıfırlama: "+kul.ad+" ("+kul.email+") şifresini unuttu. Şifre: "+kul.pw,
+      tarih:new Date().toLocaleString("tr-TR")
+    };
+    setA({...a, bildirimler:[...(a.bildirimler||[]), bildirim]});
+    setMesaj("Şifre sıfırlama talebiniz alındı. Admin en kısa sürede sizinle iletişime geçecek.");
   };
 
   const tabS = a => ({flex:1,padding:"10px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
@@ -1413,6 +1423,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
             </button>
           </div>
           </div>
+
           <button onClick={()=>{
             const sonMesaj = [...msgs].reverse().find(m=>m.r==="ai");
             const testMetni = sonMesaj ? sonMesaj.t.split(".")[0] : "Merhaba";
@@ -1759,10 +1770,14 @@ function AdminPanel({kapat, admCikis}) {
                 </div>
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   <div style={{background:"rgba(46,125,50,0.12)",color:K.gL,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700}}>{u.durum}</div>
-                  <button onClick={()=>alert(u.ad+" öğrencisinin dersini izlemek için yakında kameralı ders özelliği eklenecek.")}
+                  <button onClick={()=>{
+                    // O kullanıcının tüm derslerini göster
+                    setSecilenKullanici(u);
+                    setSekme("kul");
+                  }}
                     style={{padding:"7px 12px",borderRadius:7,background:K.bg3,color:K.tL,
                       border:"1px solid "+K.bdr2,cursor:"pointer",fontSize:11,fontWeight:600}}>
-                    👁 İzle
+                    👁 Dersleri Gör
                   </button>
                 </div>
               </div>
@@ -1917,7 +1932,7 @@ function AdminPanel({kapat, admCikis}) {
   );
 }
 
-export default function App() {
+export default function App() 
   const [kul, setKul] = useState(()=>DB.g("kul"));
   const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
   const [adAcik, setAdAcik] = useState(false);
@@ -2531,18 +2546,4 @@ export default function App() {
                   const a=getA(); setA({...a,pw:pw1});
                   alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
                   setAdUnuttu(false); setAdModal(false);
-                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8}}>
-                  Şifreyi Güncelle
-                </button>
-                <div style={{textAlign:"center"}}>
-                  <button onClick={()=>setAdUnuttu(false)} style={{background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12}}>← Geri Dön</button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")"
