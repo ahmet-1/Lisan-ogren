@@ -1933,7 +1933,7 @@ function AdminPanel({kapat, admCikis}) {
   );
 }
 
-export default function App() 
+export default function App() { 
   const [kul, setKul] = useState(()=>DB.g("kul"));
   const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
   const [adAcik, setAdAcik] = useState(false);
@@ -1992,7 +1992,7 @@ export default function App()
   const gI2={width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
+    div  ) <style; {{minHeight:"100vh",background;"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily;"'Segoe UI',system-ui,sans-serif",fontSize;"17px"}}
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
@@ -2531,7 +2531,7 @@ export default function App()
                 </div>
               </>
             ):
-              <>
+              
                 <div style={{color:K.tx3,fontSize:12,marginBottom:14}}>Yeni admin şifresi belirleyin.</div>
                 <input type="password" id="np1" placeholder="Yeni şifre (min 6)"
                   style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
@@ -2547,5 +2547,5 @@ export default function App()
                   const a=getA(); setA({...a,pw:pw1});
                   alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
                   setAdUnuttu(false); setAdModal(false);
-                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")"
-}
+                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")"}}
+
