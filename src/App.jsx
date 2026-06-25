@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-
+import.meta.env.VITE_SUPABASE_URL,
+import.meta.env.VITE_SUPABASE_ANON_KEY
 const K = {
   bg:"#071510",bg2:"#0a1e13",bg3:"#0d2618",card:"#0f2c1c",
   bdr:"#1a3d26",bdr2:"#1f4d30",bdr3:"#266040",
@@ -2501,7 +2502,7 @@ export default function App()
         </div>
       )}
 
-      {adModal&&(
+      adModal&&
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
           <div style={{background:K.card,borderRadius:18,padding:26,width:320,border:"1px solid "+K.bdr3,boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
@@ -2509,7 +2510,7 @@ export default function App()
               <button onClick={()=>{setAdModal(false);setAdHata("");setAdSifre("");setAdUnuttu(false);}}
                 style={{background:"none",border:"none",color:K.tx3,fontSize:18,cursor:"pointer"}}>✕</button>
             </div>
-            {!adUnuttu?(
+            !adUnuttu?(
               <>
                 <input type="password" value={adSifre} placeholder="Yönetici şifresi"
                   onChange={e=>{setAdSifre(e.target.value);setAdHata("");}}
@@ -2529,7 +2530,7 @@ export default function App()
                       color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700}}>Giriş</button>
                 </div>
               </>
-            ):(
+            ):
               <>
                 <div style={{color:K.tx3,fontSize:12,marginBottom:14}}>Yeni admin şifresi belirleyin.</div>
                 <input type="password" id="np1" placeholder="Yeni şifre (min 6)"
@@ -2538,7 +2539,7 @@ export default function App()
                 <input type="password" id="np2" placeholder="Tekrar girin"
                   style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
                     borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box",marginBottom:14}}/>
-                <button onClick={()=>{
+                button onClick={()=>{
                   const pw1=document.getElementById("np1").value;
                   const pw2=document.getElementById("np2").value;
                   if(!pw1||pw1.length<6){alert("En az 6 karakter!");return;}
@@ -2547,3 +2548,4 @@ export default function App()
                   alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
                   setAdUnuttu(false); setAdModal(false);
                 }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")"
+}
