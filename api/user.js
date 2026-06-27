@@ -14,32 +14,33 @@ export default async function handler(req, res) {
 
   denemek {
     if (req.method === "GET") {
-      const { email } = req.query;
-      const url = SUPA_URL + "/rest/v1/kullanicilar" + (email ? "?email=eq." + encodeURIComponent(email) : "?order=created_at.desc");
-      sabit r = await fetch(url, {
-        başlıklar: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
-      });
-      const data = await r.json();
-      res.status(200).json(email ? (data?.[0] || null) : (data || []));
+      var email = req.query.email;
+      var url = SUPA_URL + "/rest/v1/kullanicilar" + (email ? "?email=eq." + encodeURIComponent(email) : "?order=created_at.desc");
+      var r = await fetch(url, { headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY } });
+      var data = await r.json();
+      res.status(200).json(email ? (data && data[0] ? data[0] : null) : (data || []));
 
     } aksi takdirde eğer (req.method === "POST") {
-      sabit kullanıcı = istek gövdesi;
-      const r = await fetch(SUPA_URL + "/rest/v1/kullanicilar", {
+      var user = istek gövdesi;
+      var r2 = getirmeyi bekliyor(SUPA_URL + "/rest/v1/kullanicilar", {
         yöntem: "POST",
         başlıklar: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
         gövde: JSON.stringify({
           id: String(user.id), ad: user.ad, email: user.email,
-          tel: kullanıcı.tel || "", şehir: user.sehir || "",
+          tel: kullanıcı.tel || "", şehir: user.sehir || "", dogum: user.dogum || "",
           pw: user.pw, plan: user.plan || "Deneme", durum: user.durum || "Deneme",
           deneme_başlangıcı: Dize(kullanıcı.denemebaşlangıcı || Tarih.şimdi()),
           created_at: new Date().toISOString()
         })
       });
-      const data = await r.json();
-      res.status(200).json(data?.[0] || {});
+      var data2 = await r2.json();
+      res.status(200).json(data2 && data2[0] ? data2[0] : {});
 
     } aksi takdirde eğer (req.method === "PUT") {
-      const { id, ...güncellemeler } = req.body;
+      var gövde = istek gövdesi;
+      var id = body.id;
+      var updates = {};
+      Object.keys(body).forEach(function(k) { if (k !== "id") updates[k] = body[k]; });
       await fetch(SUPA_URL + "/rest/v1/kullanicilar?id=eq." + id, {
         yöntem: "PATCH",
         başlıklar: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json" },
@@ -48,12 +49,14 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: true });
 
     } aksi takdirde eğer (req.method === "DELETE") {
-      const { id } = req.query;
-      await fetch(SUPA_URL + "/rest/v1/kullanicilar?id=eq." + id, {
+      var delId = req.query.id;
+      fetch'i bekliyor(SUPA_URL + "/rest/v1/kullanicilar?id=eq." + delId, {
         yöntem: "SİL",
         başlıklar: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
       });
       res.status(200).json({ ok: true });
+    } başka {
+      res.status(405).json({ error: "Method not allowed" });
     }
   } yakala (e) {
     res.status(500).json({ error: e.message });

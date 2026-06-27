@@ -15,27 +15,30 @@ export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
       const { userId, dilId, hocaId } = req.query;
-      if (!userId || !dilId || !hocaId) { res.status(400).json({ error: "Eksik parametre" }); return; }
+      if (!userId || !dilId || !hocaId) {
+        res.status(400).json({ error: "Eksik parametre" });
+        return;
+      }
       const url = SUPA_URL + "/rest/v1/messages?user_id=eq." + userId + "&dil_id=eq." + dilId + "&hoca_id=eq." + hocaId + "&order=created_at.asc&limit=100";
       const r = await fetch(url, {
         headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
       });
       const data = await r.json();
-      res.status(200).json((data || []).map(d => ({ r: d.role, t: d.content })));
+      res.status(200).json((data || []).map(function(d) { return { r: d.role, t: d.content }; }));
 
     } else if (req.method === "POST") {
       const { userId, dilId, hocaId, messages } = req.body;
-      if (!userId || !dilId || !hocaId) { res.status(400).json({ error: "Eksik parametre" }); return; }
-      // Eski mesajları sil
+      if (!userId || !dilId || !hocaId) {
+        res.status(400).json({ error: "Eksik parametre" });
+        return;
+      }
       await fetch(SUPA_URL + "/rest/v1/messages?user_id=eq." + userId + "&dil_id=eq." + dilId + "&hoca_id=eq." + hocaId, {
         method: "DELETE",
         headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
       });
-      // Yeni mesajları ekle
-      const rows = (messages || []).slice(-50).map(m => ({
-        user_id: String(userId), dil_id: dilId, hoca_id: hocaId,
-        role: m.r, content: m.t, created_at: new Date().toISOString()
-      }));
+      var rows = (messages || []).slice(-50).map(function(m) {
+        return { user_id: String(userId), dil_id: dilId, hoca_id: hocaId, role: m.r, content: m.t, created_at: new Date().toISOString() };
+      });
       if (rows.length > 0) {
         await fetch(SUPA_URL + "/rest/v1/messages", {
           method: "POST",
@@ -44,6 +47,8 @@ export default async function handler(req, res) {
         });
       }
       res.status(200).json({ ok: true });
+    } else {
+      res.status(405).json({ error: "Method not allowed" });
     }
   } catch (e) {
     res.status(500).json({ error: e.message });

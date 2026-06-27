@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import.meta.env.VITE_SUPABASE_URL,
-import.meta.env.VITE_SUPABASE_ANON_KEY
+
 const K = {
   bg:"#071510",bg2:"#0a1e13",bg3:"#0d2618",card:"#0f2c1c",
   bdr:"#1a3d26",bdr2:"#1f4d30",bdr3:"#266040",
@@ -599,19 +598,26 @@ function AuthModal({ilkMod, kapat, basari}) {
     basari(yeni);
   };
 
-  const doSifre = () => {
-    if(!f.email.includes("@")){setH({email:"Geçerli e-posta girin"});return;}
+  const doSifre = async () => {
+    if(!f.email.includes("@")){setH({email:"Gecerli e-posta girin"});return;}
     const a = getA();
-    const kul = (a.users||[]).find(u=>u.email.toLowerCase()===f.email.toLowerCase());
-    if(!kul){setH({email:"Bu e-posta kayıtlı değil"});return;}
-    // Admin'e bildirim gönder
-    const bildirim = {
-      id:Date.now(), tip:"sifreSifirla", okundu:false,
-      mesaj:"🔑 Şifre sıfırlama: "+kul.ad+" ("+kul.email+") şifresini unuttu. Şifre: "+kul.pw,
-      tarih:new Date().toLocaleString("tr-TR")
-    };
-    setA({...a, bildirimler:[...(a.bildirimler||[]), bildirim]});
-    setMesaj("Şifre sıfırlama talebiniz alındı. Admin en kısa sürede sizinle iletişime geçecek.");
+    const kulBulundu = (a.users||[]).find(u=>u.email.toLowerCase()===f.email.toLowerCase());
+    if(!kulBulundu){setH({email:"Bu e-posta kayitli degil"});return;}
+    try {
+      const res = await fetch("/api/reset-password", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"send", email:f.email})
+      });
+      if(res.ok){
+        setMesaj("Sifre sifirlama linki e-posta adresinize gonderildi. Lufen e-postanizi kontrol edin.");
+      } else {
+        const err = await res.json();
+        setMesaj("Hata: " + (err.error || "Email gonderilemedi"));
+      }
+    } catch(e) {
+      setMesaj("Baglanti hatasi. Lutfen tekrar deneyin.");
+    }
   };
 
   const tabS = a => ({flex:1,padding:"10px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
@@ -911,7 +917,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       "- Medrese sırası: 1.Kuran 2.Arapça 3.Fıkıh 4.Hadis 5.Tefsir 6.Akaid. Bu ASLA değişmez.\n"+
       "- Namaz duaları ve ayetleri TAM ver, eksik verme, özetleme.\n"+
       "- Ettehiyyatü namazda okunan duadır, Kuran suresi DEĞİLDİR.\n"+
-      "- Arapça kelimeleri MUTLAKA doğru Arapça harflerle yaz. Kalem = قَلَم (doğru). Kalem = كَلَم (YANLIŞ).\n"+
+      "- Arapca kelimeleri dogru Arapca harflerle yaz. Kalem = قَلَم\n"+
+"- Arapca rakamlar: 0=صفر(sifr), 1=واحد(vahid), 2=اثنان(isnan), 3=ثلاثة(selase), 4=أربعة(erbea), 5=خمسة(hamse), 6=ستة(sitte), 7=سبعة(sebea), 8=ثمانية(semaniye), 9=تسعة(tisaa), 10=عشرة(asere)\n"+
+"- Japonca rakamlar: 1=一(ichi), 2=二(ni), 3=三(san), 4=四(shi), 5=五(go), 6=六(roku), 7=七(nana), 8=八(hachi), 9=九(ku), 10=十(juu)\n"+
+"- Korece rakamlar: 1=일(il), 2=이(i), 3=삼(sam), 4=사(sa), 5=오(o), 6=육(yuk), 7=칠(chil), 8=팔(pal), 9=구(gu), 10=십(sip)\n"+
+
       "- Dua ve ayetleri TAM yaz, yarım bırakma. Rabbu yessir duasının tamamı: رَبِّ يَسِّرْ وَلَا تُعَسِّرْ، رَبِّ تَمِّمْ بِالْخَيْرِ\n"+
       "- Emin olmadığın bilgiyi KESINLIKLE üretme. Yanlis bilgi vermek haramdır.\n"+
       "- Kuran ayet numaraları söylerken SADECE emin olduğunu söyle, uydurma.\n"+
@@ -925,7 +935,9 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       "\nKESIN CEVAP UZUNLUĞU KURALI: Maksimum 4-5 cümle yaz, asla daha uzun yazma. Soruyla doğrudan ilgili olmayan hiçbir bilgi ekleme. Sadece sorulan şeyi cevapla, arka plan/tarih/gereksiz detay YASAK. Örnek: 'Patates nasıl kızartılır?' sorusuna SADECE pratik adımları ver (yıka, soy, dilimle, kızgın yağda kızart), tarımsal süreç gibi alakasız bilgi KESİNLİKLE verme. Konuyu öğretirken bile kısa ve öz ol, tek seferde 1 kavram anlat, sonra öğrenciye sor."+
       "\nYANLIŞ DÜZELTME TARZI: Öğrenci hata yaparsa asla doğrudan 'yanlış' deme. Şöyle yumuşak düzelt: 'Yaklaştın, ama burada ... biraz farklı' gibi. Sabırlı, motive edici, nazik ol. Öğrenciyi küçümseme."+
       "\nTELAFFUZ GERİ BİLDİRİMİ: Öğrencinin yazdığı/söylediği kelimede harf hatası varsa belirt, doğrusunu göster ve nasıl çıkarılacağını söyle (örn: bu harf gırtlaktan/boğazdan çıkar)."+
-      "\nŞİMDİ DERSE BAŞLA. "+seviye+" seviyesine göre bugünkü konuyu tanıt, öğrenciye soru sor.";
+      "\nŞİMDİ DERSE BAŞLA. "+seviye+" seviyesine göre bugünkü konuyu tanıt.\n"+
+      "DERS KURALLARI: En az 4-5 konu goster. Sadece 1-2 konu söyleyip bitirme. Yarım bırakma, ders en az 30 dakika sürsün.\n"+
+      "Her 5 mesajda mini test yap (3 soru). Ders sonunda mutlaka ödev ver.";
   };
 
 
@@ -969,13 +981,20 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       .trim();
     msgKaydet([...msgs, {r:"user",t:metin}, {r:"ai",t:temizYanEkran}]);
       // Metni temizle - yıldız, emoji, parantez, noktalama fazlalıkları kaldır
-    const metinTemizle = (txt) => txt
+    const metinTemizle = (txt) => {
+      const yazimDuzelt = (t) => t
+        .replace(/teşekur/gi, "teşekkür")
+        .replace(/merhba/gi, "merhaba")
+        .replace(/hafya/gi, "hafta")
+        .replace(/birse/gi, "bir se");
+      return yazimDuzelt(txt)
       .replace(/\*+/g, '')
       .replace(/#{1,6}\s/g, '')
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
       .replace(/[🎯🤔😊😀🎉✅❌⭐🔴🟢📚🎓👋🙏✨🌟💡]/gu, '')
       .replace(/\s+/g, ' ')
-      .trim();
+        .trim();
+    };
     
     const temizYan = metinTemizle(yan);
     
@@ -1562,6 +1581,7 @@ function AdminPanel({kapat, admCikis}) {
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg] = useState(getA());
   const [secilenKullanici, setSecilenKullanici] = useState(null);
+  const [kulArama, setKulArama] = useState("");
   const [kayd, setKayd] = useState(false);
   const [hE,setHE]=useState(""); const [hT,setHT]=useState("7 Gün"); const [hOk,setHOk]=useState(false); const [hErr,setHErr]=useState("");
   const [p1,setP1]=useState(""); const [p2,setP2]=useState(""); const [pMsg,setPMsg]=useState("");
@@ -1604,7 +1624,7 @@ function AdminPanel({kapat, admCikis}) {
 
   const SEKMELER=[
     ["dash","📊","Dashboard"],["kul","👥","Kullanıcılar"],["ode","💳","Ödemeler"],
-    ["ders","📡","Aktif Dersler"],["iht","⚠️","İhtar Geçmişi"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["bildirimler","🆕","Yeni Üyeler"],["set","⚙️","Ayarlar"]
+    ["ders","📡","Aktif Dersler"],["derslerim","📚","Derslerim"],["iht","⚠️","İhtar Geçmişi"],["hed","🎁","Hediye Ver"],["bil","🔔","Bildirimler"],["bildirimler","🆕","Yeni Üyeler"],["set","⚙️","Ayarlar"]
   ];
 
   return (
@@ -1667,19 +1687,37 @@ function AdminPanel({kapat, admCikis}) {
         </>}
 
         {sekme==="kul"&&<>
-          <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>Kullanıcılar ({toplam})</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div style={{fontSize:20,fontWeight:800,color:K.tx}}>Kullanıcılar ({toplam})</div>
+          </div>
+          <input
+            placeholder="Ad, email veya telefon ile ara..."
+            value={kulArama||""}
+            onChange={e=>setKulArama(e.target.value)}
+            style={{width:"100%",padding:"10px 14px",background:K.bg3,border:"1px solid "+K.bdr,
+              borderRadius:9,color:K.tx,fontSize:13,outline:"none",marginBottom:14,boxSizing:"border-box"}}
+          />
           {kul.length===0?<div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Henüz kayıtlı kullanıcı yok</div>:(
             <div style={{...kd,padding:0,overflow:"hidden"}}>
               <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr 0.6fr",padding:"9px 14px",
                 background:K.bg3,fontSize:9,color:K.tx4,fontWeight:700}}>
                 {["AD / E-POSTA","TEL / TC","PLAN","DURUM","GELİR","DERSLER"].map(h=><div key={h}>{h}</div>)}
               </div>
-              {kul.map(u=>(
+              {kul.filter(u=>{
+                if(!kulArama) return true;
+                const ara = kulArama.toLowerCase();
+                return (u.ad||"").toLowerCase().includes(ara) ||
+                       (u.email||"").toLowerCase().includes(ara) ||
+                       (u.tel||"").toLowerCase().includes(ara);
+              }).map(u=>(
                 <div key={u.id} style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr 0.6fr",
                   padding:"11px 14px",borderTop:"1px solid "+K.bdr,alignItems:"center"}}>
-                  <div><div style={{color:K.tx,fontSize:12,fontWeight:600}}>{u.ad}</div>
+                  <div>
+                    <div style={{color:K.tx,fontSize:12,fontWeight:600}}>{u.ad}</div>
                     <div style={{color:K.tx4,fontSize:10}}>{u.email}</div>
-                    <div style={{color:K.tx4,fontSize:10}}>{u.tarih}</div></div>
+                    <div style={{color:K.tx4,fontSize:10}}>{u.dogum||""} {u.sehir?("/ "+u.sehir):""}</div>
+                    <div style={{color:K.tx4,fontSize:10}}>{u.tarih}</div>
+                  </div>
                   <div><div style={{color:K.tx2,fontSize:11}}>{u.tel||"—"}</div>
                     </div>
                   <div style={{color:K.tx2,fontSize:11}}>{u.plan}{u.hediye&&<span style={{color:K.gL}}> 🎁</span>}</div>
@@ -1687,9 +1725,16 @@ function AdminPanel({kapat, admCikis}) {
                     background:u.durum==="Aktif"?"rgba(46,125,50,0.18)":u.durum==="Deneme"?"rgba(249,168,37,0.15)":"rgba(198,40,40,0.15)",
                     color:u.durum==="Aktif"?K.gL:u.durum==="Deneme"?K.warn:K.errL}}>{u.durum}</div>
                   <div style={{color:K.warn,fontSize:12,fontWeight:700}}>{u.odeme}</div>
-                  <button onClick={()=>setSecilenKullanici(u)}
-                    style={{padding:"5px 10px",borderRadius:6,background:K.bg3,color:K.tL,
-                      border:"1px solid "+K.bdr2,cursor:"pointer",fontSize:11}}>📚 Gör</button>
+                  <div style={{display:"flex",gap:6,flexDirection:"column"}}>
+                    <button onClick={()=>setSecilenKullanici(u)}
+                      style={{padding:"5px 10px",borderRadius:6,background:K.bg3,color:K.tL,
+                        border:"1px solid "+K.bdr2,cursor:"pointer",fontSize:11}}>📚 Gör</button>
+                    <button onClick={()=>{
+                      if(!window.confirm(u.ad+" adlı üyeyi silmek istediğinizden emin misiniz?")) return;
+                      kaydet({...cfg, users:(cfg.users||[]).filter(x=>x.email!==u.email)});
+                    }} style={{padding:"5px 10px",borderRadius:6,background:"rgba(198,40,40,0.1)",color:K.errL,
+                      border:"1px solid "+K.err+"33",cursor:"pointer",fontSize:11}}>🗑 Sil</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1784,6 +1829,45 @@ function AdminPanel({kapat, admCikis}) {
               </div>
             ))
           }
+        </>}
+
+        {sekme==="derslerim"&&<>
+          <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:16}}>📚 Derslerim</div>
+          <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Admin olarak kendi ders geçmişiniz</div>
+          {DILLER.map(d => {
+            const admId = "admin";
+            const dersler = getDG(admId, d.id);
+            if (dersler.length === 0) return null;
+            return (
+              <div key={d.id} style={{...kd}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <span style={{fontSize:18}}>{d.bayrak}</span>
+                  <span style={{color:K.tx,fontWeight:700}}>{d.ad}</span>
+                  <span style={{color:K.gL,fontWeight:700,marginLeft:"auto"}}>{getSV(admId,d.id)}</span>
+                </div>
+                {[...dersler].reverse().slice(0,5).map(dr=>(
+                  <div key={dr.id} style={{background:K.bg3,borderRadius:8,padding:"8px 12px",marginBottom:6,
+                    display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div>
+                      <div style={{color:K.tx,fontSize:12}}>{dr.tarih} — {dr.hoca}</div>
+                      <div style={{color:K.tx4,fontSize:11}}>{dr.kategori} • {dr.sure}dk • {dr.seviye}</div>
+                    </div>
+                    <button onClick={()=>{
+                      const dilHocalar = HOCALAR[d.id]||[];
+                      const hoca = dilHocalar.find(h=>h.id===dr.hocaId)||dilHocalar[0];
+                      if(hoca) setDers({dil:d.id, hoca:hoca, kul:{id:"admin",ad:"Admin",plan:"Sınırsız",durum:"Aktif",trialStart:0}});
+                    }} style={{padding:"5px 10px",borderRadius:6,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                      color:"#fff",border:"none",cursor:"pointer",fontSize:11,fontWeight:600,flexShrink:0}}>
+                      Devam Et
+                    </button>
+                  </div>
+                ))}
+              </div>
+            );
+          }).filter(Boolean)}
+          {DILLER.every(d=>getDG("admin",d.id).length===0) && (
+            <div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Henüz ders geçmişi yok</div>
+          )}
         </>}
 
         {sekme==="iht"&&<>
@@ -1884,7 +1968,28 @@ function AdminPanel({kapat, admCikis}) {
               <div key={n.t} style={{...kd,marginBottom:0}}>
                 <div style={{color:K.tx,fontWeight:700,marginBottom:6,fontSize:13}}>{n.t}</div>
                 <div style={{color:K.tx4,fontSize:11,lineHeight:1.6,marginBottom:10}}>{n.m}</div>
-                <button onClick={()=>alert("Bildirim gönderildi!")}
+                <button onClick={async ()=>{
+                  // Tüm kullanıcılara email gönder
+                  const kullanicilar = cfg.users || [];
+                  if(kullanicilar.length === 0){ alert("Kayıtlı kullanıcı yok."); return; }
+                  let basarili = 0;
+                  for(const u of kullanicilar){
+                    try {
+                      await fetch("/api/send-notification", {
+                        method:"POST",
+                        headers:{"Content-Type":"application/json"},
+                        body:JSON.stringify({email:u.email, ad:u.ad, mesaj:n.m, baslik:n.t})
+                      });
+                      basarili++;
+                    } catch(e){ console.log("Email hatası:", e); }
+                  }
+                  // Bildirim kaydına ekle
+                  const bl = {id:Date.now(),tip:"bildirim",okundu:true,
+                    mesaj:"📢 '"+n.t+"' bildirimi "+basarili+" kullanıcıya gönderildi.",
+                    tarih:new Date().toLocaleString("tr-TR")};
+                  kaydet({...cfg, bildirimler:[...(cfg.bildirimler||[]),bl]});
+                  alert("✅ "+basarili+"/"+kullanicilar.length+" kullanıcıya bildirim gönderildi.");
+                }}
                   style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(46,125,50,0.12)",
                     color:K.gL,border:"1px solid "+K.g2+"44",cursor:"pointer",fontSize:11}}>
                   Tüm Kullanıcılara Gönder
@@ -1933,7 +2038,7 @@ function AdminPanel({kapat, admCikis}) {
   );
 }
 
-export default function App() { 
+export default function App() {
   const [kul, setKul] = useState(()=>DB.g("kul"));
   const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
   const [adAcik, setAdAcik] = useState(false);
@@ -1949,6 +2054,41 @@ export default function App() {
   const [adUnuttu, setAdUnuttu] = useState(false);
   const [odePlan, setOdePlan] = useState(null);
   const [pwaPrompt, setPwaPrompt] = useState(null);
+
+  // Şifre sıfırlama token kontrolü
+  useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get("reset");
+    if(resetToken){
+      fetch("/api/reset-password", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"verify", token:resetToken})
+      }).then(r=>r.json()).then(data=>{
+        if(data.ok){
+          const yeniSifre = prompt("Yeni sifrenizi girin (min 6 karakter):");
+          if(!yeniSifre || yeniSifre.length < 6){ alert("Gecersiz sifre."); return; }
+          // Şifreyi localStorage'da güncelle
+          const a = getA();
+          const guncellenmis = (a.users||[]).map(u=>
+            u.email===data.email ? {...u, pw:yeniSifre} : u
+          );
+          setA({...a, users:guncellenmis});
+          // Token'ı geçersiz kıl
+          fetch("/api/reset-password", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({action:"reset", token:resetToken, newPassword:yeniSifre})
+          });
+          alert("Sifreniz basariyla guncellendi! Simdi giris yapabilirsiniz.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          alert("Sifre sifirlama linki gecersiz veya suresi dolmus.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }).catch(()=>{});
+    }
+  },[]);
 
   useEffect(()=>{
     document.title = "Lisan Öğren — AI Hoca ile 10 Dil Öğren";
@@ -1992,7 +2132,7 @@ export default function App() {
   const gI2={width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
 
   return (
-    div  ) <style; {{minHeight:"100vh",background;"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily;"'Segoe UI',system-ui,sans-serif",fontSize;"17px"}}
+    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
@@ -2274,8 +2414,18 @@ export default function App() {
                     </div>
                   </div>
                 ))}
-                <button onClick={()=>{setDilSec(d);git("diller");}}
-                  style={{width:"100%",marginTop:8,padding:"9px",borderRadius:9,
+                <button onClick={()=>{
+                  // Son dersteki hocayı bul
+                  const sonDers = [...dersler].reverse()[0];
+                  const hocaId = sonDers?.hocaId;
+                  const dilHocalar = HOCALAR[d.id] || [];
+                  const sonHoca = dilHocalar.find(h=>h.id===hocaId) || dilHocalar[0];
+                  if (sonHoca) {
+                    setDers({dil:d.id, hoca:sonHoca, kul:kul});
+                  } else {
+                    setDilSec(d); git("diller");
+                  }
+                }} style={{width:"100%",marginTop:8,padding:"9px",borderRadius:9,
                     background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
                     color:"#fff",border:"none",cursor:"pointer",fontWeight:700,fontSize:12}}>
                   🎤 Kaldığım Yerden Devam Et ({getSV(kul.id,d.id)})
@@ -2502,7 +2652,7 @@ export default function App() {
         </div>
       )}
 
-      adModal&&
+      {adModal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
           <div style={{background:K.card,borderRadius:18,padding:26,width:320,border:"1px solid "+K.bdr3,boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
@@ -2510,7 +2660,7 @@ export default function App() {
               <button onClick={()=>{setAdModal(false);setAdHata("");setAdSifre("");setAdUnuttu(false);}}
                 style={{background:"none",border:"none",color:K.tx3,fontSize:18,cursor:"pointer"}}>✕</button>
             </div>
-            !adUnuttu?(
+            {!adUnuttu?(
               <>
                 <input type="password" value={adSifre} placeholder="Yönetici şifresi"
                   onChange={e=>{setAdSifre(e.target.value);setAdHata("");}}
@@ -2530,8 +2680,8 @@ export default function App() {
                       color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700}}>Giriş</button>
                 </div>
               </>
-            ):
-              
+            ):(
+              <>
                 <div style={{color:K.tx3,fontSize:12,marginBottom:14}}>Yeni admin şifresi belirleyin.</div>
                 <input type="password" id="np1" placeholder="Yeni şifre (min 6)"
                   style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
@@ -2539,7 +2689,7 @@ export default function App() {
                 <input type="password" id="np2" placeholder="Tekrar girin"
                   style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
                     borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box",marginBottom:14}}/>
-                button onClick={()=>{
+                <button onClick={()=>{
                   const pw1=document.getElementById("np1").value;
                   const pw2=document.getElementById("np2").value;
                   if(!pw1||pw1.length<6){alert("En az 6 karakter!");return;}
@@ -2547,5 +2697,18 @@ export default function App() {
                   const a=getA(); setA({...a,pw:pw1});
                   alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
                   setAdUnuttu(false); setAdModal(false);
-                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")"}}
-
+                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8}}>
+                  Şifreyi Güncelle
+                </button>
+                <div style={{textAlign:"center"}}>
+                  <button onClick={()=>setAdUnuttu(false)} style={{background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12}}>← Geri Dön</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

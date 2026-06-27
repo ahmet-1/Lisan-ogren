@@ -5,30 +5,38 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
   if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
 
-  const { audioBase64, referenceText, language } = req.body || {};
+  var body = req.body || {};
+  var audioBase64 = body.audioBase64;
+  var referenceText = body.referenceText;
+  var language = body.language;
+
   if (!audioBase64 || !referenceText) {
     res.status(400).json({ error: "Eksik parametre" });
     return;
   }
 
-  const key = process.env.AZURE_SPEECH_KEY;
-  const region = process.env.AZURE_SPEECH_REGION || "eastus";
-  if (!key) { res.status(500).json({ error: "Azure key tanımlı değil" }); return; }
+  var key = process.env.AZURE_SPEECH_KEY;
+  var region = process.env.AZURE_SPEECH_REGION || "eastus";
+
+  if (!key) {
+    res.status(500).json({ error: "Azure key tanimli degil" });
+    return;
+  }
 
   try {
-    const config = {
+    var config = {
       ReferenceText: referenceText.substring(0, 500),
       GradingSystem: "HundredMark",
       Granularity: "Phoneme",
       Dimension: "Comprehensive",
       EnableMiscue: true
     };
-    const header = Buffer.from(JSON.stringify(config)).toString("base64");
-    const audioBuffer = Buffer.from(audioBase64, "base64");
-    const lang = language || "tr-TR";
-    const url = "https://" + region + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=" + lang;
+    var header = Buffer.from(JSON.stringify(config)).toString("base64");
+    var audioBuffer = Buffer.from(audioBase64, "base64");
+    var lang = language || "tr-TR";
+    var url = "https://" + region + ".stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=" + lang;
 
-    const response = await fetch(url, {
+    var response = await fetch(url, {
       method: "POST",
       headers: {
         "Ocp-Apim-Subscription-Key": key,
@@ -40,27 +48,26 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errText = await response.text();
+      var errText = await response.text();
       res.status(response.status).json({ error: "Azure hata: " + errText.substring(0, 200) });
       return;
     }
 
-    const data = await response.json();
-    const nbest = data.NBest?.[0] || {};
-    const pa = nbest.PronunciationAssessment || {};
-    const words = (nbest.Words || []).map(w => ({
-      word: w.Word,
-      accuracyScore: w.PronunciationAssessment?.AccuracyScore ?? null,
-      errorType: w.PronunciationAssessment?.ErrorType || "None"
-    }));
+    var data = await response.json();
+    var nbest = (data.NBest && data.NBest[0]) ? data.NBest[0] : {};
+    var pa = nbest.PronunciationAssessment || {};
+    var words = (nbest.Words || []).map(function(w) {
+      var wpa = w.PronunciationAssessment || {};
+      return { word: w.Word, accuracyScore: wpa.AccuracyScore !== undefined ? wpa.AccuracyScore : null, errorType: wpa.ErrorType || "None" };
+    });
 
     res.status(200).json({
       recognizedText: data.DisplayText || "",
-      accuracyScore: pa.AccuracyScore ?? null,
-      fluencyScore: pa.FluencyScore ?? null,
-      completenessScore: pa.CompletenessScore ?? null,
-      pronScore: pa.PronScore ?? null,
-      words
+      accuracyScore: pa.AccuracyScore !== undefined ? pa.AccuracyScore : null,
+      fluencyScore: pa.FluencyScore !== undefined ? pa.FluencyScore : null,
+      completenessScore: pa.CompletenessScore !== undefined ? pa.CompletenessScore : null,
+      pronScore: pa.PronScore !== undefined ? pa.PronScore : null,
+      words: words
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
