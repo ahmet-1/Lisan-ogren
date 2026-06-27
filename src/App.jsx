@@ -1660,7 +1660,7 @@ function AdminPanel({kapat, admCikis}) {
                 background:K.bg3,fontSize:9,color:K.tx4,fontWeight:700}}>
                 {["AD / E-POSTA","TEL / TC","PLAN","DURUM","GELİR","DERSLER"].map(h=><div key={h}>{h}</div>)}
               </div>
-              {kul.filter(u=>{
+              {(kul||[]).filter(u=>{
                 if(!kulArama) return true;
                 const ara = kulArama.toLowerCase();
                 return (u.ad||"").toLowerCase().includes(ara) ||
@@ -1812,7 +1812,7 @@ function AdminPanel({kapat, admCikis}) {
                     <button onClick={()=>{
                       const dilHocalar = HOCALAR[d.id]||[];
                       const hoca = dilHocalar.find(h=>h.id===dr.hocaId)||dilHocalar[0];
-                      if(hoca) setDers({dil:d.id, hoca:hoca, kul:{id:"admin",ad:"Admin",plan:"Sınırsız",durum:"Aktif",trialStart:0}});
+                      alert("Ana sayfaya dönüp ilgili dili seçin.");
                     }} style={{padding:"5px 10px",borderRadius:6,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
                       color:"#fff",border:"none",cursor:"pointer",fontSize:11,fontWeight:600,flexShrink:0}}>
                       Devam Et
