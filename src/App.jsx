@@ -152,6 +152,24 @@ const MUFREDAT = {
     C1: "İleri yazı ve konuşma. YDS/YÖKDİL hazırlık.",
     C2: "Ana dil seviyesi."
   },
+  // İBRANİCE
+ hebrew: {
+    A1:"Ibranice alfabesi (Alefbet), harflerin sesleri, temel kelimeler",
+    A2:"Temel cumle yapisi, fiil cekimi temelleri, günlük konusma",
+    B1:"Binyan sistemi, orta seviye gramer, haber metinleri",
+    B2:"Ileri gramer, edebi dil, gazete makaleleri",
+    C1:"Akademik Ibranice, Talmud metinleri",
+    C2:"Ana dil seviyesi"
+  },
+  // SÜRYANİCE
+  syriac: {
+    A1:"Suryanice alfabesi, harfler, temel kelimeler",
+    A2:"Temel cumle yapisi, isim ve fiil temelleri",
+    B1:"Gramer, klasik metin okuma, dini terminoloji",
+    B2:"Ileri gramer, kilise metinleri",
+    C1:"Akademik Suryanice, Peshitta metinleri",
+    C2:"Uzman seviye klasik metin analizi"
+  },
 };
 
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
