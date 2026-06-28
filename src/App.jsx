@@ -362,6 +362,23 @@ const HOCALAR = {
     {id:"t5",ad:"Öğrt. Burak Şahin",  yer:"İzmir",     uz:"Çocuklara Türkçe", p:4.9,n:620, c:true},
     {id:"t6",ad:"Öğrt. Elif Kılıç",   yer:"Ankara",    uz:"Çocuk Türkçesi",   p:4.8,n:540, c:true},
   ],
+hebrew:[
+  {id:"h1",ad:"Dr. Eli Ben-David",   yer:"Kudüs",   uz:"Alefbet & Gramer",      p:4.9,n:1400,c:false},
+  {id:"h2",ad:"Prof. Noam Cohen",    yer:"Tel Aviv",uz:"Modern İbranice",       p:4.8,n:1200,c:false},
+  {id:"h3",ad:"Dr. Miriam Levi",     yer:"Hayfa",   uz:"Dini Metinler",         p:4.9,n:1350,c:false},
+  {id:"h4",ad:"Sarah Mizrahi",       yer:"Kudüs",   uz:"Konuşma & Okuma",       p:4.8,n:980,c:false},
+  {id:"h5",ad:"Öğrt. Daniel",        yer:"Tel Aviv",uz:"Çocuklara İbranice",    p:4.9,n:520,c:true},
+  {id:"h6",ad:"Öğrt. Yael",          yer:"Hayfa",   uz:"Çocuk İbranicesi",      p:4.8,n:430,c:true},
+],
+
+syriac:[
+  {id:"sy1",ad:"Mor Gabriel",        yer:"Mardin",  uz:"Klasik Süryanice",      p:5.0,n:880,c:false},
+  {id:"sy2",ad:"Dr. Hanna Yuhanon",  yer:"Midyat",  uz:"Süryani Grameri",       p:4.9,n:760,c:false},
+  {id:"sy3",ad:"Mor Mikail",         yer:"Tur Abdin",uz:"Dini Metinler",        p:4.9,n:710,c:false},
+  {id:"sy4",ad:"Rabi Ester",         yer:"Mardin",  uz:"Okuma & Konuşma",       p:4.8,n:530,c:false},
+  {id:"sy5",ad:"Öğrt. Rami",         yer:"Midyat",  uz:"Çocuklara Süryanice",   p:4.8,n:290,c:true},
+  {id:"sy6",ad:"Öğrt. Narin",        yer:"Mardin",  uz:"Çocuk Süryanicesi",     p:4.7,n:250,c:true},
+],
 };
 
 const BESMELE_DILLER = ["quran","arabic","medrese"];
