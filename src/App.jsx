@@ -2240,7 +2240,7 @@ export default function App() {
             {[
               {t:"🎤 Telefon Modu",d:"Bas konuş, hocanla sesli diyalog"},
               {t:"✍️ Yazılı Ders",d:"İstediğin konuda pratik yap"},
-              {t:"🌍 12 Dil",d:"Kuran dahil 12 dil, 72 hoca"},
+              {t:"🌍 12 + 2 Dil",d:"Kuran dahil 12 + 2 dil, 72 hoca"},
               {t:"👶 Çocuk Modu",d:"Her dilde özel çocuk hocaları"},
             ].map(f=>(
               <div key={f.t} style={{background:K.card,borderRadius:14,padding:"18px 16px",width:190,border:"1px solid "+K.bdr,textAlign:"center"}}>
@@ -2251,7 +2251,7 @@ export default function App() {
           </div>
 
           <div style={{padding:"0 22px 58px",textAlign:"center"}}>
-            <div style={{fontSize:13,fontWeight:700,color:K.tx4,marginBottom:16}}>12 Dil</div>
+            <div style={{fontSize:13,fontWeight:700,color:K.tx4,marginBottom:16}}>12 + 2 Dil</div>
             <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
               {DILLER.map(d=>(
                 <button key={d.id} onClick={()=>{setDilSec(d);git("diller");}}
