@@ -1569,7 +1569,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   );
 }
 
-function AdminPanel({kapat, admCikis}) {
+function AdminPanel({kapat, admCikis, setDers, kul}) {
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg] = useState(getA());
   const [secilenKullanici, setSecilenKullanici] = useState(null);
@@ -2116,7 +2116,7 @@ export default function App() {
   const git = s => { setSayfa(s); setDilSec(null); };
   const adm = getA();
 
-  if(adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis}/>;
+  if(adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis} setDers={setDers} kul={kul}/>;
   if(ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul||kul} kapat={()=>setDers(null)}/>;
 
   const bP={padding:"13px 28px",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:14,boxShadow:"0 4px 20px "+K.g2+"55"};
