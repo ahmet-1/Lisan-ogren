@@ -2203,7 +2203,7 @@ export default function App() {
               border:"1px solid rgba(46,125,50,0.25)",borderRadius:20,padding:"5px 16px",
               fontSize:11,color:K.gL,marginBottom:22,fontWeight:600}}>
               <span style={{width:5,height:5,borderRadius:"50%",background:K.gL,display:"inline-block"}}/>
-              5 Gün Ücretsiz • Yazılı & Sesli AI Hoca • 12 Dil
+              5 Gün Ücretsiz • Yazılı & Sesli AI Hoca • 12 + 2 Dil
             </div>
             <h1 style={{fontSize:48,fontWeight:900,lineHeight:1.08,margin:"0 auto 18px",maxWidth:650,letterSpacing:-1.5,color:K.tx}}>
               AI Hocanla<br/>
