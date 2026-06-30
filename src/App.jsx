@@ -1604,23 +1604,23 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
   },[]);
 
   const kullaniciListesi = cfg.users||[]; const ode = cfg.pays||[];
-  const toplam=kul.length; const aktif=kul.filter(u=>u.durum==="Aktif").length;
-  const deneme=kul.filter(u=>u.durum==="Deneme").length;
+  const toplam=kullaniciListesi.length; const aktif=kullaniciListesi.filter(u=>u.durum==="Aktif").length;
+  const deneme=kullaniciListesi.filter(u=>u.durum==="Deneme").length;
   const bekl=(ode).filter(o=>o.d==="bekle").length;
-  const gelir=kul.reduce((t,u)=>{const n=parseInt((u.odeme||"0").replace(/[^0-9]/g,""));return t+(isNaN(n)?0:n);},0);
+  const gelir=kullaniciListesi.reduce((t,u)=>{const n=parseInt((u.odeme||"0").replace(/[^0-9]/g,""));return t+(isNaN(n)?0:n);},0);
 
   const onayOde = id => {
     const o=ode.find(x=>x.id===id); if(!o)return;
     kaydet({...cfg,
       pays:ode.map(x=>x.id===id?{...x,d:"ok"}:x),
-      users:kul.map(u=>u.email===o.email?{...u,plan:o.plan,durum:"Aktif",
+      users:kullaniciListesi.map(u=>u.email===o.email?{...u,plan:o.plan,durum:"Aktif",
         odeme:"₺"+(parseInt((u.odeme||"0").replace(/[^0-9]/g,""))+(o.tutar||299))}:u)
     });
   };
 
   const hediye = () => {
     if(!hE.includes("@")){setHErr("Geçerli e-posta");return;}
-    const u=kul.find(x=>x.email===hE);
+    const u=kullaniciListesi.find(x=>x.email===hE);
     if(!u){setHErr("Kullanıcı bulunamadı");return;}
     kaydet({...cfg,users:kul.map(x=>x.email===hE?{...x,plan:hT,durum:"Aktif",hediye:true}:x)});
     setHOk(true);
@@ -1713,13 +1713,13 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
             style={{width:"100%",padding:"10px 14px",background:K.bg3,border:"1px solid "+K.bdr,
               borderRadius:9,color:K.tx,fontSize:13,outline:"none",marginBottom:14,boxSizing:"border-box"}}
           />
-          {kul.length===0?<div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Henüz kayıtlı kullanıcı yok</div>:(
+            {kullaniciListesi.length===0?<div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Henüz kayıtlı kullanıcı yok</div>:(
             <div style={{...kd,padding:0,overflow:"hidden"}}>
               <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 0.8fr 0.6fr",padding:"9px 14px",
                 background:K.bg3,fontSize:9,color:K.tx4,fontWeight:700}}>
                 {["AD / E-POSTA","TEL / TC","PLAN","DURUM","GELİR","DERSLER"].map(h=><div key={h}>{h}</div>)}
               </div>
-              {(kul||[]).filter(u=>{
+              {(kullaniciListesi||[]).filter(u=>{
                 if(!kulArama) return true;
                 const ara = kulArama.toLowerCase();
                 return (u.ad||"").toLowerCase().includes(ara) ||
@@ -1822,9 +1822,9 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
         {sekme==="ders"&&<>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:8}}>📡 Aktif Dersler</div>
           <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Öğrencilerin aktif derslerini izleyebilirsiniz.</div>
-          {kul.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").length===0
+          {kullaniciListesi.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").length===0
             ? <div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Şu an aktif ders yok</div>
-            : kul.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").map(u=>(
+            : kullaniciListesi.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").map(u=>(
               <div key={u.id} style={{...kd,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
                   <div style={{color:K.tx,fontWeight:700}}>{u.ad}</div>
@@ -1871,7 +1871,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                     <button onClick={()=>{
                       const dilHocalar = HOCALAR[d.id]||[];
                       const hoca = dilHocalar.find(h=>h.id===dr.hocaId)||dilHocalar[0];
-                      alert("Ana sayfaya dönüp ilgili dili seçin.");
+                      kapat(); DB.s("pendingDers",JSON.stringify({dil:d.id,hocaId:dr.hocaId||((HOCALAR[d.id]||[])[0]||{}).id}));
                     }} style={{padding:"5px 10px",borderRadius:6,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
                       color:"#fff",border:"none",cursor:"pointer",fontSize:11,fontWeight:600,flexShrink:0}}>
                       Devam Et
@@ -2057,6 +2057,18 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 export default function App() {
   const [kul, setKul] = useState(()=>DB.g("kul"));
   const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
+
+  useEffect(()=>{
+    const p=DB.g("pendingDers");
+    if(p&&kul){
+      DB.d("pendingDers");
+      try{
+        const {dil:dilId,hocaId}=JSON.parse(p);
+        const h=(HOCALAR[dilId]||[]).find(x=>x.id===hocaId)||(HOCALAR[dilId]||[])[0];
+        if(h) setDers({dil:dilId,hoca:h,kul:kul});
+      }catch(e){}
+    }
+  },[kul]);
   const [adAcik, setAdAcik] = useState(false);
   const [sayfa, setSayfa] = useState("ana");
   const [dilSec, setDilSec] = useState(null);
