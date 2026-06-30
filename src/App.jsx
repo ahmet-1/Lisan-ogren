@@ -1588,7 +1588,22 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
   const [p1,setP1]=useState(""); const [p2,setP2]=useState(""); const [pMsg,setPMsg]=useState("");
 
   const kaydet = y => { setCfg(y); setA(y); setKayd(true); setTimeout(()=>setKayd(false),2000); };
-  const kul = cfg.users||[]; const ode = cfg.pays||[];
+  
+  useEffect(()=>{
+    fetch("/api/users").then(r=>r.json()).then(dbUsers=>{
+      if(dbUsers&&dbUsers.length>0){
+        const a=getA();
+        const localEmails=new Set((a.users||[]).map(u=>u.email));
+        const yeni=[...(a.users||[])];
+        dbUsers.forEach(du=>{ if(!localEmails.has(du.email)) yeni.push(du); });
+        const yeniA={...a,users:yeni};
+        setA(yeniA);
+        setCfg(yeniA);
+      }
+    }).catch(()=>{});
+  },[]);
+
+  const kullaniciListesi = cfg.users||[]; const ode = cfg.pays||[];
   const toplam=kul.length; const aktif=kul.filter(u=>u.durum==="Aktif").length;
   const deneme=kul.filter(u=>u.durum==="Deneme").length;
   const bekl=(ode).filter(o=>o.d==="bekle").length;
@@ -2091,13 +2106,10 @@ export default function App() {
     }
   },[]);
 
-  useEffect(()=>{
-   const kulGiris = u => {
+const kulGiris = u => {
     setKul(u); DB.s("kul",u);
     fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)}).catch(()=>{});
   };
-
-  const kulGiris = u => { setKul(u); DB.s("kul",u); };
   const kulCikis = () => { setKul(null); DB.d("kul"); };
   const admKapat = () => { setAdAcik(false); };
   const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
