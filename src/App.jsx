@@ -543,17 +543,26 @@ function AuthModal({ilkMod, kapat, basari}) {
     </div>
   );
 
-  const doGiris = () => {
+ const doGiris = async () => {
     const e={};
     if(!f.email) e.email="E-posta gerekli";
     if(!f.sifre) e.sifre="Şifre gerekli";
     if(Object.keys(e).length){setH(e);return;}
     const a=getA();
-    const u=(a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase()&&x.pw===f.sifre);
+    let u=(a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase()&&x.pw===f.sifre);
+    if(!u){
+      try{
+        const r=await fetch("/api/users?email="+encodeURIComponent(f.email));
+        const dbU=await r.json();
+        if(dbU&&dbU.pw===f.sifre){
+          u=dbU;
+          setA({...a,users:[...(a.users||[]).filter(x=>x.email!==dbU.email),dbU]});
+        }
+      }catch(e){}
+    }
     if(!u){setH({sifre:"E-posta veya şifre hatalı"});return;}
     basari(u);
   };
-
   const doKayit = () => {
     const e={};
     if(!f.ad.trim()) e.ad="Zorunlu";
@@ -2083,14 +2092,10 @@ export default function App() {
   },[]);
 
   useEffect(()=>{
-    document.title = "Lisan Öğren — AI Hoca ile 10 Dil Öğren";
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if(!meta){meta=document.createElement('meta');meta.name="theme-color";document.head.appendChild(meta);}
-    meta.content="#071510";
-    const handler = e => {e.preventDefault(); setPwaPrompt(e);};
-    window.addEventListener("beforeinstallprompt", handler);
-    return ()=>window.removeEventListener("beforeinstallprompt", handler);
-  },[]);
+   const kulGiris = u => {
+    setKul(u); DB.s("kul",u);
+    fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)}).catch(()=>{});
+  };
 
   const kulGiris = u => { setKul(u); DB.s("kul",u); };
   const kulCikis = () => { setKul(null); DB.d("kul"); };
