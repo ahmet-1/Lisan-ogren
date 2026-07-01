@@ -280,6 +280,7 @@ const DILLER = [
   {id:"russian",ad:"Rusça",           bayrak:"🇷🇺",renk:"#0a0a2a",vurgu:"#ef5350",mic:"ru-RU",mods:["Kiril","Gramer","Konuşma","TORFL"],cats:["Genel","Seyahat","Edebiyat","İş"]},
   {id:"turkish",ad:"Türkçe",          bayrak:"🇹🇷",renk:"#2a0a0a",vurgu:"#ecf0f1",mic:"tr-TR",mods:["Dilbilgisi","Konuşma","Yazma","TÖMER"],cats:["Genel","Günlük Hayat","İş","Akademik"]},
   {id:"hebrew", ad:"İbranice",        bayrak:"🇮🇱",renk:"#1a1a2e",vurgu:"#4fc3f7",mic:"he-IL",mods:["Alefbet","Gramer","Konuşma","Metin"],cats:["Genel","Günlük Hayat","Dini Metinler","Akademik"]},
+  {id:"kurdish",ad:"Kürtçe",bayrak:"🟡",renk:"#1a1a0e",vurgu:"#ffd600",mic:"tr-TR",mods:["Kurmanci","Zazaca","Gramer","Konuşma"],cats:["Genel","Günlük Hayat","Kültür","Akademik"]},
   {id:"syriac", ad:"Süryanice",       bayrak:"🏛️",renk:"#1a0e1a",vurgu:"#ce93d8",mic:"tr-TR",mods:["Alfabe","Gramer","Klasik Metin","Konuşma"],cats:["Genel","Klasik","Dini Metinler","Akademik"]},
 ];
 
@@ -492,22 +493,32 @@ function Av({h, dil, sz=64}) {
 function tarayiciSes(metin, lang) {
   return new Promise(resolve => {
     try {
-      window.speechSynthesis?.cancel();
-      const temiz = metin.replace(/[*#_~`>]/g,"").replace(/\s+/g," ").trim();
-      const u = new SpeechSynthesisUtterance(temiz.substring(0,400));
-      u.lang = lang || "tr-TR";
-      u.rate = 0.88;
-      u.pitch = 1.0;
-      u.volume = 1.0;
-      const sesler = window.speechSynthesis.getVoices();
-      const dilKodu = (lang||"tr-TR").split("-")[0];
-      const uygunSes = sesler.find(s=>s.lang.startsWith(dilKodu)&&s.localService) ||
-                       sesler.find(s=>s.lang.startsWith(dilKodu));
-      if (uygunSes) u.voice = uygunSes;
-      u.onend = resolve;
-      u.onerror = () => resolve();
-      setTimeout(()=>window.speechSynthesis?.speak(u), 100);
-    } catch { resolve(); }
+      const synth = window.speechSynthesis;
+      if (!synth) { resolve(); return; }
+      synth.cancel();
+      const temiz = metin.replace(/[*#_~`>[\]]/g,"").replace(/\s+/g," ").trim();
+      const utt = new SpeechSynthesisUtterance(temiz.substring(0,500));
+      utt.lang = lang || "tr-TR";
+      utt.rate = 0.85;
+      utt.pitch = 1.0;
+      utt.volume = 1.0;
+      const loadSes = () => {
+        const sesler = synth.getVoices();
+        if (sesler.length > 0) {
+          const dilKodu = (lang||"tr-TR").split("-")[0];
+          const secilen = sesler.find(s=>s.lang.startsWith(dilKodu)) || sesler[0];
+          if (secilen) utt.voice = secilen;
+        }
+        utt.onend = () => resolve();
+        utt.onerror = () => resolve();
+        synth.speak(utt);
+      };
+      if (synth.getVoices().length === 0) {
+        synth.onvoiceschanged = loadSes;
+      } else {
+        setTimeout(loadSes, 50);
+      }
+    } catch(e) { resolve(); }
   });
 }
 
@@ -1871,7 +1882,10 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                     <button onClick={()=>{
                       const dilHocalar = HOCALAR[d.id]||[];
                       const hoca = dilHocalar.find(h=>h.id===dr.hocaId)||dilHocalar[0];
-                      kapat(); DB.s("pendingDers",JSON.stringify({dil:d.id,hocaId:dr.hocaId||((HOCALAR[d.id]||[])[0]||{}).id}));
+                      (()=>{
+                      const h=(HOCALAR[d.id]||[]).find(x=>x.id===dr.hocaId)||(HOCALAR[d.id]||[])[0];
+                      if(h){ kapat(); setTimeout(()=>setDers({dil:d.id,hoca:h,kul:kul||{id:"admin",ad:"Admin",plan:"Sinirstiz",durum:"Aktif",trialStart:0}}),100); }
+                    })()
                     }} style={{padding:"5px 10px",borderRadius:6,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
                       color:"#fff",border:"none",cursor:"pointer",fontSize:11,fontWeight:600,flexShrink:0}}>
                       Devam Et
@@ -2154,6 +2168,9 @@ const kulGiris = u => {
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
+      <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
