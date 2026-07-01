@@ -416,7 +416,7 @@ kurdish: {
   B2:"Ileri gramer, kültürel metinler, akici konusma",
   C1:"Akademik Kürtçe, edebi metinler",
   C2:"Ana dil seviyesi"
-}
+},
 };
 
 const BESMELE_DILLER = ["quran","arabic","medrese"];
