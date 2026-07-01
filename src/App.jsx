@@ -2336,7 +2336,7 @@ const kulGiris = u => {
         <div style={{padding:"26px 22px"}}>
           <div style={{textAlign:"center",marginBottom:26}}>
             <h2 style={{fontSize:26,fontWeight:800,marginBottom:6,color:K.tx}}>Dil Seç</h2>
-            <p style={{color:K.tx4,fontSize:13}}>12 dil, 72 hoca — yetişkin ve çocuklara özel</p>
+            <p style={{color:K.tx4,fontSize:13}}>13 dil, 72 hoca — yetişkin ve çocuklara özel</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
             {DILLER.map(d=>(
