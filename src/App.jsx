@@ -2249,12 +2249,12 @@ const kulGiris = u => {
               border:"1px solid rgba(46,125,50,0.25)",borderRadius:20,padding:"5px 16px",
               fontSize:11,color:K.gL,marginBottom:22,fontWeight:600}}>
               <span style={{width:5,height:5,borderRadius:"50%",background:K.gL,display:"inline-block"}}/>
-              5 Gün Ücretsiz • Yazılı & Sesli AI Hoca • 12 + 2 Dil
+              5 Gün Ücretsiz • Yazılı & Sesli AI Hoca • 13 + 2 Dil
             </div>
             <h1 style={{fontSize:48,fontWeight:900,lineHeight:1.08,margin:"0 auto 18px",maxWidth:650,letterSpacing:-1.5,color:K.tx}}>
               AI Hocanla<br/>
               <span style={{background:"linear-gradient(90deg,"+K.gL+","+K.tL+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
-                12 + 2 Dil Öğren
+                13 + 2 Dil Öğren
               </span>
             </h1>
             <p style={{fontSize:15,color:K.tx3,maxWidth:440,margin:"0 auto 30px",lineHeight:1.8}}>
@@ -2286,7 +2286,7 @@ const kulGiris = u => {
             {[
               {t:"🎤 Telefon Modu",d:"Bas konuş, hocanla sesli diyalog"},
               {t:"✍️ Yazılı Ders",d:"İstediğin konuda pratik yap"},
-              {t:"🌍 12 + 2 Dil",d:"Kuran dahil 12 + 2 dil, 72 hoca"},
+              {t:"🌍 13 + 2 Dil",d:"Kuran dahil 13 + 2 dil, 72 hoca"},
               {t:"👶 Çocuk Modu",d:"Her dilde özel çocuk hocaları"},
             ].map(f=>(
               <div key={f.t} style={{background:K.card,borderRadius:14,padding:"18px 16px",width:190,border:"1px solid "+K.bdr,textAlign:"center"}}>
@@ -2297,7 +2297,7 @@ const kulGiris = u => {
           </div>
 
           <div style={{padding:"0 22px 58px",textAlign:"center"}}>
-            <div style={{fontSize:13,fontWeight:700,color:K.tx4,marginBottom:16}}>12 + 2 Dil</div>
+            <div style={{fontSize:13,fontWeight:700,color:K.tx4,marginBottom:16}}>13 + 2 Dil</div>
             <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
               {DILLER.map(d=>(
                 <button key={d.id} onClick={()=>{setDilSec(d);git("diller");}}
@@ -2543,8 +2543,8 @@ const kulGiris = u => {
           <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
             {[
               {id:"d",ad:"5 Günlük Deneme",fiyat:"Ücretsiz",donem:"",hl:false,oz:["1 dil","Günde 20 dk","Yazılı AI hoca","Sesli konuşma"]},
-              {id:"a",ad:"Aylık Plan",fiyat:"₺299",donem:"/ay",hl:false,tutar:299,oz:["Tüm 12 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları"]},
-              {id:"y",ad:"Yıllık Plan",fiyat:"₺1990",donem:"/yıl",hl:true,tutar:1990,oz:["Tüm 12 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları","Öncelikli destek","%44 tasarruf"]},
+              {id:"a",ad:"Aylık Plan",fiyat:"₺299",donem:"/ay",hl:false,tutar:299,oz:["Tüm 13 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları"]},
+              {id:"y",ad:"Yıllık Plan",fiyat:"₺1990",donem:"/yıl",hl:true,tutar:1990,oz:["Tüm 13 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları","Öncelikli destek","%44 tasarruf"]},
             ].map(p=>(
               <div key={p.id}
                 style={{background:p.hl?"linear-gradient(135deg,"+K.bg2+","+K.bg3+")":K.card,
