@@ -716,7 +716,7 @@ function AuthModal({ilkMod, kapat, basari}) {
       </div>
     </div>
   );
-}
+
 
 function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d=>d.id===dilId);
@@ -2869,7 +2869,7 @@ const kulGiris = u => {
       </div>
     </div>
   );
-}
+
 
 function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d=>d.id===dilId);
