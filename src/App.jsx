@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+
 const K = {
   bg:"#071510",bg2:"#0a1e13",bg3:"#0d2618",card:"#0f2c1c",
   bdr:"#1a3d26",bdr2:"#1f4d30",bdr3:"#266040",
@@ -582,19 +582,20 @@ function AuthModal({ilkMod, kapat, basari}) {
     return;
   }
 
-  const { data, error } = await supabase
-    .from("kullanicilar")
-    .select("*")
-    .eq("email", f.email.trim().toLowerCase())
-    .eq("pw", f.sifre)
-    .single();
-
-  if (error || !data) {
-    setH({ sifre: "E-posta veya şifre hatalı" });
-    return;
+  const a = getA();
+  let u = (a.users||[]).find(x=>x.email.toLowerCase()===f.email.trim().toLowerCase()&&x.pw===f.sifre);
+  if(!u){
+    try{
+      const r = await fetch("/api/users?email="+encodeURIComponent(f.email.trim()));
+      const du = await r.json();
+      if(du&&du.pw===f.sifre){
+        u=du;
+        setA({...a,users:[...(a.users||[]).filter(x=>x.email!==du.email),du]});
+      }
+    }catch(e){}
   }
-
-  basari(data);
+  if(!u){setH({sifre:"E-posta veya şifre hatalı"});return;}
+  basari(u);
 };
  const doKayit = async () => {
   const e = {};
@@ -630,12 +631,12 @@ function AuthModal({ilkMod, kapat, basari}) {
     trial_start: new Date().toISOString()
   };
 
-  const { error } = await supabase.from("kullanicilar").insert([yeni]);
-
-  if (error) {
-    setH({ email: error.message });
-    return;
-  }
+  const a2 = getA();
+  const bildirim={id:Date.now()+1,tip:"yeniUye",okundu:false,
+    mesaj:"Yeni uye: "+yeni.ad+" ("+yeni.email+")",
+    tarih:new Date().toLocaleString("tr-TR")};
+  setA({...a2,users:[...(a2.users||[]),yeni],bildirimler:[...(a2.bildirimler||[]),bildirim]});
+  fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(yeni)}).catch(()=>{});
 
   setTamam(true);
   basari(yeni);
