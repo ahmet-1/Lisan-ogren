@@ -2125,35 +2125,8 @@ export default function App() {
   const [adHata, setAdHata] = useState("");
   const [adUnuttu, setAdUnuttu] = useState(false);
   const [odePlan, setOdePlan] = useState(null);
- const [pwaPrompt, setPwaPrompt] = useState(null);
 const [users, setUsers] = useState([]);
-useEffect(() => {
-  const loadUsers = async () => {
-    const { data, error } = await supabase
-      .from("kullanicilar")
-      .select("*")
-      .order("created_at", { ascending: false });
 
-    if (!error) setUsers(data || []);
-  };
-
-  loadUsers();
-
-  const channel = supabase
-    .channel("kullanicilar-changes")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "kullanicilar" },
-      () => {
-        loadUsers();
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, []);
   // Şifre sıfırlama token kontrolü
   useEffect(()=>{
     const params = new URLSearchParams(window.location.search);
