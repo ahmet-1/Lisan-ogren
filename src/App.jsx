@@ -2125,10 +2125,11 @@ export default function App() {
   const [adHata, setAdHata] = useState("");
   const [adUnuttu, setAdUnuttu] = useState(false);
   const [odePlan, setOdePlan] = useState(null);
-const [users, setUsers] = useState([]);
+  const [pwaPrompt, setPwaPrompt] = useState(null);
+  const [users, setUsers] = useState([]);
 
   // Şifre sıfırlama token kontrolü
-  useEffect(()=>{
+    useEffect(()=>{
     const params = new URLSearchParams(window.location.search);
     const resetToken = params.get("reset");
     if(resetToken){
