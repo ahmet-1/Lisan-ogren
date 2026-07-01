@@ -291,7 +291,7 @@ const DILLER = [
   {id:"russian",ad:"Rusça",           bayrak:"🇷🇺",renk:"#0a0a2a",vurgu:"#ef5350",mic:"ru-RU",mods:["Kiril","Gramer","Konuşma","TORFL"],cats:["Genel","Seyahat","Edebiyat","İş"]},
   {id:"turkish",ad:"Türkçe",          bayrak:"🇹🇷",renk:"#2a0a0a",vurgu:"#ecf0f1",mic:"tr-TR",mods:["Dilbilgisi","Konuşma","Yazma","TÖMER"],cats:["Genel","Günlük Hayat","İş","Akademik"]},
   {id:"hebrew", ad:"İbranice",        bayrak:"🇮🇱",renk:"#1a1a2e",vurgu:"#4fc3f7",mic:"he-IL",mods:["Alefbet","Gramer","Konuşma","Metin"],cats:["Genel","Günlük Hayat","Dini Metinler","Akademik"]},
-  {id:"kurdish",ad:"Kürtçe",bayrak:"🟡",renk:"#1a1a0e",vurgu:"#ffd600",mic:"tr-TR",mods:["Kurmanci","Zazaca","Gramer","Konuşma"],cats:["Genel","Günlük Hayat","Kültür","Akademik"]},
+  {id:"kurdish",ad:"Kürtçe",      bayrak:"🟡",renk:"#1a1a0e",vurgu:"#ffd600",mic:"tr-TR",mods:["Kurmanci","Zazaca","Gramer","Konuşma"],cats:["Genel","Günlük Hayat","Kültür","Akademik"]},
   {id:"syriac", ad:"Süryanice",       bayrak:"🏛️",renk:"#1a0e1a",vurgu:"#ce93d8",mic:"tr-TR",mods:["Alfabe","Gramer","Klasik Metin","Konuşma"],cats:["Genel","Klasik","Dini Metinler","Akademik"]},
 ];
 
