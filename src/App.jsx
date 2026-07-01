@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "./supabaseClient";
 const K = {
   bg:"#071510",bg2:"#0a1e13",bg3:"#0d2618",card:"#0f2c1c",
   bdr:"#1a3d26",bdr2:"#1f4d30",bdr3:"#266040",
@@ -573,32 +574,72 @@ function AuthModal({ilkMod, kapat, basari}) {
   );
 
  const doGiris = async () => {
-    const e={};
-    if(!f.email) e.email="E-posta gerekli";
-    if(!f.sifre) e.sifre="Şifre gerekli";
-    if(Object.keys(e).length){setH(e);return;}
-    const a=getA();
-    let u=(a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase()&&x.pw===f.sifre);
-    if(!u){
-      try{
-        const r=await fetch("/api/users?email="+encodeURIComponent(f.email));
-        const du=await r.json();
-        if(du&&du.pw===f.sifre){
-          u=du;
-          setA({...a,users:[...(a.users||[]).filter(x=>x.email!==du.email),du]});
-        }
-      }catch(e){}
-    }
-    if(!u){setH({sifre:"E-posta veya şifre hatalı"});return;}
-    basari(u);
+  const e = {};
+  if (!f.email) e.email = "E-posta gerekli";
+  if (!f.sifre) e.sifre = "Şifre gerekli";
+  if (Object.keys(e).length) {
+    setH(e);
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("kullanicilar")
+    .select("*")
+    .eq("email", f.email.trim().toLowerCase())
+    .eq("pw", f.sifre)
+    .single();
+
+  if (error || !data) {
+    setH({ sifre: "E-posta veya şifre hatalı" });
+    return;
+  }
+
+  basari(data);
+};
+ const doKayit = async () => {
+  const e = {};
+  if (!f.ad.trim()) e.ad = "Zorunlu";
+  if (!f.email.includes("@")) e.email = "Geçerli e-posta";
+  if (!f.tel.trim()) e.tel = "Zorunlu";
+  if (f.tc.length !== 11 || !/^\d+$/.test(f.tc)) e.tc = "11 haneli TC";
+  if (!f.dogum) e.dogum = "Zorunlu";
+  if (!f.sehir.trim()) e.sehir = "Zorunlu";
+  if (f.sifre.length < 6) e.sifre = "En az 6 karakter";
+  if (f.sifre !== f.sifre2) e.sifre2 = "Şifreler eşleşmiyor";
+  if (!f.onay) e.onay = "Onay zorunlu";
+
+  if (Object.keys(e).length) {
+    setH(e);
+    return;
+  }
+
+  const yeni = {
+    id: String(Date.now()),
+    ad: f.ad.trim(),
+    email: f.email.trim().toLowerCase(),
+    tel: f.tel.trim(),
+    tc: f.tc.trim(),
+    dogum: f.dogum,
+    sehir: f.sehir.trim(),
+    pw: f.sifre,
+    plan: "Deneme",
+    durum: "Deneme",
+    dil: "—",
+    tarih: new Date().toLocaleDateString("tr-TR"),
+    odeme: "₺0",
+    trial_start: new Date().toISOString()
   };
 
+  const { error } = await supabase.from("kullanicilar").insert([yeni]);
+
+  if (error) {
+    setH({ email: error.message });
     return;
   }
 
   setTamam(true);
   basari(yeni);
-
+};
   const doSifre = async () => {
     if(!f.email.includes("@")){setH({email:"Gecerli e-posta girin"});return;}
     const a = getA();
@@ -620,16 +661,6 @@ function AuthModal({ilkMod, kapat, basari}) {
       setMesaj("Baglanti hatasi. Lutfen tekrar deneyin.");
     }
   };
-
-  const tabS = a => ({flex:1,padding:"10px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
-    background:a?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.bg3,
-    color:a?"#fff":K.tx3,borderRadius:8});
-  const btnP = {width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-    color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8};
-  const btnG = {width:"100%",padding:11,background:"transparent",color:K.tx2,
-    border:"1px solid "+K.bdr,borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:13,marginBottom:8};
-  const lnk = {background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12,fontWeight:600};
-
 
   const tabS = a => ({flex:1,padding:"10px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
     background:a?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.bg3,
@@ -722,9 +753,9 @@ function AuthModal({ilkMod, kapat, basari}) {
       </div>
     </div>
   );
+}
 
-
- {
+function DersEkrani({dilId, hoca, kul, kapat}) {
   const dil = DILLER.find(d=>d.id===dilId);
   // WhatsApp mantığı - önceki ders geçmişini yükle
   // WhatsApp mantığı - hoca+dil bazlı ders geçmişi yükle
@@ -1588,7 +1619,7 @@ function AuthModal({ilkMod, kapat, basari}) {
   );
 }
 
-{
+function AdminPanel({kapat, admCikis, setDers, kul}) {
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg] = useState(getA());
   const [secilenKullanici, setSecilenKullanici] = useState(null);
@@ -2067,3 +2098,695 @@ function AuthModal({ilkMod, kapat, basari}) {
   );
 }
 
+export default function App() {
+  const [kul, setKul] = useState(()=>DB.g("kul"));
+  const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
+
+  useEffect(()=>{
+    const p=DB.g("pendingDers");
+    if(p&&kul){
+      DB.d("pendingDers");
+      try{
+        const {dil:dilId,hocaId}=JSON.parse(p);
+        const h=(HOCALAR[dilId]||[]).find(x=>x.id===hocaId)||(HOCALAR[dilId]||[])[0];
+        if(h) setDers({dil:dilId,hoca:h,kul:kul});
+      }catch(e){}
+    }
+  },[kul]);
+  const [adAcik, setAdAcik] = useState(false);
+  const [sayfa, setSayfa] = useState("ana");
+  const [dilSec, setDilSec] = useState(null);
+  const [cocuk, setCocuk] = useState(false);
+  const [ders, setDers] = useState(null);
+  const [authAcik, setAuthAcik] = useState(false);
+  const [authMod, setAuthMod] = useState("giris");
+  const [adModal, setAdModal] = useState(false);
+  const [adSifre, setAdSifre] = useState("");
+  const [adHata, setAdHata] = useState("");
+  const [adUnuttu, setAdUnuttu] = useState(false);
+  const [odePlan, setOdePlan] = useState(null);
+  const [pwaPrompt, setPwaPrompt] = useState(null);
+  const [users, setUsers] = useState([]);
+
+  // Şifre sıfırlama token kontrolü
+    useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get("reset");
+    if(resetToken){
+      fetch("/api/reset-password", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"verify", token:resetToken})
+      }).then(r=>r.json()).then(data=>{
+        if(data.ok){
+          const yeniSifre = prompt("Yeni sifrenizi girin (min 6 karakter):");
+          if(!yeniSifre || yeniSifre.length < 6){ alert("Gecersiz sifre."); return; }
+          // Şifreyi localStorage'da güncelle
+          const a = getA();
+          const guncellenmis = (a.users||[]).map(u=>
+            u.email===data.email ? {...u, pw:yeniSifre} : u
+          );
+          setA({...a, users:guncellenmis});
+          // Token'ı geçersiz kıl
+          fetch("/api/reset-password", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({action:"reset", token:resetToken, newPassword:yeniSifre})
+          });
+          alert("Sifreniz basariyla guncellendi! Simdi giris yapabilirsiniz.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          alert("Sifre sifirlama linki gecersiz veya suresi dolmus.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }).catch(()=>{});
+    }
+  },[]);
+
+const kulGiris = u => {
+    setKul(u); DB.s("kul",u);
+    fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)}).catch(()=>{});
+  };
+  const kulCikis = () => { setKul(null); DB.d("kul"); };
+  const admKapat = () => { setAdAcik(false); };
+  const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
+  const admGiris = () => {
+    const a = getA();
+    if(adSifre===a.pw){
+      setAdGir(true); DB.s("adGir",true);
+      setAdAcik(true); setAdModal(false);
+      setAdSifre(""); setAdHata(""); setAdUnuttu(false);
+    } else setAdHata("Yanlış şifre");
+  };
+
+  const dersGir = () => {
+    if(adGir) return true;
+    if(!kul) return false;
+    if(kul.durum==="Aktif") return true;
+    if(kul.durum==="Deneme") return (Date.now()-kul.trialStart)/86400000 < 5;
+    return false;
+  };
+
+  const git = s => { setSayfa(s); setDilSec(null); };
+  const adm = getA();
+
+  if(adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis} setDers={setDers} kul={kul}/>;
+  if(ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul||kul} kapat={()=>setDers(null)}/>;
+
+  const bP={padding:"13px 28px",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:14,boxShadow:"0 4px 20px "+K.g2+"55"};
+  const bS={padding:"13px 28px",background:"transparent",color:K.tx2,border:"1px solid "+K.bdr,borderRadius:12,cursor:"pointer",fontWeight:600,fontSize:14};
+  const gI2={width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
+
+  return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
+      <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
+      <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
+      <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
+      <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
+      <style>{`*{box-sizing:border-box}
+        @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
+        @keyframes y2{0%,100%{transform:translateY(4px)}50%{transform:translateY(-8px)}}
+        @keyframes gir{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
+
+      {pwaPrompt&&(
+        <div style={{background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",padding:"10px 22px",
+          display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <span style={{color:"#fff",fontSize:13,fontWeight:600}}>📲 Lisan Öğren'i ana ekrana ekle — uygulama gibi kullan!</span>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{pwaPrompt.prompt();setPwaPrompt(null);}}
+              style={{padding:"7px 16px",background:"#fff",color:K.g2,border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:12}}>
+              Ekle
+            </button>
+            <button onClick={()=>setPwaPrompt(null)}
+              style={{padding:"7px 12px",background:"transparent",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,cursor:"pointer",fontSize:12}}>✕</button>
+          </div>
+        </div>
+      )}
+
+      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 22px",
+        borderBottom:"1px solid "+K.bdr,background:"rgba(7,21,16,0.97)",
+        position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>git("ana")}>
+          <div style={{width:36,height:36,borderRadius:10,
+            background:"linear-gradient(135deg,"+K.g4+","+K.t3+")",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            color:"#fff",fontWeight:900,fontSize:18,boxShadow:"0 2px 14px "+K.g2+"66"}}>L</div>
+          <span style={{fontSize:20,fontWeight:900,color:K.tx}}>Lisan </span>
+          <span style={{fontSize:20,fontWeight:900,color:K.gL}}>Öğren</span>
+        </div>
+        <div style={{display:"flex",gap:3}}>
+          {[["ana","Ana Sayfa"],["diller","Diller"],["fiyatlar","Fiyatlar"],["iletisim","İletişim"]].map(([s,l])=>(
+            <button key={s} onClick={()=>git(s)} style={{padding:"7px 13px",borderRadius:8,border:"none",
+              cursor:"pointer",fontSize:12,fontWeight:sayfa===s?700:400,
+              background:sayfa===s?"rgba(46,125,50,0.2)":"transparent",
+              color:sayfa===s?K.gL:K.tx3}}>{l}</button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:7,alignItems:"center"}}>
+          {kul?(
+            <>
+              <div style={{background:"rgba(46,125,50,0.12)",borderRadius:8,padding:"6px 13px",
+                fontSize:12,color:K.gL,fontWeight:600,border:"1px solid "+K.g2+"33",cursor:"pointer"}}
+                onClick={()=>git("profil")}>
+                👤 {kul.ad.split(" ")[0]}
+                <span style={{color:kul.durum==="Aktif"?K.gL:K.warn,fontSize:10,marginLeft:5}}>{kul.durum}</span>
+              </div>
+              <button onClick={kulCikis} style={{padding:"6px 11px",borderRadius:8,border:"1px solid "+K.bdr,background:"transparent",color:K.tx4,cursor:"pointer",fontSize:11}}>Çıkış</button>
+            </>
+          ):(
+            <>
+              <button onClick={()=>{setAuthMod("giris");setAuthAcik(true);}}
+                style={{padding:"7px 14px",borderRadius:8,border:"1px solid "+K.bdr,background:"transparent",color:K.tx2,cursor:"pointer",fontSize:12,fontWeight:600}}>Giriş Yap</button>
+              <button onClick={()=>{setAuthMod("kayit");setAuthAcik(true);}}
+                style={{padding:"7px 16px",borderRadius:8,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",cursor:"pointer",fontWeight:700,fontSize:12}}>Üye Ol</button>
+            </>
+          )}
+          {adGir?(
+            <div style={{background:"rgba(46,125,50,0.15)",borderRadius:8,padding:"6px 12px",
+              fontSize:12,color:K.gL,fontWeight:700,border:"1px solid "+K.g2+"44",cursor:"pointer"}}
+              onClick={()=>setAdAcik(true)}>🔧 Admin</div>
+          ):(
+            <button onClick={()=>{setAdModal(true);setAdHata("");setAdSifre("");setAdUnuttu(false);}}
+              style={{padding:"6px 9px",borderRadius:8,border:"1px solid "+K.bdr,background:"transparent",color:K.tx4,cursor:"pointer",fontSize:10}}>⚙</button>
+          )}
+        </div>
+      </nav>
+
+      {sayfa==="ana"&&(
+        <div style={{animation:"gir 0.5s ease"}}>
+          <div style={{textAlign:"center",padding:"68px 22px 42px"}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:7,background:"rgba(46,125,50,0.1)",
+              border:"1px solid rgba(46,125,50,0.25)",borderRadius:20,padding:"5px 16px",
+              fontSize:11,color:K.gL,marginBottom:22,fontWeight:600}}>
+              <span style={{width:5,height:5,borderRadius:"50%",background:K.gL,display:"inline-block"}}/>
+              5 Gün Ücretsiz • Yazılı & Sesli AI Hoca • 13 + 2 Dil
+            </div>
+            <h1 style={{fontSize:48,fontWeight:900,lineHeight:1.08,margin:"0 auto 18px",maxWidth:650,letterSpacing:-1.5,color:K.tx}}>
+              AI Hocanla<br/>
+              <span style={{background:"linear-gradient(90deg,"+K.gL+","+K.tL+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+                13 + 2 Dil Öğren
+              </span>
+            </h1>
+            <p style={{fontSize:15,color:K.tx3,maxWidth:440,margin:"0 auto 30px",lineHeight:1.8}}>
+              Yaz veya mikrofona bas, AI hocanla birebir ders yap.<br/>Kameralı özellik yakında geliyor!
+            </p>
+            <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+              <button style={bP} onClick={()=>{if(kul)git("diller");else{setAuthMod("kayit");setAuthAcik(true);}}}>Ücretsiz Başla →</button>
+              <button style={bS} onClick={()=>git("fiyatlar")}>Fiyatlar</button>
+            </div>
+          </div>
+
+          <div style={{display:"flex",justifyContent:"center",gap:18,padding:"0 22px 36px",flexWrap:"wrap",alignItems:"flex-end"}}>
+            {[
+              {ad:"Şeyh Ahmed",p:4.9,n:1240,c:false,uz:"Tecvid",dil:DILLER[0],a:0},
+              {ad:"Sarah Mitchell",p:4.9,n:2800,c:false,uz:"English",dil:DILLER[3],a:1},
+              {ad:"Tanaka Hiroshi",p:4.9,n:2200,c:false,uz:"日本語",dil:DILLER[8],a:2},
+              {ad:"Kim Jisoo",p:4.9,n:1900,c:false,uz:"한국어",dil:DILLER[9],a:0},
+              {ad:"Marie Dupont",p:4.9,n:2300,c:false,uz:"Français",dil:DILLER[5],a:1},
+              {ad:"Prof. Klaus",p:4.9,n:1800,c:false,uz:"Deutsch",dil:DILLER[4],a:2},
+            ].map((h,i)=>(
+              <div key={i} style={{textAlign:"center",animation:"y"+h.a+" "+(2.8+i*0.25)+"s ease-in-out infinite",cursor:"pointer"}} onClick={()=>git("diller")}>
+                <Av h={h} dil={h.dil} sz={72}/>
+                <div style={{color:K.tx4,fontSize:10,marginTop:7}}>{h.dil.ad}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{display:"flex",gap:12,padding:"0 22px 36px",justifyContent:"center",flexWrap:"wrap"}}>
+            {[
+              {t:"🎤 Telefon Modu",d:"Bas konuş, hocanla sesli diyalog"},
+              {t:"✍️ Yazılı Ders",d:"İstediğin konuda pratik yap"},
+              {t:"🌍 13 + 2 Dil",d:"Kuran dahil 13 + 2 dil, 72 hoca"},
+              {t:"👶 Çocuk Modu",d:"Her dilde özel çocuk hocaları"},
+            ].map(f=>(
+              <div key={f.t} style={{background:K.card,borderRadius:14,padding:"18px 16px",width:190,border:"1px solid "+K.bdr,textAlign:"center"}}>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:6,color:K.tx}}>{f.t}</div>
+                <div style={{color:K.tx4,fontSize:11,lineHeight:1.6}}>{f.d}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{padding:"0 22px 58px",textAlign:"center"}}>
+            <div style={{fontSize:13,fontWeight:700,color:K.tx4,marginBottom:16}}>13 + 2 Dil</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
+              {DILLER.map(d=>(
+                <button key={d.id} onClick={()=>{setDilSec(d);git("diller");}}
+                  style={{background:K.card,border:"1px solid "+K.bdr,borderRadius:10,padding:"8px 14px",
+                    cursor:"pointer",color:K.tx3,display:"flex",alignItems:"center",gap:7,fontSize:12}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=d.vurgu;e.currentTarget.style.color=K.tx;}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=K.bdr;e.currentTarget.style.color=K.tx3;}}>
+                  <span style={{fontSize:16}}>{d.bayrak}</span>{d.ad}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sayfa==="diller"&&!dilSec&&(
+        <div style={{padding:"26px 22px"}}>
+          <div style={{textAlign:"center",marginBottom:26}}>
+            <h2 style={{fontSize:26,fontWeight:800,marginBottom:6,color:K.tx}}>Dil Seç</h2>
+            <p style={{color:K.tx4,fontSize:13}}>13 dil, 72 hoca — yetişkin ve çocuklara özel</p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
+            {DILLER.map(d=>(
+              <div key={d.id} onClick={()=>setDilSec(d)}
+                style={{background:K.card,borderRadius:16,overflow:"hidden",border:"1px solid "+K.bdr,cursor:"pointer",transition:"all 0.2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor=d.vurgu;e.currentTarget.style.transform="translateY(-3px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=K.bdr;e.currentTarget.style.transform="translateY(0)";}}>
+                <div style={{background:"linear-gradient(135deg,"+d.renk+","+d.renk+"cc)",padding:"16px",borderBottom:"3px solid "+d.vurgu}}>
+                  <div style={{fontSize:26}}>{d.bayrak}</div>
+                  <div style={{fontSize:17,fontWeight:800,marginTop:5,color:"#fff"}}>{d.ad}</div>
+                </div>
+                <div style={{padding:14}}>
+                  <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:10}}>
+                    {d.mods.map(m=><span key={m} style={{background:K.bg3,border:"1px solid "+d.vurgu+"22",borderRadius:4,padding:"2px 6px",fontSize:10,color:K.tx4}}>{m}</span>)}
+                  </div>
+                  <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                    {HOCALAR[d.id].filter(h=>!h.c).map(h=><Av key={h.id} h={h} dil={d} sz={26}/>)}
+                    <div style={{background:K.bg3,borderRadius:5,padding:"2px 7px",fontSize:9,color:K.tL,fontWeight:600}}>+2 Çocuk</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sayfa==="diller"&&dilSec&&(
+        <div style={{padding:"26px 22px"}}>
+          <button onClick={()=>setDilSec(null)} style={{background:"none",border:"none",color:K.tx4,cursor:"pointer",fontSize:12,marginBottom:16}}>← Geri</button>
+          <div style={{textAlign:"center",marginBottom:22}}>
+            <div style={{fontSize:32,marginBottom:6}}>{dilSec.bayrak}</div>
+            <h2 style={{fontSize:22,fontWeight:800,marginBottom:5,color:K.tx}}>{dilSec.ad} — Hocanı Seç</h2>
+          </div>
+          <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:22}}>
+            {[false,true].map(k=>(
+              <button key={String(k)} onClick={()=>setCocuk(k)}
+                style={{padding:"9px 22px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,
+                  border:"1px solid "+(cocuk===k?dilSec.vurgu:K.bdr),
+                  background:cocuk===k?"rgba(46,125,50,0.12)":"transparent",
+                  color:cocuk===k?dilSec.vurgu:K.tx4}}>
+                {k?"👶 Çocuklara Özel":"🎓 Yetişkin Hocaları"}
+              </button>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:16,maxWidth:900,margin:"0 auto"}}>
+            {HOCALAR[dilSec.id].filter(h=>h.c===cocuk).map(h=>(
+              <div key={h.id}
+                style={{background:K.card,borderRadius:16,padding:18,border:"1px solid "+K.bdr,textAlign:"center",cursor:"pointer",transition:"all 0.2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor=dilSec.vurgu;e.currentTarget.style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=K.bdr;e.currentTarget.style.transform="translateY(0)";}}
+                onClick={()=>{
+                  if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
+                  if(!dersGir()){setOdePlan({id:"up",ad:"Premium Üyelik",fiyat:"₺299",donem:"/ay",tutar:299});return;}
+                  const k2 = adGir?{id:"admin",ad:"Admin",plan:"Sınırsız",durum:"Aktif",trialStart:0}:kul;
+                  setDers({dil:dilSec.id,hoca:h,kul:k2});
+                }}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><Av h={h} dil={dilSec} sz={80}/></div>
+                {h.c&&<div style={{background:"rgba(249,168,37,0.12)",color:K.warn,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,marginBottom:8,display:"inline-block"}}>👶 Çocuklara Özel</div>}
+                <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:K.tx}}>{h.ad}</div>
+                <div style={{color:K.tx4,fontSize:11,marginBottom:7}}>{h.yer}</div>
+                <div style={{background:K.bg3,borderRadius:7,padding:"3px 9px",fontSize:11,color:K.tx2,marginBottom:10,display:"inline-block"}}>{h.uz}</div>
+                <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:14}}>
+                  <span style={{color:dilSec.vurgu,fontSize:12,fontWeight:600}}>⭐ {h.p}</span>
+                  <span style={{color:K.tx4,fontSize:11}}>{h.n.toLocaleString()}</span>
+                </div>
+                <button style={{width:"100%",padding:"9px",borderRadius:9,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",cursor:"pointer",fontWeight:700,fontSize:12}}>🎤 Derse Başla</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sayfa==="profil"&&kul&&(
+        <div style={{padding:"26px 22px",maxWidth:800,margin:"0 auto"}}>
+          <div style={{background:K.card,borderRadius:16,padding:22,border:"1px solid "+K.bdr,marginBottom:20}}>
+            <div style={{display:"flex",alignItems:"center",gap:16}}>
+              <div style={{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:24}}>
+                {kul.ad[0]}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{color:K.tx,fontSize:20,fontWeight:800}}>{kul.ad}</div>
+                <div style={{color:K.tx4,fontSize:12,marginTop:2}}>{kul.email}</div>
+                <div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>
+                  <span style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:600}}>{kul.plan}</span>
+                  <span style={{background:"rgba(46,125,50,0.1)",color:K.tx3,borderRadius:6,padding:"2px 10px",fontSize:11}}>{kul.sehir}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{color:K.tx,fontSize:16,fontWeight:700,marginBottom:12}}>📊 Dil Seviyelerin</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:24}}>
+            {DILLER.map(d=>{
+              const dersler = getDG(kul.id,d.id);
+              if(dersler.length===0) return null;
+              const sv = getSV(kul.id,d.id);
+              return(
+                <div key={d.id} style={{background:K.card,borderRadius:12,padding:14,border:"1px solid "+K.bdr,textAlign:"center",cursor:"pointer"}}
+                  onClick={()=>{setDilSec(d);git("diller");}}>
+                  <div style={{fontSize:24,marginBottom:6}}>{d.bayrak}</div>
+                  <div style={{color:K.tx,fontWeight:700,fontSize:13}}>{d.ad}</div>
+                  <div style={{color:K.gL,fontSize:20,fontWeight:900,margin:"6px 0"}}>{sv}</div>
+                  <div style={{color:K.tx4,fontSize:11}}>{dersler.length} ders</div>
+                  <div style={{background:K.bg3,borderRadius:4,height:4,marginTop:8}}>
+                    <div style={{background:"linear-gradient(90deg,"+K.g2+","+K.tL+")",height:4,borderRadius:4,
+                      width:((SEVIYELER.indexOf(sv)+1)*100/6)+"%"}}/>
+                  </div>
+                </div>
+              );
+            }).filter(Boolean)}
+          </div>
+
+          {DILLER.map(d=>{
+            const dersler = getDG(kul.id,d.id);
+            if(dersler.length===0) return null;
+            return(
+              <div key={d.id} style={{background:K.card,borderRadius:14,padding:16,border:"1px solid "+K.bdr,marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                  <span style={{fontSize:20}}>{d.bayrak}</span>
+                  <span style={{color:K.tx,fontWeight:700,fontSize:14}}>{d.ad}</span>
+                  <span style={{color:K.gL,fontWeight:700,fontSize:13,marginLeft:"auto"}}>{getSV(kul.id,d.id)}</span>
+                </div>
+                {[...dersler].reverse().slice(0,3).map(dr=>(
+                  <div key={dr.id} style={{background:K.bg3,borderRadius:9,padding:"10px 14px",border:"1px solid "+K.bdr,marginBottom:6}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <div style={{color:K.tx,fontSize:14,fontWeight:600}}>{dr.tarih} {dr.saat||""}</div>
+                        <div style={{color:K.tx4,fontSize:11,marginTop:2}}>{dr.hoca+" • "+dr.sure+" dk • "+dr.kategori}</div>
+                      </div>
+                      <div style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{dr.seviye}</div>
+                    </div>
+                  </div>
+                ))}
+                <button onClick={()=>{
+                  // Son dersteki hocayı bul
+                  const sonDers = [...dersler].reverse()[0];
+                  const hocaId = sonDers?.hocaId;
+                  const dilHocalar = HOCALAR[d.id] || [];
+                  const sonHoca = dilHocalar.find(h=>h.id===hocaId) || dilHocalar[0];
+                  if (sonHoca) {
+                    setDers({dil:d.id, hoca:sonHoca, kul:kul});
+                  } else {
+                    setDilSec(d); git("diller");
+                  }
+                }} style={{width:"100%",marginTop:8,padding:"9px",borderRadius:9,
+                    background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                    color:"#fff",border:"none",cursor:"pointer",fontWeight:700,fontSize:12}}>
+                  🎤 Kaldığım Yerden Devam Et ({getSV(kul.id,d.id)})
+                </button>
+              </div>
+            );
+          }).filter(Boolean)}
+
+          {DILLER.every(d=>getDG(kul.id,d.id).length===0)&&(
+            <div style={{background:K.card,borderRadius:12,padding:30,border:"1px solid "+K.bdr,textAlign:"center",color:K.tx4}}>
+              Henüz ders geçmişin yok. Hemen başla! 🚀
+            </div>
+          )}
+
+          {/* HESAP SİL */}
+          <div style={{background:"rgba(198,40,40,0.05)",borderRadius:14,padding:18,border:"1px solid "+K.err+"33",marginTop:16}}>
+            <div style={{color:K.errL,fontWeight:700,fontSize:14,marginBottom:8}}>⚠️ Hesabı Sil</div>
+            <select id="silNeden" style={{width:"100%",padding:"10px 12px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,marginBottom:10,outline:"none"}}>
+              <option value="">Neden silmek istiyorsunuz?</option>
+              <option value="pahalı">Ücret çok yüksek</option>
+              <option value="fayda">Fayda göremedim</option>
+              <option value="alternatif">Başka platform tercih ettim</option>
+              <option value="teknik">Teknik sorunlar</option>
+              <option value="diger">Diğer</option>
+            </select>
+            <button onClick={()=>{
+              const neden=document.getElementById("silNeden").value;
+              if(!neden){alert("Lütfen neden belirtin.");return;}
+              if(!window.confirm("Hesabınız kalıcı olarak silinecek. Emin misiniz?")){return;}
+              const a=getA();
+              const bildirim={id:Date.now(),tip:"hesapSilindi",okundu:false,
+                mesaj:"❌ Üye hesabını sildi: "+kul.ad+" ("+kul.email+") — Neden: "+neden,
+                tarih:new Date().toLocaleString("tr-TR")};
+              setA({...a,users:(a.users||[]).filter(u=>u.email!==kul.email),
+                bildirimler:[...(a.bildirimler||[]),bildirim]});
+              DB.d("kul"); alert("Hesabınız silindi."); window.location.reload();
+            }} style={{width:"100%",padding:10,background:"rgba(198,40,40,0.12)",color:K.errL,
+              border:"1px solid "+K.err+"44",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>
+              Hesabımı Kalıcı Olarak Sil
+            </button>
+          </div>
+
+          {/* ŞİFRE DEĞİŞTİRME */}
+          <div style={{background:K.card,borderRadius:14,padding:18,border:"1px solid "+K.bdr,marginTop:20}}>
+            <div style={{color:K.tx,fontWeight:700,fontSize:15,marginBottom:14}}>🔐 Şifre Değiştir</div>
+            <input type="password" id="kulP1" placeholder="Yeni şifre (min 6 karakter)"
+              style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
+                borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+            <input type="password" id="kulP2" placeholder="Yeni şifreyi tekrar girin"
+              style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
+                borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+            <button onClick={()=>{
+              const p1 = document.getElementById("kulP1").value;
+              const p2 = document.getElementById("kulP2").value;
+              if(!p1 || p1.length<6){ alert("Şifre en az 6 karakter olmalı!"); return; }
+              if(p1!==p2){ alert("Şifreler eşleşmiyor!"); return; }
+              const a = getA();
+              const yeniUsers = a.users.map(u => u.email===kul.email ? {...u, pw:p1} : u);
+              setA({...a, users:yeniUsers});
+              const yeniKul = {...kul, pw:p1};
+              setKul(yeniKul); DB.s("kul", yeniKul);
+              document.getElementById("kulP1").value="";
+              document.getElementById("kulP2").value="";
+              alert("✅ Şifreniz güncellendi!");
+            }} style={{width:"100%",padding:11,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+              color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>
+              Şifreyi Güncelle
+            </button>
+          </div>
+        </div>
+      )}
+
+      {sayfa==="fiyatlar"&&(
+        <div style={{padding:"50px 22px",textAlign:"center"}}>
+          <h2 style={{fontSize:30,fontWeight:800,marginBottom:8,color:K.tx}}>Fiyatlandırma</h2>
+          <p style={{color:K.tx4,marginBottom:38,fontSize:14}}>5 gün ücretsiz dene, havale ile öde</p>
+          <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
+            {[
+              {id:"d",ad:"5 Günlük Deneme",fiyat:"Ücretsiz",donem:"",hl:false,oz:["1 dil","Günde 20 dk","Yazılı AI hoca","Sesli konuşma"]},
+              {id:"a",ad:"Aylık Plan",fiyat:"₺299",donem:"/ay",hl:false,tutar:299,oz:["Tüm 13 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları"]},
+              {id:"y",ad:"Yıllık Plan",fiyat:"₺1990",donem:"/yıl",hl:true,tutar:1990,oz:["Tüm 13 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları","Öncelikli destek","%44 tasarruf"]},
+            ].map(p=>(
+              <div key={p.id}
+                style={{background:p.hl?"linear-gradient(135deg,"+K.bg2+","+K.bg3+")":K.card,
+                  border:p.hl?"2px solid "+K.g3:"1px solid "+K.bdr,
+                  borderRadius:20,padding:26,width:245,position:"relative",transition:"transform 0.2s"}}
+                onMouseEnter={e=>e.currentTarget.style.transform="translateY(-4px)"}
+                onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+                {p.hl&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",
+                  background:"linear-gradient(135deg,"+K.g3+","+K.t3+")",color:"#fff",
+                  borderRadius:18,padding:"3px 14px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>⭐ EN POPÜLER</div>}
+                <div style={{fontSize:15,fontWeight:700,marginBottom:7,color:K.tx}}>{p.ad}</div>
+                <div style={{marginBottom:18}}>
+                  <span style={{fontSize:34,fontWeight:900,color:p.hl?K.gL:K.tx}}>{p.fiyat}</span>
+                  <span style={{color:K.tx4,fontSize:13}}>{p.donem}</span>
+                </div>
+                {p.oz.map(o=><div key={o} style={{display:"flex",gap:7,marginBottom:7,textAlign:"left"}}>
+                  <span style={{color:K.gL,fontWeight:700}}>✓</span>
+                  <span style={{color:K.tx3,fontSize:12}}>{o}</span>
+                </div>)}
+                <button onClick={()=>{
+                  if(p.id==="d"){if(kul)git("diller");else{setAuthMod("kayit");setAuthAcik(true);}}
+                  else{if(!kul){setAuthMod("kayit");setAuthAcik(true);}else setOdePlan(p);}
+                }} style={{width:"100%",marginTop:18,padding:11,borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",
+                  background:p.hl?"linear-gradient(135deg,"+K.g2+","+K.t2+")":p.id==="d"?"transparent":K.bg3,
+                  color:p.hl?"#fff":K.tx2,
+                  border:p.id==="d"?"1px solid "+K.g2:p.hl?"none":"1px solid "+K.bdr}}>
+                  {p.id==="d"?"Ücretsiz Başla":"Havale ile Satın Al"}
+                </button>
+              </div>
+            ))}
+          </div>
+          {adm.iban&&(
+            <div style={{marginTop:34,background:K.card,borderRadius:14,padding:22,maxWidth:440,
+              margin:"34px auto 0",border:"1px solid "+K.bdr,textAlign:"left"}}>
+              <div style={{color:K.tx,fontWeight:700,marginBottom:10,fontSize:14}}>💳 Havale Bilgileri</div>
+              <div style={{color:K.tx4,fontSize:13,lineHeight:2.2}}>
+                Ad: <strong style={{color:K.tx}}>{adm.acName}</strong><br/>
+                IBAN: <strong style={{color:K.gL,fontFamily:"monospace"}}>{adm.iban}</strong><br/>
+                Banka: <strong style={{color:K.tx}}>{adm.bank}</strong>
+              </div>
+              <div style={{background:"rgba(46,125,50,0.08)",borderRadius:8,padding:10,marginTop:10}}>
+                <div style={{color:K.tx4,fontSize:11}}>havale işleminden sonra iletişim bölümünden dekontunuzu gönderiniz(üyeliğiniz max 2 saat içinde aktif olur).</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {sayfa==="iletisim"&&(
+        <div style={{padding:"50px 22px",maxWidth:500,margin:"0 auto"}}>
+          <h2 style={{fontSize:26,fontWeight:800,marginBottom:8,color:K.tx}}>İletişim</h2>
+          <div style={{background:K.card,borderRadius:16,padding:24,border:"1px solid "+K.bdr}}>
+            {adm.contactEmail&&(
+              <div style={{marginBottom:20}}>
+                <div style={{color:K.tx4,fontSize:12,marginBottom:6}}>E-posta</div>
+                <a href={"mailto:"+adm.contactEmail} style={{color:K.gL,fontSize:17,fontWeight:700,textDecoration:"none"}}>{adm.contactEmail}</a>
+              </div>
+            )}
+            <div style={{borderTop:"1px solid "+K.bdr,paddingTop:18}}>
+              <div style={{color:K.tx4,fontSize:12,marginBottom:12}}>Mesaj Gönderin</div>
+              <input placeholder="Adınız" style={{...gI2,marginBottom:10}}/>
+              <input placeholder="E-postanız" type="email" style={{...gI2,marginBottom:10}}/>
+              <textarea placeholder="Mesajınız..." rows={4} style={{...gI2,resize:"vertical",marginBottom:10}}/>
+              <label style={{display:"block",background:K.bg3,border:"1px dashed "+K.bdr,borderRadius:9,
+                padding:"10px",textAlign:"center",cursor:"pointer",marginBottom:14}}>
+                <input type="file" accept="image/*,application/pdf" style={{display:"none"}}
+                  onChange={e=>{
+                    const f=e.target.files[0];
+                    if(f) e.target.parentElement.querySelector("span").textContent="📎 "+f.name;
+                  }}/>
+                <span style={{color:K.tx3,fontSize:12}}>📎 Dosya veya fotoğraf ekle (isteğe bağlı)</span>
+              </label>
+              <button onClick={()=>alert("Mesajınız alındı! En kısa sürede dönüş yapacağız.")}
+                style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14}}>
+                Gönder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {authAcik&&<AuthModal ilkMod={authMod} kapat={()=>setAuthAcik(false)} basari={u=>{kulGiris(u);setAuthAcik(false);git("diller");}}/>}
+
+      {odePlan&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
+          <div style={{background:K.card,borderRadius:20,padding:26,width:390,border:"1px solid "+K.bdr3,boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+              <div>
+                <div style={{color:K.tx,fontSize:16,fontWeight:700}}>{"Ödeme — "+odePlan.ad}</div>
+                <div style={{color:K.tx4,fontSize:11,marginTop:2}}>{odePlan.fiyat+odePlan.donem}</div>
+              </div>
+              <button onClick={()=>setOdePlan(null)} style={{background:"none",border:"none",color:K.tx4,fontSize:18,cursor:"pointer"}}>✕</button>
+            </div>
+            {adm.iban?(
+              <div style={{background:K.bg3,borderRadius:11,padding:15,marginBottom:14,border:"1px solid "+K.bdr}}>
+                <div style={{color:K.tx,fontWeight:700,marginBottom:9,fontSize:13}}>Havale Bilgileri</div>
+                <div style={{color:K.tx4,fontSize:12,lineHeight:2.2}}>
+                  Ad: <strong style={{color:K.tx}}>{adm.acName}</strong><br/>
+                  IBAN: <strong style={{color:K.gL,fontFamily:"monospace"}}>{adm.iban}</strong><br/>
+                  Tutar: <strong style={{color:K.warn}}>{odePlan.fiyat}</strong>
+                </div>
+                <div style={{background:"rgba(46,125,50,0.08)",borderRadius:7,padding:9,marginTop:9}}>
+                  <div style={{color:K.tx4,fontSize:11}}>Açıklama: <strong style={{color:K.tx}}>{kul?.email}</strong></div>
+                </div>
+              </div>
+            ):<div style={{color:K.tx4,fontSize:13,marginBottom:14,padding:14,background:K.bg3,borderRadius:10}}>IBAN girilmemiş.</div>}
+            <div style={{marginBottom:12}}>
+              <div style={{color:K.tx4,fontSize:12,marginBottom:8}}>📎 Dekont Fotoğrafı (İsteğe Bağlı)</div>
+              <label style={{display:"block",background:K.bg3,border:"1px dashed "+K.bdr2,borderRadius:9,
+                padding:"14px",textAlign:"center",cursor:"pointer"}}>
+                <input type="file" accept="image/*" style={{display:"none"}}
+                  onChange={e=>{
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      window._dekontBase64 = ev.target.result;
+                      document.getElementById("dekontOnizleme").src = ev.target.result;
+                      document.getElementById("dekontOnizleme").style.display = "block";
+                      document.getElementById("dekontLabel").textContent = file.name;
+                    };
+                    reader.readAsDataURL(file);
+                  }}/>
+                <div id="dekontLabel" style={{color:K.tx3,fontSize:12}}>📸 Dekont fotoğrafı seç</div>
+                <img id="dekontOnizleme" style={{display:"none",width:"100%",marginTop:8,borderRadius:6,maxHeight:120,objectFit:"cover"}}/>
+              </label>
+            </div>
+            <button onClick={()=>{
+              const a=getA();
+              const ny={id:Date.now(),ad:kul?.ad||"",email:kul?.email||"",tutar:odePlan.tutar||0,
+                plan:odePlan.ad,tarih:new Date().toLocaleDateString("tr-TR"),d:"bekle",
+                dekont:window._dekontBase64||null};
+              setA({...a,pays:[...(a.pays||[]),ny]});
+              window._dekontBase64 = null;
+              alert("✅ Bildiriminiz alındı!\nAdmin onayından sonra (max 2 saat) üyeliğiniz aktifleşir.\nSorularınız için iletişim sayfasından ulaşabilirsiniz.");
+              setOdePlan(null);
+            }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+              color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:13}}>
+              ✓ Havaleyi Yaptım, Bildir
+            </button>
+          </div>
+        </div>
+      )}
+
+      {adModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9000}}>
+          <div style={{background:K.card,borderRadius:18,padding:26,width:320,border:"1px solid "+K.bdr3,boxShadow:"0 24px 64px rgba(0,0,0,0.8)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+              <div style={{color:K.tx,fontSize:15,fontWeight:700}}>{adUnuttu?"Admin Şifre Sıfırla":"Yönetici Girişi"}</div>
+              <button onClick={()=>{setAdModal(false);setAdHata("");setAdSifre("");setAdUnuttu(false);}}
+                style={{background:"none",border:"none",color:K.tx3,fontSize:18,cursor:"pointer"}}>✕</button>
+            </div>
+            {!adUnuttu?(
+              <>
+                <input type="password" value={adSifre} placeholder="Yönetici şifresi"
+                  onChange={e=>{setAdSifre(e.target.value);setAdHata("");}}
+                  onKeyDown={e=>e.key==="Enter"&&admGiris()}
+                  style={{width:"100%",padding:"11px 13px",background:K.bg3,
+                    border:"1px solid "+(adHata?K.err:K.bdr),borderRadius:9,
+                    color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box",marginBottom:6}}/>
+                {adHata&&<div style={{color:K.errL,fontSize:11,marginBottom:8}}>{adHata}</div>}
+                <div style={{textAlign:"right",marginBottom:14}}>
+                  <button onClick={()=>setAdUnuttu(true)} style={{background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12,fontWeight:600}}>Şifremi Unuttum</button>
+                </div>
+                <div style={{display:"flex",gap:9}}>
+                  <button onClick={()=>{setAdModal(false);setAdHata("");setAdSifre("");}}
+                    style={{flex:1,padding:10,background:"transparent",color:K.tx4,border:"1px solid "+K.bdr,borderRadius:9,cursor:"pointer"}}>İptal</button>
+                  <button onClick={admGiris}
+                    style={{flex:1,padding:10,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                      color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700}}>Giriş</button>
+                </div>
+              </>
+            ):(
+              <>
+                <div style={{color:K.tx3,fontSize:12,marginBottom:14}}>Yeni admin şifresi belirleyin.</div>
+                <input type="password" id="np1" placeholder="Yeni şifre (min 6)"
+                  style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
+                    borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+                <input type="password" id="np2" placeholder="Tekrar girin"
+                  style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
+                    borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box",marginBottom:14}}/>
+                <button onClick={()=>{
+                  const pw1=document.getElementById("np1").value;
+                  const pw2=document.getElementById("np2").value;
+                  if(!pw1||pw1.length<6){alert("En az 6 karakter!");return;}
+                  if(pw1!==pw2){alert("Şifreler eşleşmiyor!");return;}
+                  const a=getA(); setA({...a,pw:pw1});
+                  alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
+                  setAdUnuttu(false); setAdModal(false);
+                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
+                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8}}>
+                  Şifreyi Güncelle
+                </button>
+                <div style={{textAlign:"center"}}>
+                  <button onClick={()=>setAdUnuttu(false)} style={{background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12}}>← Geri Dön</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
