@@ -170,7 +170,18 @@ const MUFREDAT = {
     C1:"Akademik Suryanice, Peshitta metinleri",
     C2:"Uzman seviye klasik metin analizi"
   },
+// KÜRTÇE
+  kurdish: {
+    A1:"Kürtçe alfabesi, temel kelimeler, selamlasma, sayilar",
+    A2:"Temel cumle yapisi, fiil temelleri, günlük konusmalar",
+    B1:"Gramer derinlestirme, Kurmanci/Zazaca farkliliklari",
+    B2:"Ileri gramer, kültürel metinler, akici konusma",
+    C1:"Akademik Kürtçe, edebi metinler",
+    C2:"Ana dil seviyesi"
+  },
+
 };
+
 
 const getMufredat = (dilId, seviye) => MUFREDAT[dilId]?.[seviye] || "Temel "+dilId+" konuları";
 
@@ -397,7 +408,15 @@ syriac:[
   {id:"sy4",ad:"Rabi Ester",         yer:"Mardin",  uz:"Okuma & Konuşma",       p:4.8,n:530,c:false},
   {id:"sy5",ad:"Öğrt. Rami",         yer:"Midyat",  uz:"Çocuklara Süryanice",   p:4.8,n:290,c:true},
   {id:"sy6",ad:"Öğrt. Narin",        yer:"Mardin",  uz:"Çocuk Süryanicesi",     p:4.7,n:250,c:true},
-],
+], 
+kurdish: {
+  A1:"Kürtçe alfabesi, temel kelimeler, selamlasma, sayilar",
+  A2:"Temel cumle yapisi, fiil temelleri, günlük konusmalar",
+  B1:"Gramer derinlestirme, Kurmanci/Zazaca farkliliklari",
+  B2:"Ileri gramer, kültürel metinler, akici konusma",
+  C1:"Akademik Kürtçe, edebi metinler",
+  C2:"Ana dil seviyesi"
+}
 };
 
 const BESMELE_DILLER = ["quran","arabic","medrese"];
