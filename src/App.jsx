@@ -2191,6 +2191,12 @@ const kulGiris = u => {
         #__vcsp{display:none!important}
         vercel-live-feedback{display:none!important}`}</style>
       <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
+      <style>{`*{box-sizing:border-box}
+        #__vcsp{display:none!important}
+        vercel-live-feedback{display:none!important}`}</style>
+      <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
         @keyframes y2{0%,100%{transform:translateY(4px)}50%{transform:translateY(-8px)}}
