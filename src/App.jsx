@@ -593,16 +593,12 @@ function AuthModal({ilkMod, kapat, basari}) {
     basari(u);
   };
 
-  const { error } = await supabase.from("kullanicilar").insert([yeni]);
-
-  if (error) {
-    setH({ email: error.message });
     return;
   }
 
   setTamam(true);
   basari(yeni);
-};
+
   const doSifre = async () => {
     if(!f.email.includes("@")){setH({email:"Gecerli e-posta girin"});return;}
     const a = getA();
