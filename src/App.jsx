@@ -2867,7 +2867,7 @@ const kulGiris = u => {
   );
 
 
-) {
+ {
   const dil = DILLER.find(d=>d.id===dilId);
   // WhatsApp mantığı - önceki ders geçmişini yükle
   // WhatsApp mantığı - hoca+dil bazlı ders geçmişi yükle
@@ -3731,7 +3731,7 @@ const kulGiris = u => {
   );
 }
 
-) {
+{
   const [sekme, setSekme] = useState("dash");
   const [cfg, setCfg] = useState(getA());
   const [secilenKullanici, setSecilenKullanici] = useState(null);
