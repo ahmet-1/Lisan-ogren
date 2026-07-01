@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
+import { supabase } from "./supabaseClient";
 const K = {
   bg:"#071510",bg2:"#0a1e13",bg3:"#0d2618",card:"#0f2c1c",
   bdr:"#1a3d26",bdr2:"#1f4d30",bdr3:"#266040",
@@ -574,61 +574,72 @@ function AuthModal({ilkMod, kapat, basari}) {
   );
 
  const doGiris = async () => {
-    const e={};
-    if(!f.email) e.email="E-posta gerekli";
-    if(!f.sifre) e.sifre="Şifre gerekli";
-    if(Object.keys(e).length){setH(e);return;}
-    const a=getA();
-    let u=(a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase()&&x.pw===f.sifre);
-    if(!u){
-      try{
-        const r=await fetch("/api/users?email="+encodeURIComponent(f.email));
-        const dbU=await r.json();
-        if(dbU&&dbU.pw===f.sifre){
-          u=dbU;
-          setA({...a,users:[...(a.users||[]).filter(x=>x.email!==dbU.email),dbU]});
-        }
-      }catch(e){}
-    }
-    if(!u){setH({sifre:"E-posta veya şifre hatalı"});return;}
-    basari(u);
-  };
-  const doKayit = () => {
-    const e={};
-    if(!f.ad.trim()) e.ad="Zorunlu";
-    if(!f.email.includes("@")) e.email="Geçerli e-posta";
-    if(!f.tel.trim()) e.tel="Zorunlu";
-    
-    if(!f.dogum) e.dogum="Zorunlu";
-    if(!f.sehir.trim()) e.sehir="Zorunlu";
-    if(f.sifre.length<6) e.sifre="En az 6 karakter";
-    if(f.sifre!==f.sifre2) e.sifre2="Şifreler eşleşmiyor";
-    if(!f.onay) e.onay="Zorunlu";
-    if(Object.keys(e).length){setH(e);return;}
-    const a=getA();
-    if((a.users||[]).find(x=>x.email.toLowerCase()===f.email.toLowerCase())){setH({email:"Bu e-posta kayıtlı"});return;}
-    const yeni={id:Date.now(),ad:f.ad,email:f.email,tel:f.tel,dogum:f.dogum,
-      sehir:f.sehir,pw:f.sifre,plan:"Deneme",durum:"Deneme",
-      tarih:new Date().toLocaleDateString("tr-TR"),odeme:"₺0",trialStart:Date.now(),hediye:false,
-      kayitZamani:new Date().toLocaleString("tr-TR")};
-    // Admin bildirim listesine ekle
-    const yeniBildirim = {
-      id:Date.now(),
-      tip:"yeniUye",
-      mesaj:"🆕 Yeni üye: "+f.ad+" ("+f.email+")",
-      tarih:new Date().toLocaleString("tr-TR"),
-      okundu:false
-    };
-    setA({...a,
-      users:[...(a.users||[]),yeni],
-      bildirimler:[...(a.bildirimler||[]),yeniBildirim]
-    });
-    // Supabase'e kaydet
-    saveUserToDB(yeni);
-    setTamam(true);
-    basari(yeni);
+  const e = {};
+  if (!f.email) e.email = "E-posta gerekli";
+  if (!f.sifre) e.sifre = "Şifre gerekli";
+  if (Object.keys(e).length) {
+    setH(e);
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("kullanicilar")
+    .select("*")
+    .eq("email", f.email.trim().toLowerCase())
+    .eq("pw", f.sifre)
+    .single();
+
+  if (error || !data) {
+    setH({ sifre: "E-posta veya şifre hatalı" });
+    return;
+  }
+
+  basari(data);
+};
+ const doKayit = async () => {
+  const e = {};
+  if (!f.ad.trim()) e.ad = "Zorunlu";
+  if (!f.email.includes("@")) e.email = "Geçerli e-posta";
+  if (!f.tel.trim()) e.tel = "Zorunlu";
+  if (f.tc.length !== 11 || !/^\d+$/.test(f.tc)) e.tc = "11 haneli TC";
+  if (!f.dogum) e.dogum = "Zorunlu";
+  if (!f.sehir.trim()) e.sehir = "Zorunlu";
+  if (f.sifre.length < 6) e.sifre = "En az 6 karakter";
+  if (f.sifre !== f.sifre2) e.sifre2 = "Şifreler eşleşmiyor";
+  if (!f.onay) e.onay = "Onay zorunlu";
+
+  if (Object.keys(e).length) {
+    setH(e);
+    return;
+  }
+
+  const yeni = {
+    id: String(Date.now()),
+    ad: f.ad.trim(),
+    email: f.email.trim().toLowerCase(),
+    tel: f.tel.trim(),
+    tc: f.tc.trim(),
+    dogum: f.dogum,
+    sehir: f.sehir.trim(),
+    pw: f.sifre,
+    plan: "Deneme",
+    durum: "Deneme",
+    dil: "—",
+    tarih: new Date().toLocaleDateString("tr-TR"),
+    odeme: "₺0",
+    trial_start: new Date().toISOString()
   };
 
+  const { error } = await supabase.from("kullanicilar").insert([yeni]);
+
+  if (error) {
+    setH({ email: error.message });
+    return;
+  }
+
+  setTamam(true);
+  basari(yeni);
+};
   const doSifre = async () => {
     if(!f.email.includes("@")){setH({email:"Gecerli e-posta girin"});return;}
     const a = getA();
@@ -2114,8 +2125,35 @@ export default function App() {
   const [adHata, setAdHata] = useState("");
   const [adUnuttu, setAdUnuttu] = useState(false);
   const [odePlan, setOdePlan] = useState(null);
-  const [pwaPrompt, setPwaPrompt] = useState(null);
+ const [pwaPrompt, setPwaPrompt] = useState(null);
+const [users, setUsers] = useState([]);
+useEffect(() => {
+  const loadUsers = async () => {
+    const { data, error } = await supabase
+      .from("kullanicilar")
+      .select("*")
+      .order("created_at", { ascending: false });
 
+    if (!error) setUsers(data || []);
+  };
+
+  loadUsers();
+
+  const channel = supabase
+    .channel("kullanicilar-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "kullanicilar" },
+      () => {
+        loadUsers();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
   // Şifre sıfırlama token kontrolü
   useEffect(()=>{
     const params = new URLSearchParams(window.location.search);
