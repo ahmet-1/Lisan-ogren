@@ -409,14 +409,14 @@ syriac:[
   {id:"sy5",ad:"Öğrt. Rami",         yer:"Midyat",  uz:"Çocuklara Süryanice",   p:4.8,n:290,c:true},
   {id:"sy6",ad:"Öğrt. Narin",        yer:"Mardin",  uz:"Çocuk Süryanicesi",     p:4.7,n:250,c:true},
 ], 
-kurdish: {
-  A1:"Kürtçe alfabesi, temel kelimeler, selamlasma, sayilar",
-  A2:"Temel cumle yapisi, fiil temelleri, günlük konusmalar",
-  B1:"Gramer derinlestirme, Kurmanci/Zazaca farkliliklari",
-  B2:"Ileri gramer, kültürel metinler, akici konusma",
-  C1:"Akademik Kürtçe, edebi metinler",
-  C2:"Ana dil seviyesi"
-},
+kurdish:[
+    {id:"kd1",ad:"Dr. Serdar Kaya",yer:"Diyarbakır",uz:"Kurmanci Gramer",p:4.8,n:620,c:false},
+    {id:"kd2",ad:"Prof. Zinar Baran",yer:"Mardin",uz:"Zazaca ve Kurmanci",p:4.9,n:540,c:false},
+    {id:"kd3",ad:"Dr. Rojda Yilmaz",yer:"Van",uz:"Modern Kürtçe",p:4.8,n:480,c:false},
+    {id:"kd4",ad:"Heval Demir",yer:"Diyarbakır",uz:"Konuşma Dili",p:4.7,n:390,c:false},
+    {id:"kd5",ad:"Ogrt. Berivan Ay",yer:"Mardin",uz:"Cocuklara Kürtçe",p:4.9,n:280,c:true},
+    {id:"kd6",ad:"Ogrt. Serhildan Er",yer:"Van",uz:"Cocuk Kürtçesi",p:4.8,n:210,c:true},
+  ]
 };
 
 const BESMELE_DILLER = ["quran","arabic","medrese"];
