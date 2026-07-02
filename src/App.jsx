@@ -510,37 +510,34 @@ function Av({h, dil, sz=64}) {
 }
 
 function tarayiciSes(metin, lang) {
-  return new Promise(resolve => {
+  return new Promise(function(resolve) {
     try {
-      const synth = window.speechSynthesis;
-      if (!synth) { resolve(); return; }
-      synth.cancel();
-      const temiz = metin.replace(/[*#_~`>[\]]/g,"").replace(/\s+/g," ").trim();
-      const utt = new SpeechSynthesisUtterance(temiz.substring(0,500));
+      if (!window.speechSynthesis) { resolve(); return; }
+      window.speechSynthesis.cancel();
+      var temiz = metin.replace(/[*#_~`>]/g,"").replace(/\s+/g," ").trim();
+      var utt = new SpeechSynthesisUtterance(temiz.substring(0,500));
       utt.lang = lang || "tr-TR";
       utt.rate = 0.85;
       utt.pitch = 1.0;
       utt.volume = 1.0;
-      const loadSes = () => {
-        const sesler = synth.getVoices();
-        if (sesler.length > 0) {
-          const dilKodu = (lang||"tr-TR").split("-")[0];
-          const secilen = sesler.find(s=>s.lang.startsWith(dilKodu)) || sesler[0];
-          if (secilen) utt.voice = secilen;
-        }
-        utt.onend = () => resolve();
-        utt.onerror = () => resolve();
-        synth.speak(utt);
-      };
-      if (synth.getVoices().length === 0) {
-        synth.onvoiceschanged = loadSes;
-      } else {
-        setTimeout(loadSes, 50);
+      utt.onend = function() { resolve(); };
+      utt.onerror = function() { resolve(); };
+      function speak() {
+        var voices = window.speechSynthesis.getVoices();
+        var dilKodu = (lang||"tr-TR").split("-")[0];
+        var v = voices.find(function(x){return x.lang.startsWith(dilKodu);});
+        if(v) utt.voice = v;
+        window.speechSynthesis.speak(utt);
       }
-    } catch(e) { resolve(); }
+      if(window.speechSynthesis.getVoices().length===0){
+        window.speechSynthesis.addEventListener("voiceschanged", speak, {once:true});
+        setTimeout(speak, 1000);
+      } else {
+        setTimeout(speak, 50);
+      }
+    } catch(e){ resolve(); }
   });
 }
-
 async function aiYanit(msgs, system) {
   const res = await fetch("/api/chat", {
     method:"POST",
@@ -691,7 +688,7 @@ function AuthModal({ilkMod, kapat, basari}) {
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>E-posta</div>
           {inp("email","email","ornek@mail.com")}
           <div style={{color:K.tx3,fontSize:11,marginBottom:3}}>Şifre</div>
-          {inp("sifre","password","••••••••")}
+          {inp("sifre","password","••••••••", e=>e.key==="Enter"&&doGiris())}
           <div style={{textAlign:"right",marginBottom:14}}>
             <button style={lnk} onClick={()=>{setMod("unuttu");setH({});setMesaj("");}}>Şifremi Unuttum</button>
           </div>
@@ -1980,7 +1977,9 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
             ):(
               <>
                 <div style={{color:K.tx4,fontSize:11,marginBottom:4}}>Kullanıcı E-postası</div>
-                <input value={hE} onChange={e=>{setHE(e.target.value);setHErr("");}} placeholder="ornek@mail.com" style={gI}/>
+                <input value={hE} onChange={e=>{setHE(e.target.value);setHErr("");}} 
+                  onKeyDown={e=>e.key==="Enter"&&hediye()}
+                  placeholder="ornek@mail.com" style={gI}/>
                 {hErr&&<div style={{color:K.errL,fontSize:11,marginBottom:8}}>{hErr}</div>}
                 <div style={{color:K.tx4,fontSize:11,marginBottom:8}}>Hediye Türü</div>
                 {["7 Gün","1 Ay","3 Ay","Yıllık","Sınırsız"].map(g=>(
@@ -2615,21 +2614,15 @@ const kulGiris = u => {
               </div>
             ))}
           </div>
-          {adm.iban&&(
-            <div style={{marginTop:34,background:K.card,borderRadius:14,padding:22,maxWidth:440,
-              margin:"34px auto 0",border:"1px solid "+K.bdr,textAlign:"left"}}>
-              <div style={{color:K.tx,fontWeight:700,marginBottom:10,fontSize:14}}>💳 Havale Bilgileri</div>
-              <div style={{color:K.tx4,fontSize:13,lineHeight:2.2}}>
-                Ad: <strong style={{color:K.tx}}>{adm.acName}</strong><br/>
-                IBAN: <strong style={{color:K.gL,fontFamily:"monospace"}}>{adm.iban}</strong><br/>
-                Banka: <strong style={{color:K.tx}}>{adm.bank}</strong>
-              </div>
-              <div style={{background:"rgba(46,125,50,0.08)",borderRadius:8,padding:10,marginTop:10}}>
-                <div style={{color:K.tx4,fontSize:11}}>havale işleminden sonra iletişim bölümünden dekontunuzu gönderiniz(üyeliğiniz max 2 saat içinde aktif olur).</div>
-              </div>
+          <div style={{marginTop:24,background:"rgba(46,125,50,0.06)",borderRadius:12,padding:16,
+            maxWidth:440,margin:"24px auto 0",border:"1px solid rgba(46,125,50,0.2)",textAlign:"center"}}>
+            <div style={{color:K.gL,fontWeight:700,fontSize:13,marginBottom:6}}>💳 Ödeme: Banka Havalesi</div>
+            <div style={{color:K.tx4,fontSize:12,lineHeight:1.8}}>
+              Planı seçip "Satın Al" butonuna tıklayın.<br/>
+              IBAN ve ödeme bilgileri açılacaktır.<br/>
+              Dekont yükleyin — max 2 saat içinde üyeliğiniz aktifleşir.
             </div>
-          )}
-        </div>
+          </div>        </div>
       )}
 
       {sayfa==="iletisim"&&(
