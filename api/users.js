@@ -16,11 +16,27 @@ export default async function handler(req, res) {
       res.status(200).json(email ? (d[0] || null) : (d || []));
     } else if (req.method === "POST") {
       const u = req.body;
+      const payload = {
+        id: parseInt(u.id || Date.now()),
+        ad: u.ad || "",
+        email: u.email || "",
+        tel: u.tel || "",
+        sehir: u.sehir || "",
+        dogum: u.dogum || "",
+        pw: u.pw || "",
+        plan: u.plan || "Deneme",
+        durum: u.durum || "Deneme",
+        trial_start: String(u.trialStart || Date.now()),
+        odeme: u.odeme || "0",
+        created_at: new Date().toISOString()
+      };
       const r = await fetch(SB_URL + "/rest/v1/kullanicilar", {
         method: "POST",
         headers: { ...h, "Prefer": "resolution=merge-duplicates" },
-        body: JSON.stringify({ id: String(u.id || Date.now()), ad: u.ad, email: u.email, tel: u.tel || "", sehir: u.sehir || "", dogum: u.dogum || "", pw: u.pw, plan: u.plan || "Deneme", durum: u.durum || "Deneme", trial_start: String(u.trialStart || Date.now()), odeme: u.odeme || "0", created_at: new Date().toISOString() })
+        body: JSON.stringify(payload)
       });
+      const txt = await r.text();
+      console.log("Supabase response:", r.status, txt);
       res.status(200).json({ ok: true });
     } else if (req.method === "PUT") {
       const { id, ...updates } = req.body;
@@ -31,6 +47,7 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: true });
     }
   } catch (e) {
+    console.log("Error:", e.message);
     res.status(500).json({ error: e.message });
   }
 }
