@@ -18,11 +18,10 @@ export default async function handler(req, res) {
       const u = req.body;
       const r = await fetch(SB_URL + "/rest/v1/kullanicilar", {
         method: "POST",
-        headers: { ...h, "Prefer": "return=representation,resolution=merge-duplicates" },
+        headers: { ...h, "Prefer": "resolution=merge-duplicates" },
         body: JSON.stringify({ id: String(u.id || Date.now()), ad: u.ad, email: u.email, tel: u.tel || "", sehir: u.sehir || "", dogum: u.dogum || "", pw: u.pw, plan: u.plan || "Deneme", durum: u.durum || "Deneme", trial_start: String(u.trialStart || Date.now()), odeme: u.odeme || "0", created_at: new Date().toISOString() })
       });
-      const d = await r.json();
-      res.status(200).json(d[0] || {});
+      res.status(200).json({ ok: true });
     } else if (req.method === "PUT") {
       const { id, ...updates } = req.body;
       await fetch(SB_URL + "/rest/v1/kullanicilar?id=eq." + id, { method: "PATCH", headers: h, body: JSON.stringify(updates) });
