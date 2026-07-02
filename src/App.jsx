@@ -2098,6 +2098,13 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 
 export default function App() {
   const [kul, setKul] = useState(()=>DB.g("kul"));
+
+  useEffect(()=>{
+    window.addEventListener("beforeinstallprompt", e=>{
+      e.preventDefault();
+      setPwaPrompt(e);
+    });
+  },[]);
   const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
 
   useEffect(()=>{
@@ -2182,7 +2189,8 @@ const kulGiris = u => {
     if(!kul) return false;
     if(kul.durum==="Aktif") return true;
     if(kul.durum==="Deneme") {
-      const gunSayisi = (Date.now()-kul.trialStart)/86400000;
+      const ts = kul.trialStart || kul.trial_start || Date.now();
+      const gunSayisi = (Date.now()-parseInt(ts))/86400000;
       return gunSayisi < 5;
     }
     return false;
