@@ -3,10 +3,17 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
+  
   const SB_URL = process.env.SUPABASE_URL;
   const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-  if (!SB_URL || !SB_KEY) { res.status(200).json([]); return; }
+  
+  if (!SB_URL || !SB_KEY) {
+    res.status(200).json({ error: "ENV_MISSING", SB_URL: !!SB_URL, SB_KEY: !!SB_KEY });
+    return;
+  }
+  
   const h = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
+  
   try {
     if (req.method === "GET") {
       const email = req.query.email;
@@ -35,9 +42,9 @@ export default async function handler(req, res) {
         headers: { ...h, "Prefer": "resolution=merge-duplicates" },
         body: JSON.stringify(payload)
       });
+      const status = r.status;
       const txt = await r.text();
-      console.log("Supabase response:", r.status, txt);
-      res.status(200).json({ ok: true });
+      res.status(200).json({ ok: true, supabase_status: status, supabase_response: txt, payload_id: payload.id });
     } else if (req.method === "PUT") {
       const { id, ...updates } = req.body;
       await fetch(SB_URL + "/rest/v1/kullanicilar?id=eq." + id, { method: "PATCH", headers: h, body: JSON.stringify(updates) });
@@ -47,7 +54,6 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: true });
     }
   } catch (e) {
-    console.log("Error:", e.message);
     res.status(500).json({ error: e.message });
   }
 }
