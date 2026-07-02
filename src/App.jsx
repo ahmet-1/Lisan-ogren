@@ -2181,7 +2181,10 @@ const kulGiris = u => {
     if(adGir) return true;
     if(!kul) return false;
     if(kul.durum==="Aktif") return true;
-    if(kul.durum==="Deneme") return (Date.now()-kul.trialStart)/86400000 < 5;
+    if(kul.durum==="Deneme") {
+      const gunSayisi = (Date.now()-kul.trialStart)/86400000;
+      return gunSayisi < 5;
+    }
     return false;
   };
 
@@ -2408,7 +2411,8 @@ const kulGiris = u => {
                 onMouseLeave={e=>{e.currentTarget.style.borderColor=K.bdr;e.currentTarget.style.transform="translateY(0)";}}
                 onClick={()=>{
                   if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
-                  if(!dersGir()){setOdePlan({id:"up",ad:"Premium Üyelik",fiyat:"₺299",donem:"/ay",tutar:299});return;}
+                  if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
+                  if(!dersGir()){setOdePlan({id:"a",ad:"Aylık Plan",fiyat:"₺349",donem:"/ay",tutar:349});return;}
                   const k2 = adGir?{id:"admin",ad:"Admin",plan:"Sınırsız",durum:"Aktif",trialStart:0}:kul;
                   setDers({dil:dilSec.id,hoca:h,kul:k2});
                 }}>
@@ -2684,7 +2688,9 @@ const kulGiris = u => {
                   <div style={{color:K.tx4,fontSize:11}}>Açıklama: <strong style={{color:K.tx}}>{kul?.email}</strong></div>
                 </div>
               </div>
-            ):<div style={{color:K.tx4,fontSize:13,marginBottom:14,padding:14,background:K.bg3,borderRadius:10}}>IBAN girilmemiş.</div>}
+            ):<div style={{color:K.tx4,fontSize:13,marginBottom:14,padding:14,background:K.bg3,borderRadius:10}}>
+              Ödeme bilgileri için iletişim sayfasından ulaşın.
+            </div>}
             <div style={{marginBottom:12}}>
               <div style={{color:K.tx4,fontSize:12,marginBottom:8}}>📎 Dekont Fotoğrafı (İsteğe Bağlı)</div>
               <label style={{display:"block",background:K.bg3,border:"1px dashed "+K.bdr2,borderRadius:9,
