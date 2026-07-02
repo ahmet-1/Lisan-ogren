@@ -1659,7 +1659,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
     if(!hE.includes("@")){setHErr("Geçerli e-posta");return;}
     const u=kullaniciListesi.find(x=>x.email===hE);
     if(!u){setHErr("Kullanıcı bulunamadı");return;}
-    kaydet({...cfg,users:kul.map(x=>x.email===hE?{...x,plan:hT,durum:"Aktif",hediye:true}:x)});
+    kaydet({...cfg,users:kullaniciListesi.map(x=>x.email.toLowerCase()===hE.toLowerCase()?{...x,plan:hT,durum:"Aktif",hediye:true}:x)});
     setHOk(true);
   };
 
@@ -2209,17 +2209,9 @@ const kulGiris = u => {
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
       <style>{`*{box-sizing:border-box}
-        #__vcsp{display:none!important}
-        vercel-live-feedback{display:none!important}`}</style>
+        #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback{display:none!important}`}</style>
       <style>{`*{box-sizing:border-box}
-        #__vcsp{display:none!important}
-        vercel-live-feedback{display:none!important}`}</style>
-      <style>{`*{box-sizing:border-box}
-        #__vcsp{display:none!important}
-        vercel-live-feedback{display:none!important}`}</style>
-      <style>{`*{box-sizing:border-box}
-        #__vcsp{display:none!important}
-        vercel-live-feedback{display:none!important}`}</style>
+        #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback{display:none!important}`}</style>
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
