@@ -602,12 +602,10 @@ function AuthModal({ilkMod, kapat, basari}) {
   if (!f.ad.trim()) e.ad = "Zorunlu";
   if (!f.email.includes("@")) e.email = "Geçerli e-posta";
   if (!f.tel.trim()) e.tel = "Zorunlu";
-  if (f.tc.length !== 11 || !/^\d+$/.test(f.tc)) e.tc = "11 haneli TC";
   if (!f.dogum) e.dogum = "Zorunlu";
   if (!f.sehir.trim()) e.sehir = "Zorunlu";
   if (f.sifre.length < 6) e.sifre = "En az 6 karakter";
   if (f.sifre !== f.sifre2) e.sifre2 = "Şifreler eşleşmiyor";
-  if (!f.onay) e.onay = "Onay zorunlu";
 
   if (Object.keys(e).length) {
     setH(e);
