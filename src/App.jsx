@@ -2580,9 +2580,10 @@ const kulGiris = u => {
           <p style={{color:K.tx4,marginBottom:38,fontSize:14}}>5 gün ücretsiz dene, havale ile öde</p>
           <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
             {[
-              {id:"d",ad:"5 Günlük Deneme",fiyat:"Ücretsiz",donem:"",hl:false,oz:["1 dil","Günde 20 dk","Yazılı AI hoca","Sesli konuşma"]},
-              {id:"a",ad:"Aylık Plan",fiyat:"₺299",donem:"/ay",hl:false,tutar:299,oz:["Tüm 13 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları"]},
-              {id:"y",ad:"Yıllık Plan",fiyat:"₺1990",donem:"/yıl",hl:true,tutar:1990,oz:["Tüm 13 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları","Öncelikli destek","%44 tasarruf"]},
+              {id:"d",ad:"5 Günlük Deneme",fiyat:"Ücretsiz",donem:"",hl:false,tutar:0,oz:["3 dil","Günde 20 dk","Yazılı AI hoca","Sesli konuşma"]},
+              {id:"a",ad:"Aylık Plan",fiyat:"₺349",donem:"/ay",hl:false,tutar:349,oz:["5 dil seçim","Sınırsız ders","4+2 hoca","Çocuk hocaları"]},
+              {id:"alt",ad:"6 Aylık Plan",fiyat:"₺1490",donem:"/6ay",hl:false,tutar:1490,oz:["10 dil seçim","Sınırsız ders","4+2 hoca","Çocuk hocaları","%29 tasarruf"]},
+              {id:"y",ad:"Yıllık Plan",fiyat:"₺2490",donem:"/yıl",hl:true,tutar:2490,oz:["Tüm 15 dil","Sınırsız ders","4+2 hoca","Çocuk hocaları","Öncelikli destek","%40 tasarruf"]},
             ].map(p=>(
               <div key={p.id}
                 style={{background:p.hl?"linear-gradient(135deg,"+K.bg2+","+K.bg3+")":K.card,
