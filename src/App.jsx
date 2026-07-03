@@ -1204,25 +1204,26 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     try{recRef.current?.stop();}catch{}
     // Sadece en az 5 mesaj varsa gerçek ders sayıl
     const gercekDers = msgs.filter(m=>m.r==="user").length >= 1;
-    if (kul?.id && dilMod && gercekDers) {
-      const dersSayisi = getDG(kul.id, dilId).length + 1;
-      if (dersSayisi % 20 === 0) {
+    const userId2 = kul?.id ? String(kul.id) : "admin";
+    if (dilMod && gercekDers) {
+      const dersSayisi = getDG(userId2, dilId).length + 1;
+      if (kul?.id && dersSayisi % 20 === 0) {
         setTimeout(()=>setSinavEkrani("final"), 500);
-      } else if (dersSayisi % 10 === 0) {
+      } else if (kul?.id && dersSayisi % 10 === 0) {
         setTimeout(()=>setSinavEkrani("mid"), 500);
       }
     }
     if (dilMod && gercekDers) {
-      const userId = kul?.id || "admin";
+      const userId = userId2;
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
       const gecmis = getDG(userId,dilId);
       const yeniDers = {id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
         hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:Math.max(sure2,1),seviye,
         ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""};
       setDG(userId,dilId,[...gecmis,yeniDers]);
-      // Supabase'e de kaydet
+      // Mesajları Supabase'e kaydet
       fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({userId,dilId,hocaId:hoca.id,messages:[...msgs]})
+        body:JSON.stringify({userId:String(userId),dilId,hocaId:hoca.id,messages:[...msgs]})
       }).catch(()=>{});
       const idx = Math.min(Math.floor((gecmis.length+1)/5), SEVIYELER.length-1);
       const yeniSv = SEVIYELER[idx];
