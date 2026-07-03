@@ -1045,7 +1045,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       .replace(/\n+/g," ")
       .replace(/\s+/g," ")
       .trim()
-      .substring(0,500);
+      .substring(0,1000);
     sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
       if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
     }).catch(()=>{
@@ -1189,7 +1189,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     konusmaRef.current=false;
     try{recRef.current?.stop();}catch{}
     // Sadece en az 5 mesaj varsa gerçek ders sayıl
-    const gercekDers = msgs.filter(m=>m.r==="user").length >= 3;
+    const gercekDers = msgs.filter(m=>m.r==="user").length >= 1;
     if (kul?.id && dilMod && gercekDers) {
       const dersSayisi = getDG(kul.id, dilId).length + 1;
       if (dersSayisi % 20 === 0) {
@@ -1202,9 +1202,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const userId = kul?.id || "admin";
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
       const gecmis = getDG(userId,dilId);
-      setDG(userId,dilId,[...gecmis,{id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
+      const yeniDers = {id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
         hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:Math.max(sure2,1),seviye,
-        ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""}]);
+        ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""};
+      setDG(userId,dilId,[...gecmis,yeniDers]);
+      // Supabase'e de kaydet
+      fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({userId,dilId,hocaId:hoca.id,messages:[...msgs]})
+      }).catch(()=>{});
       const idx = Math.min(Math.floor((gecmis.length+1)/5), SEVIYELER.length-1);
       const yeniSv = SEVIYELER[idx];
       setSV(userId,dilId,yeniSv);
