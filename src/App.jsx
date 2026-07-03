@@ -1194,7 +1194,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
       const gecmis = getDG(kul.id,dilId);
       setDG(kul.id,dilId,[...gecmis,{id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
-        hoca:hoca.ad,dilMod,kategori,sure:sure2,seviye,
+        hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:sure2,seviye,
         ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""}]);
       const idx = Math.min(Math.floor((gecmis.length+1)/5), SEVIYELER.length-1);
       const yeniSv = SEVIYELER[idx];
@@ -2207,9 +2207,13 @@ const kulGiris = u => {
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
       <style>{`*{box-sizing:border-box}
-        #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback{display:none!important}`}</style>
+        #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback,
+        #vercel-live-feedback,.__vcFeedbackButton,#__vercel_speed_insights_widget,
+        [data-vercel-speed-insights],[id*="vercel"],[class*="vercel"]{display:none!important;height:0!important;width:0!important;overflow:hidden!important;}`}</style>
       <style>{`*{box-sizing:border-box}
-        #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback{display:none!important}`}</style>
+        #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback,
+        #vercel-live-feedback,.__vcFeedbackButton,#__vercel_speed_insights_widget,
+        [data-vercel-speed-insights],[id*="vercel"],[class*="vercel"]{display:none!important;height:0!important;width:0!important;overflow:hidden!important;}`}</style>
       <style>{`*{box-sizing:border-box}
         @keyframes y0{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
         @keyframes y1{0%,100%{transform:translateY(-5px)}50%{transform:translateY(7px)}}
@@ -2488,7 +2492,15 @@ const kulGiris = u => {
                         <div style={{color:K.tx,fontSize:14,fontWeight:600}}>{dr.tarih} {dr.saat||""}</div>
                         <div style={{color:K.tx4,fontSize:11,marginTop:2}}>{dr.hoca+" • "+dr.sure+" dk • "+dr.kategori}</div>
                       </div>
-                      <div style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{dr.seviye}</div>
+                      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                        <div style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{dr.seviye}</div>
+                        <button onClick={()=>{
+                          if(!window.confirm("Bu ders kaydı silinsin mi?"))return;
+                          const yeniDersler=getDG(kul.id,d.id).filter(x=>x.id!==dr.id);
+                          setDG(kul.id,d.id,yeniDersler);
+                          window.location.reload();
+                        }} style={{background:"none",border:"none",color:"#ef5350",cursor:"pointer",fontSize:14,padding:"2px 6px"}}>🗑</button>
+                      </div>
                     </div>
                   </div>
                 ))}
