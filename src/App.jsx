@@ -1036,16 +1036,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     const temizYan = metinTemizle(yan);
     
-    // Ses SADECE sesliMod true ise çal (mikrofonla girdiyse)
-    if (sesliMod) {
-      const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
-      sesliOku(temizYan.substring(0,600), hoca.id, sesDil).then(()=>{
-        if(konusmaRef.current) setTimeout(mikDinle, 700);
-      }).catch(()=>{
-        if(konusmaRef.current) setTimeout(mikDinle, 700);
-      });
-    }
-      if (konusmaRef.current) mikDinle();
+    // Ses her zaman çal
+    const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
+    sesliOku(temizYan.substring(0,600), hoca.id, sesDil).then(()=>{
+      if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
+    }).catch(()=>{
+      if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
+    });
+    if(sesliMod && konusmaRef.current) mikDinle();
     } catch(e) {
       setMsgs(m=>[...m,{r:"ai",t:"Bağlantı hatası: "+e.message+". Tekrar deneyin."}]);
     }
