@@ -1038,7 +1038,15 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     // Ses her zaman çal
     const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
-    sesliOku(temizYan.substring(0,600), hoca.id, sesDil).then(()=>{
+    // Markdown ve sembolleri temizle, sonra sesle oku
+    const sesMeyin = temizYan
+      .replace(/[*#_~`]/g,"")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")
+      .replace(/\n+/g," ")
+      .replace(/\s+/g," ")
+      .trim()
+      .substring(0,500);
+    sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
       if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
     }).catch(()=>{
       if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
@@ -1190,15 +1198,16 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setTimeout(()=>setSinavEkrani("mid"), 500);
       }
     }
-    if (kul?.id && dilMod && gercekDers) {
+    if (dilMod && gercekDers) {
+      const userId = kul?.id || "admin";
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
-      const gecmis = getDG(kul.id,dilId);
-      setDG(kul.id,dilId,[...gecmis,{id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
-        hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:sure2,seviye,
+      const gecmis = getDG(userId,dilId);
+      setDG(userId,dilId,[...gecmis,{id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
+        hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:Math.max(sure2,1),seviye,
         ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""}]);
       const idx = Math.min(Math.floor((gecmis.length+1)/5), SEVIYELER.length-1);
       const yeniSv = SEVIYELER[idx];
-      setSV(kul.id,dilId,yeniSv);
+      setSV(userId,dilId,yeniSv);
       if (yeniSv!==seviye) alert("🎉 Tebrikler! "+yeniSv+" seviyesine ulaştınız!");
     }
     kapat();
@@ -2102,6 +2111,14 @@ export default function App() {
       e.preventDefault();
       setPwaPrompt(e);
     });
+    // Vercel toolbar kaldır
+    const removeVercel = () => {
+      const els = document.querySelectorAll('[id*="vercel"],[class*="vercel"],vercel-live-feedback,#__vcsp');
+      els.forEach(el=>el.remove());
+    };
+    removeVercel();
+    setTimeout(removeVercel, 1000);
+    setTimeout(removeVercel, 3000);
   },[]);
   const [adGir, setAdGir] = useState(()=>DB.g("adGir")===true);
 
