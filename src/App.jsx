@@ -1221,6 +1221,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:Math.max(sure2,1),seviye,
         ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""};
       setDG(userId,dilId,[...gecmis,yeniDers]);
+      // Supabase'e ders kaydet
+      fetch("/api/dersler",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          id:yeniDers.id, userId:String(userId), dilId,
+          hocaId:hoca.id, hocaAd:hoca.ad, seviye, kategori,
+          sure:yeniDers.sure, dilMod, ozet:yeniDers.ozet, tarih:yeniDers.tarih
+        })
+      }).catch(()=>{});
       // Mesajları Supabase'e kaydet
       fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({userId:String(userId),dilId,hocaId:hoca.id,messages:[...msgs]})
@@ -2125,6 +2133,30 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 
 export default function App() {
   const [kul, setKul] = useState(()=>DB.g("kul"));
+  const [sbDersler, setSbDersler] = useState({});
+
+  useEffect(()=>{
+    // Supabase'den ders geçmişini yükle
+    if(kul?.id){
+      fetch("/api/dersler?userId="+kul.id).then(r=>r.json()).then(dersler=>{
+        if(dersler && dersler.length > 0){
+          const gruplu = {};
+          dersler.forEach(d=>{
+            if(!gruplu[d.dil_id]) gruplu[d.dil_id]=[];
+            gruplu[d.dil_id].push({
+              id:d.id, tarih:d.tarih, hoca:d.hoca_ad, hocaId:d.hoca_id,
+              seviye:d.seviye, kategori:d.kategori, sure:d.sure, dilMod:d.dil_mod, ozet:d.ozet
+            });
+          });
+          setSbDersler(gruplu);
+          // localStorage'a da kaydet
+          Object.keys(gruplu).forEach(dilId=>{
+            setDG(kul.id, dilId, gruplu[dilId]);
+          });
+        }
+      }).catch(()=>{});
+    }
+  },[kul?.id]);
 
   useEffect(()=>{
     window.addEventListener("beforeinstallprompt", e=>{
@@ -2535,6 +2567,7 @@ const kulGiris = u => {
                           if(!window.confirm("Bu ders kaydı silinsin mi?"))return;
                           const yeniDersler=getDG(kul.id,d.id).filter(x=>x.id!==dr.id);
                           setDG(kul.id,d.id,yeniDersler);
+                          fetch("/api/dersler?id="+dr.id,{method:"DELETE"}).catch(()=>{});
                           window.location.reload();
                         }} style={{background:"none",border:"none",color:"#ef5350",cursor:"pointer",fontSize:14,padding:"2px 6px"}}>🗑</button>
                       </div>
