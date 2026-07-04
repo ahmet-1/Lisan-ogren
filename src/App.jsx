@@ -1055,8 +1055,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
       const sesMeyin = temizYan
         .replace(/[*#_~`]/g,"")
-        .replace(/
-+/g," ")
+        .replace(/ +/g," ")
         .replace(/\s+/g," ")
         .trim()
         .substring(0,1000);
