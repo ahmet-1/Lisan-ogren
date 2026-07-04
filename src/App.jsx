@@ -1050,22 +1050,23 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     const temizYan = metinTemizle(yan);
     
-    // Ses her zaman çal
-    const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
-    // Markdown ve sembolleri temizle, sonra sesle oku
-    const sesMeyin = temizYan
-      .replace(/[*#_~`]/g,"")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")
-      .replace(/\n+/g," ")
-      .replace(/\s+/g," ")
-      .trim()
-      .substring(0,1000);
-    sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
-      if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
-    }).catch(()=>{
-      if(sesliMod && konusmaRef.current) setTimeout(mikDinle, 700);
-    });
-    if(sesliMod && konusmaRef.current) mikDinle();
+    // Sadece sesli modda ses çal
+    if (sesliMod) {
+      const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
+      const sesMeyin = temizYan
+        .replace(/[*#_~`]/g,"")
+        .replace(/
++/g," ")
+        .replace(/\s+/g," ")
+        .trim()
+        .substring(0,1000);
+      sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
+        if(konusmaRef.current) setTimeout(mikDinle, 700);
+      }).catch(()=>{
+        if(konusmaRef.current) setTimeout(mikDinle, 700);
+      });
+      if(konusmaRef.current) mikDinle();
+    }
     } catch(e) {
       setMsgs(m=>[...m,{r:"ai",t:"Bağlantı hatası: "+e.message+". Tekrar deneyin."}]);
     }
