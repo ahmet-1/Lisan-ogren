@@ -2503,7 +2503,22 @@ const kulGiris = u => {
         </div>
       )}
 
-      {sayfa==="profil"&&kul&&(
+      {sayfa==="profil"&&kul&&(() => {
+        // Supabase'den dersler yükle
+        if(kul?.id) {
+          fetch("/api/dersler?userId="+kul.id).then(r=>r.json()).then(dersler=>{
+            if(dersler&&dersler.length>0){
+              const g={};
+              dersler.forEach(d=>{
+                if(!g[d.dil_id])g[d.dil_id]=[];
+                g[d.dil_id].push({id:d.id,tarih:d.tarih,hoca:d.hoca_ad,hocaId:d.hoca_id,seviye:d.seviye,kategori:d.kategori,sure:d.sure,dilMod:d.dil_mod,ozet:d.ozet});
+              });
+              Object.keys(g).forEach(dilId=>setDG(String(kul.id),dilId,g[dilId]));
+            }
+          }).catch(()=>{});
+        }
+        return true;
+      })()&&(
         <div style={{padding:"26px 22px",maxWidth:800,margin:"0 auto"}}>
           <div style={{background:K.card,borderRadius:16,padding:22,border:"1px solid "+K.bdr,marginBottom:20}}>
             <div style={{display:"flex",alignItems:"center",gap:16}}>
