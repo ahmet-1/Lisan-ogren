@@ -830,7 +830,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const ad = kul?.ad?.split(" ")[0]||"";
     const besmele = BESMELE_DILLER.includes(dilId) ? BESMELE_METNI : "";
     // Önceki ders geçmişini al
-    const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
+    const oncekiDersler = kul?.id ? getDG(kul?.id || "admin", dilId) : [];
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
     const devamMesaj = sonDers 
       ? "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
@@ -924,7 +924,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   const getPrompt = () => {
     const ad = kul?.ad?.split(" ")[0] || "Öğrenci";
-    const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
+    const oncekiDersler = kul?.id ? getDG(kul?.id || "admin", dilId) : [];
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
 
     const buSeviyeMufredat = getMufredat(dilId, seviye);
@@ -2525,14 +2525,14 @@ const kulGiris = u => {
             <div style={{display:"flex",alignItems:"center",gap:16}}>
               <div style={{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
                 display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:24}}>
-                {kul.ad[0]}
+                {kul?.ad?.[0] || "A"}
               </div>
               <div style={{flex:1}}>
-                <div style={{color:K.tx,fontSize:20,fontWeight:800}}>{kul.ad}</div>
-                <div style={{color:K.tx4,fontSize:12,marginTop:2}}>{kul.email}</div>
+                <div style={{color:K.tx,fontSize:20,fontWeight:800}}>{kul?.ad || "Admin"}</div>
+                <div style={{color:K.tx4,fontSize:12,marginTop:2}}>{kul?.email || ""}</div>
                 <div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>
-                  <span style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:600}}>{kul.plan}</span>
-                  <span style={{background:"rgba(46,125,50,0.1)",color:K.tx3,borderRadius:6,padding:"2px 10px",fontSize:11}}>{kul.sehir}</span>
+                  <span style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:600}}>{kul?.plan || "Admin"}</span>
+                  <span style={{background:"rgba(46,125,50,0.1)",color:K.tx3,borderRadius:6,padding:"2px 10px",fontSize:11}}>{kul?.sehir || ""}</span>
                 </div>
               </div>
             </div>
@@ -2541,7 +2541,7 @@ const kulGiris = u => {
           <div style={{color:K.tx,fontSize:16,fontWeight:700,marginBottom:12}}>📊 Dil Seviyelerin</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:24}}>
             {DILLER.map(d=>{
-              const dersler = getDG(kul.id,d.id);
+              const dersler = getDG(kul?.id || "admin",d.id);
               if(dersler.length===0) return null;
               const sv = getSV(kul.id,d.id);
               return(
@@ -2561,7 +2561,7 @@ const kulGiris = u => {
           </div>
 
           {DILLER.map(d=>{
-            const dersler = getDG(kul.id,d.id);
+            const dersler = getDG(kul?.id || "admin",d.id);
             if(dersler.length===0) return null;
             return(
               <div key={d.id} style={{background:K.card,borderRadius:14,padding:16,border:"1px solid "+K.bdr,marginBottom:14}}>
