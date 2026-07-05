@@ -2158,7 +2158,7 @@ export default function App() {
         }
       }).catch(()=>{});
     }
-  },[kul?.id, DB.g("adGir")]);
+  },[kul?.id, adGir]);
 
   useEffect(()=>{
     window.addEventListener("beforeinstallprompt", e=>{
