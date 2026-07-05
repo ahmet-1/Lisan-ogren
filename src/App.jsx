@@ -1120,7 +1120,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setYazi("");
         if (e.error === "no-speech") {
           // Sessizlik - tekrar dinle
-          if (konusmaRef.current) setTimeout(mikDinle, 1000);
+          if (konusmaRef.current) setTimeout(mikDinle, 2000);
         } else if (e.error === "not-allowed") {
           setMikErr("Mikrofon izni reddedildi. Tarayıcı ayarlarından izin ver.");
           konusmaRef.current = false;
@@ -1135,7 +1135,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setMikr(false);
         // Sadece sonuc gonderilmediyse tekrar dinle (hoca konusurken dinleme)
         if (konusmaRef.current && !yukl && !sonucGonderildi) {
-          setTimeout(mikDinle, 1500);
+          setTimeout(mikDinle, 2500);
         }
       };
       
@@ -2138,7 +2138,9 @@ export default function App() {
   useEffect(()=>{
     // Supabase'den ders geçmişini yükle
     if(kul?.id){
-      fetch("/api/dersler?userId="+kul.id).then(r=>r.json()).then(dersler=>{
+      const uid = kul?.id || (DB.g("adGir") ? "admin" : null);
+      if(!uid) return;
+      fetch("/api/dersler?userId="+uid).then(r=>r.json()).then(dersler=>{
         if(dersler && dersler.length > 0){
           const gruplu = {};
           dersler.forEach(d=>{
