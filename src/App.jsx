@@ -2137,9 +2137,8 @@ export default function App() {
 
   useEffect(()=>{
     // Supabase'den ders geçmişini yükle
-    if(kul?.id){
-      const uid = kul?.id || (DB.g("adGir") ? "admin" : null);
-      if(!uid) return;
+    const uid = kul?.id ? String(kul.id) : (DB.g("adGir") ? "admin" : null);
+    if(uid){
       fetch("/api/dersler?userId="+uid).then(r=>r.json()).then(dersler=>{
         if(dersler && dersler.length > 0){
           const gruplu = {};
