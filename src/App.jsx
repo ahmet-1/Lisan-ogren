@@ -2161,6 +2161,20 @@ export default function App() {
   },[kul?.id, adGir]);
 
   useEffect(()=>{
+    if(!adGir) return;
+    fetch("/api/dersler?userId=admin").then(r=>r.json()).then(dersler=>{
+      if(dersler&&dersler.length>0){
+        const g={};
+        dersler.forEach(d=>{
+          if(!g[d.dil_id])g[d.dil_id]=[];
+          g[d.dil_id].push({id:d.id,tarih:d.tarih,hoca:d.hoca_ad,hocaId:d.hoca_id,seviye:d.seviye,kategori:d.kategori,sure:d.sure,dilMod:d.dil_mod,ozet:d.ozet});
+        });
+        Object.keys(g).forEach(dilId=>setDG("admin",dilId,g[dilId]));
+      }
+    }).catch(()=>{});
+  },[adGir]);
+
+  useEffect(()=>{
     window.addEventListener("beforeinstallprompt", e=>{
       e.preventDefault();
       setPwaPrompt(e);
