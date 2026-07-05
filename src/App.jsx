@@ -1120,7 +1120,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setYazi("");
         if (e.error === "no-speech") {
           // Sessizlik - tekrar dinle
-          if (konusmaRef.current) setTimeout(mikDinle, 2000);
+          if (konusmaRef.current) setTimeout(mikDinle, 1000);
         } else if (e.error === "not-allowed") {
           setMikErr("Mikrofon izni reddedildi. Tarayıcı ayarlarından izin ver.");
           konusmaRef.current = false;
@@ -1135,7 +1135,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setMikr(false);
         // Sadece sonuc gonderilmediyse tekrar dinle (hoca konusurken dinleme)
         if (konusmaRef.current && !yukl && !sonucGonderildi) {
-          setTimeout(mikDinle, 2500);
+          setTimeout(mikDinle, 1500);
         }
       };
       
@@ -2137,9 +2137,8 @@ export default function App() {
 
   useEffect(()=>{
     // Supabase'den ders geçmişini yükle
-    const uid = kul?.id ? String(kul.id) : (DB.g("adGir") ? "admin" : null);
-    if(uid){
-      fetch("/api/dersler?userId="+uid).then(r=>r.json()).then(dersler=>{
+    if(kul?.id){
+      fetch("/api/dersler?userId="+kul.id).then(r=>r.json()).then(dersler=>{
         if(dersler && dersler.length > 0){
           const gruplu = {};
           dersler.forEach(d=>{
@@ -2151,28 +2150,13 @@ export default function App() {
           });
           setSbDersler(gruplu);
           // localStorage'a da kaydet
-          const userId = kul?.id || "admin";
           Object.keys(gruplu).forEach(dilId=>{
-            setDG(userId, dilId, gruplu[dilId]);
+            setDG(kul.id, dilId, gruplu[dilId]);
           });
         }
       }).catch(()=>{});
     }
-  },[kul?.id, adGir]);
-
-  useEffect(()=>{
-    if(!adGir) return;
-    fetch("/api/dersler?userId=admin").then(r=>r.json()).then(dersler=>{
-      if(dersler&&dersler.length>0){
-        const g={};
-        dersler.forEach(d=>{
-          if(!g[d.dil_id])g[d.dil_id]=[];
-          g[d.dil_id].push({id:d.id,tarih:d.tarih,hoca:d.hoca_ad,hocaId:d.hoca_id,seviye:d.seviye,kategori:d.kategori,sure:d.sure,dilMod:d.dil_mod,ozet:d.ozet});
-        });
-        Object.keys(g).forEach(dilId=>setDG("admin",dilId,g[dilId]));
-      }
-    }).catch(()=>{});
-  },[adGir]);
+  },[kul?.id]);
 
   useEffect(()=>{
     window.addEventListener("beforeinstallprompt", e=>{
@@ -2519,7 +2503,7 @@ const kulGiris = u => {
         </div>
       )}
 
-      {sayfa==="profil"&&(kul||adGir)&&(
+      {sayfa==="profil"&&kul&&(
         <div style={{padding:"26px 22px",maxWidth:800,margin:"0 auto"}}>
           <div style={{background:K.card,borderRadius:16,padding:22,border:"1px solid "+K.bdr,marginBottom:20}}>
             <div style={{display:"flex",alignItems:"center",gap:16}}>
