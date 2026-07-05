@@ -2152,13 +2152,14 @@ export default function App() {
           });
           setSbDersler(gruplu);
           // localStorage'a da kaydet
+          const userId = kul?.id || "admin";
           Object.keys(gruplu).forEach(dilId=>{
-            setDG(kul.id, dilId, gruplu[dilId]);
+            setDG(userId, dilId, gruplu[dilId]);
           });
         }
       }).catch(()=>{});
     }
-  },[kul?.id]);
+  },[kul?.id, DB.g("adGir")]);
 
   useEffect(()=>{
     window.addEventListener("beforeinstallprompt", e=>{
