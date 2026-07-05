@@ -2519,7 +2519,7 @@ const kulGiris = u => {
         </div>
       )}
 
-      {sayfa==="profil"&&kul&&(
+      {sayfa==="profil"&&(kul||adGir)&&(
         <div style={{padding:"26px 22px",maxWidth:800,margin:"0 auto"}}>
           <div style={{background:K.card,borderRadius:16,padding:22,border:"1px solid "+K.bdr,marginBottom:20}}>
             <div style={{display:"flex",alignItems:"center",gap:16}}>
