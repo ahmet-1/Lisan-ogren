@@ -1940,17 +1940,20 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                       <div style={{color:K.tx,fontSize:12}}>{dr.tarih} — {dr.hoca}</div>
                       <div style={{color:K.tx4,fontSize:11}}>{dr.kategori} • {dr.sure}dk • {dr.seviye}</div>
                     </div>
-                    <button onClick={()=>{
-                      const dilHocalar = HOCALAR[d.id]||[];
-                      const hoca = dilHocalar.find(h=>h.id===dr.hocaId)||dilHocalar[0];
-                      (()=>{
-                      const h=(HOCALAR[d.id]||[]).find(x=>x.id===dr.hocaId)||(HOCALAR[d.id]||[])[0];
-                      if(h){ kapat(); setTimeout(()=>setDers({dil:d.id,hoca:h,kul:kul||{id:"admin",ad:"Admin",plan:"Sinirstiz",durum:"Aktif",trialStart:0}}),100); }
-                    })()
-                    }} style={{padding:"5px 10px",borderRadius:6,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-                      color:"#fff",border:"none",cursor:"pointer",fontSize:11,fontWeight:600,flexShrink:0}}>
-                      Devam Et
-                    </button>
+                    <div style={{display:"flex",gap:4}}>
+                      <button onClick={()=>{
+                        const h=(HOCALAR[d.id]||[]).find(x=>x.id===dr.hocaId)||(HOCALAR[d.id]||[])[0];
+                        if(h){ kapat(); setTimeout(()=>setDers({dil:d.id,hoca:h,kul:kul||{id:"admin",ad:"Admin",plan:"Sinirstiz",durum:"Aktif",trialStart:0}}),100); }
+                      }} style={{padding:"5px 10px",borderRadius:6,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",cursor:"pointer",fontSize:11,fontWeight:600}}>
+                        Devam Et
+                      </button>
+                      <button onClick={()=>{
+                        if(!window.confirm("Bu ders silinsin mi?"))return;
+                        setDG("admin",d.id,getDG("admin",d.id).filter(x=>x.id!==dr.id));
+                        fetch("/api/dersler?id="+dr.id,{method:"DELETE"}).catch(()=>{});
+                        setCfg({...cfg});
+                      }} style={{padding:"5px 8px",borderRadius:6,background:"rgba(198,40,40,0.1)",color:"#ef5350",border:"none",cursor:"pointer",fontSize:11}}>🗑</button>
+                    </div>
                   </div>
                 ))}
               </div>
