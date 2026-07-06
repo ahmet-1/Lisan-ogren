@@ -766,7 +766,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   // Supabase'den mesajları yükle
   useEffect(() => {
-    const uid = kul?.id || "admin";
+    const uid = kul?.id ? String(kul.id) : "admin";
     if (!uid || !dilId || !hoca?.id) return;
     loadMsgsFromDB(uid, dilId, hoca.id).then(dbMsgs => {
       if (dbMsgs && dbMsgs.length > 0) {
