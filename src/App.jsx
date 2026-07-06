@@ -1660,7 +1660,17 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
   const [p1,setP1]=useState(""); const [p2,setP2]=useState(""); const [pMsg,setPMsg]=useState("");
 
   const kaydet = y => { setCfg(y); setA(y); setKayd(true); setTimeout(()=>setKayd(false),2000); };
-  
+
+  useEffect(()=>{
+    fetch("/api/dersler?userId=admin").then(r=>r.json()).then(sbDers=>{
+      if(sbDers&&sbDers.length>0){
+        const g={};
+        sbDers.forEach(sd=>{ if(!g[sd.dil_id])g[sd.dil_id]=[]; g[sd.dil_id].push({id:sd.id,tarih:sd.tarih,hoca:sd.hoca_ad,hocaId:sd.hoca_id,seviye:sd.seviye,kategori:sd.kategori,sure:sd.sure,dilMod:sd.dil_mod}); });
+        Object.keys(g).forEach(dilId=>setDG("admin",dilId,g[dilId]));
+      }
+    }).catch(()=>{});
+  },[]);
+
   useEffect(()=>{
     fetch("/api/users").then(r=>r.json()).then(dbUsers=>{
       if(dbUsers&&dbUsers.length>0){
