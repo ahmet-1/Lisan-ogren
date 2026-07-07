@@ -1217,10 +1217,13 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const userId = userId2;
       const sure2 = Math.floor((Date.now()-baslangic.current)/60000);
       const gecmis = getDG(userId,dilId);
-      const yeniDers = {id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
+      // Aynı hoca+kategori varsa güncelle, yoksa yeni ekle
+      const mevcutIdx = gecmis.findIndex(x=>x.hocaId===hoca.id&&x.kategori===kategori&&x.seviye===seviye);
+      const yeniDers = {id:mevcutIdx>=0?gecmis[mevcutIdx].id:Date.now(),tarih:new Date().toLocaleDateString("tr-TR"),
         hoca:hoca.ad,hocaId:hoca.id,dilMod,kategori,sure:Math.max(sure2,1),seviye,
         ozet:msgs.filter(m=>m.r==="user").slice(-1)[0]?.t||""};
-      setDG(userId,dilId,[...gecmis,yeniDers]);
+      const yeniGecmis = mevcutIdx>=0 ? gecmis.map((x,i)=>i===mevcutIdx?yeniDers:x) : [...gecmis,yeniDers];
+      setDG(userId,dilId,yeniGecmis);
       // Supabase'e ders kaydet
       fetch("/api/dersler",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
