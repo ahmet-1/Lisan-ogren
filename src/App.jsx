@@ -892,23 +892,15 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         "Hazır mısın? Başlayalım!\n\n💡 İpucu: 🎤 butona bas sesli konuş, ya da klavyeyle yaz.";
     }
     const txt = karsilamaTxt;
-    // WhatsApp mantığı: önceki mesajlar varsa koru, sadece yeni karşılama ekle
-    const mevcutMesajlar = DERS_KEY ? (() => {
-      try {
-        const k = localStorage.getItem(DERS_KEY);
-        return k ? JSON.parse(k) : [];
-      } catch { return []; }
-    })() : [];
-
-    if (mevcutMesajlar.length > 0) {
-      // Önceki ders var - geçmişi koru, devam mesajı ekle
-      const devamMsg = {r:"ai", t:"Tekrar hoş geldin "+ad+"! 👋 Kaldığımız yerden devam ediyoruz. "+getMufredat(dilId,seviye)};
-      const yeniMsgs = [...mevcutMesajlar, devamMsg];
-      msgKaydet(yeniMsgs);
-    } else {
-      // İlk ders - karşılama mesajını göster
-      msgKaydet([{r:"ai",t:txt}]);
-    }
+    const uid2 = kul?.id ? String(kul.id) : "admin";
+    loadMsgsFromDB(uid2, dilId, hoca.id).then(dbMsgs => {
+      if (dbMsgs && dbMsgs.length > 0) {
+        msgKaydet([...dbMsgs, {r:"ai", t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz."}]);
+      } else {
+        const lm = DERS_KEY ? (() => { try { const k=localStorage.getItem(DERS_KEY); return k?JSON.parse(k):[]; } catch { return []; } })() : [];
+        msgKaydet(lm.length > 0 ? [...lm, {r:"ai",t:"Tekrar hos geldin "+ad+"!"}] : [{r:"ai",t:txt}]);
+      }
+    }).catch(() => { msgKaydet([{r:"ai",t:txt}]); });
     // Besmele - sesli modda oku (sesli/yazılı her ikisinde de yaz, ama sadece sesli modda çal)
     if (BESMELE_DILLER.includes(dilId)) {
       if(sesliMod) {
