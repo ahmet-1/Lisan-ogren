@@ -895,7 +895,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const uid2 = kul?.id ? String(kul.id) : "admin";
     loadMsgsFromDB(uid2, dilId, hoca.id).then(dbMsgs => {
       if (dbMsgs && dbMsgs.length > 0) {
-        msgKaydet([...dbMsgs, {r:"ai", t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz."}]);
+        msgKaydet([...dbMsgs, {r:"ai", t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz. "+getMufredat(dilId,seviye)}]);
       } else {
         const lm = DERS_KEY ? (() => { try { const k=localStorage.getItem(DERS_KEY); return k?JSON.parse(k):[]; } catch { return []; } })() : [];
         msgKaydet(lm.length > 0 ? [...lm, {r:"ai",t:"Tekrar hos geldin "+ad+"!"}] : [{r:"ai",t:txt}]);
