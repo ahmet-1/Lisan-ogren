@@ -898,7 +898,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         msgKaydet([...dbMsgs, {r:"ai", t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz. "+getMufredat(dilId,seviye)}]);
       } else {
         const lm = DERS_KEY ? (() => { try { const k=localStorage.getItem(DERS_KEY); return k?JSON.parse(k):[]; } catch { return []; } })() : [];
-        msgKaydet(lm.length > 0 ? [...lm, {r:"ai",t:"Tekrar hos geldin "+ad+"!"}] : [{r:"ai",t:txt}]);
+        msgKaydet(lm.length > 0 ? [...lm, {r:"ai",t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz. "+getMufredat(dilId,seviye)}] : [{r:"ai",t:txt}]);
       }
     }).catch(() => { msgKaydet([{r:"ai",t:txt}]); });
     // Besmele - sesli modda oku (sesli/yazılı her ikisinde de yaz, ama sadece sesli modda çal)
