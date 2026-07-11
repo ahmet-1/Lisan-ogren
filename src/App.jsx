@@ -1688,11 +1688,18 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 
   const onayOde = id => {
     const o=ode.find(x=>x.id===id); if(!o)return;
+    const yeniUsers = kullaniciListesi.map(u=>u.email===o.email?{...u,plan:o.plan,durum:"Aktif",
+      odeme:"₺"+(parseInt((u.odeme||"0").replace(/[^0-9]/g,""))+(o.tutar||299))}:u);
     kaydet({...cfg,
       pays:ode.map(x=>x.id===id?{...x,d:"ok"}:x),
-      users:kullaniciListesi.map(u=>u.email===o.email?{...u,plan:o.plan,durum:"Aktif",
-        odeme:"₺"+(parseInt((u.odeme||"0").replace(/[^0-9]/g,""))+(o.tutar||299))}:u)
+      users:yeniUsers
     });
+    // Supabase'e de guncelle
+    const guncellenenKul = yeniUsers.find(u=>u.email===o.email);
+    if(guncellenenKul){
+      fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(guncellenenKul)}).catch(()=>{});
+    }
   };
 
   const hediye = () => {
@@ -2591,7 +2598,6 @@ const kulGiris = u => {
                           const yeniDersler=getDG(kul.id,d.id).filter(x=>x.id!==dr.id);
                           setDG(kul.id,d.id,yeniDersler);
                           fetch("/api/dersler?id="+dr.id,{method:"DELETE"}).catch(()=>{});
-                          window.location.reload();
                         }} style={{background:"none",border:"none",color:"#ef5350",cursor:"pointer",fontSize:14,padding:"2px 6px"}}>🗑</button>
                       </div>
                     </div>
@@ -2824,9 +2830,9 @@ const kulGiris = u => {
               window._dekontBase64 = null;
               alert("✅ Bildiriminiz alındı!\nAdmin onayından sonra (max 2 saat) üyeliğiniz aktifleşir.\nSorularınız için iletişim sayfasından ulaşabilirsiniz.");
               setOdePlan(null);
-            }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-              color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:13}}>
-              ✓ Havaleyi Yaptım, Bildir
+            }} disabled={!window._dekontBase64} style={{width:"100%",padding:12,background:window._dekontBase64?"linear-gradient(135deg,"+K.g2+","+K.t2+")":"#555",
+              color:"#fff",border:"none",borderRadius:10,cursor:window._dekontBase64?"pointer":"not-allowed",fontWeight:700,fontSize:13}}>
+              {window._dekontBase64 ? "✓ Havaleyi Yaptım, Bildir" : "Önce Dekont Yükleyin"}
             </button>
           </div>
         </div>
