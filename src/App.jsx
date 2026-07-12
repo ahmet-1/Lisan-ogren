@@ -648,13 +648,13 @@ function AuthModal({ilkMod, kapat, basari}) {
         body:JSON.stringify({action:"send", email:f.email})
       });
       if(res.ok){
-        setMesaj("Sifre sifirlama e-postasi gonderildi. Lutfen e-postanizi kontrol edin.");
+        setMesaj("Sifre sifirlama linki e-posta adresinize gonderildi. Lufen e-postanizi kontrol edin.");
       } else {
-        const err = await res.json().catch(()=>({}));
-        setMesaj("Hata: " + (err.error || "Email gonderilemedi. Tekrar deneyin."));
+        const err = await res.json();
+        setMesaj("Hata: " + (err.error || "Email gonderilemedi"));
       }
     } catch(e) {
-      setMesaj("Baglanti hatasi: " + e.message);
+      setMesaj("Baglanti hatasi. Lutfen tekrar deneyin.");
     }
   };
 
@@ -1042,8 +1042,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     const temizYan = metinTemizle(yan);
     
-    // Ses her zaman çal
-    if (true) {
+    // Sadece sesli modda ses çal
+    if (sesliMod) {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
       const sesMeyin = temizYan
         .replace(/[*#_~`]/g,"")
@@ -2148,13 +2148,6 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 
 export default function App() {
   const [kul, setKul] = useState(()=>DB.g("kul"));
-
-  // Sayfa yenileme - önceki sayfayı koru
-  useEffect(()=>{
-    const kaydedilmisSayfa = sessionStorage.getItem("sayfa");
-    if(kaydedilmisSayfa && kaydedilmisSayfa !== "ana") setSayfa(kaydedilmisSayfa);
-  },[]);
-  useEffect(()=>{ sessionStorage.setItem("sayfa", sayfa); },[sayfa]);
   const [sbDersler, setSbDersler] = useState({});
 
   useEffect(()=>{
