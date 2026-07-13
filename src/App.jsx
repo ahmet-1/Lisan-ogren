@@ -1042,8 +1042,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     const temizYan = metinTemizle(yan);
     
-    // Sadece sesli modda ses çal
-    if (sesliMod) {
+    // Ses her zaman çal
+    {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
       const sesMeyin = temizYan
         .replace(/[*#_~`]/g,"")
@@ -1706,7 +1706,10 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
     if(!hE.includes("@")){setHErr("Geçerli e-posta");return;}
     const u=kullaniciListesi.find(x=>x.email===hE);
     if(!u){setHErr("Kullanıcı bulunamadı");return;}
-    kaydet({...cfg,users:kullaniciListesi.map(x=>x.email.toLowerCase()===hE.toLowerCase()?{...x,plan:hT,durum:"Aktif",hediye:true}:x)});
+    const yeniUsers2 = kullaniciListesi.map(x=>x.email.toLowerCase()===hE.toLowerCase()?{...x,plan:hT,durum:"Aktif",hediye:true}:x);
+    kaydet({...cfg,users:yeniUsers2});
+    const hKul = yeniUsers2.find(x=>x.email.toLowerCase()===hE.toLowerCase());
+    if(hKul) fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(hKul)}).catch(()=>{});
     setHOk(true);
   };
 
@@ -2270,6 +2273,7 @@ const kulGiris = u => {
     if(adGir) return true;
     if(!kul) return false;
     if(kul.durum==="Aktif") return true;
+    if(kul.hediye) return true;
     if(kul.durum==="Deneme") {
       const ts = kul.trialStart || kul.trial_start || Date.now();
       const gunSayisi = (Date.now()-parseInt(ts))/86400000;
