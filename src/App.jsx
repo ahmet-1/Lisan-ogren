@@ -1042,15 +1042,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     
     const temizYan = metinTemizle(yan);
     
-    // Ses her zaman çal
-    {
+    // sesliMod=true ise hoca konuşur, false ise sadece yazar
+    if (sesliMod) {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
-      const sesMeyin = temizYan
-        .replace(/[*#_~`]/g,"")
-        .replace(/ +/g," ")
-        .replace(/\s+/g," ")
-        .trim()
-        .substring(0,1000);
+      const sesMeyin = temizYan.replace(/[*#_~`]/g,"").replace(/\s+/g," ").trim().substring(0,800);
       sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
         if(konusmaRef.current) setTimeout(mikDinle, 700);
       }).catch(()=>{
