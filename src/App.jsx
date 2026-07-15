@@ -2282,8 +2282,7 @@ const kulGiris = u => {
     if(kul.durum==="Aktif") return true;
     if(kul.hediye===true) return true;
     if(kul.plan && kul.plan!=="Deneme") return true;
-    const ts = parseInt(kul.trialStart || kul.trial_start || 0);
-    if(ts===0) return true;
+    const ts = parseInt(kul.trialStart || kul.trial_start || Date.now());
     return (Date.now()-ts)/86400000 < 5;
   };
 
@@ -2507,7 +2506,7 @@ const kulGiris = u => {
                 onClick={()=>{
                   if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
                   if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
-                  if(!dersGir()){setOdePlan({id:"a",ad:"Aylık Plan",fiyat:"₺349",donem:"/ay",tutar:349});return;}
+                  if(kul&&!dersGir()){setOdePlan({id:"a",ad:"Aylık Plan",fiyat:"₺349",donem:"/ay",tutar:349});return;}
                   const k2 = adGir?{id:"admin",ad:"Admin",plan:"Sınırsız",durum:"Aktif",trialStart:0}:kul;
                   setDers({dil:dilSec.id,hoca:h,kul:k2});
                 }}>
