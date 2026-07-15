@@ -2261,7 +2261,11 @@ export default function App() {
   },[]);
 
 const kulGiris = u => {
-    setKul(u); DB.s("kul",u);
+    // Supabase'den güncel veriyi çek
+    fetch("/api/users?email="+encodeURIComponent(u.email)).then(r=>r.json()).then(dbU=>{
+      const guncel = dbU||u;
+      setKul(guncel); DB.s("kul",guncel);
+    }).catch(()=>{ setKul(u); DB.s("kul",u); });
     fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)}).catch(()=>{});
   };
   const kulCikis = () => { setKul(null); DB.d("kul"); };
