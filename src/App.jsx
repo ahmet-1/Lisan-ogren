@@ -1056,7 +1056,6 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       }).catch(()=>{
         if(konusmaRef.current) setTimeout(mikDinle, 700);
       });
-      if(konusmaRef.current) mikDinle();
     }
     } catch(e) {
       setMsgs(m=>[...m,{r:"ai",t:"Bağlantı hatası: "+e.message+". Tekrar deneyin."}]);
@@ -1533,7 +1532,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                   <div style={{fontSize:10,color:K.tx4,marginBottom:2,textAlign:m.r==="user"?"right":"left"}}>
                     {m.r==="user"?"Sen":"🤖 "+hoca.ad.split(" ")[0]}
                   </div>
-                  <div style={{padding:"14px 18px",borderRadius:16,color:K.tx,fontSize:16,lineHeight:1.9,whiteSpace:"pre-wrap",
+                  <div style={{padding:"14px 18px",borderRadius:16,color:K.tx,fontSize:18,lineHeight:2.1,whiteSpace:"pre-wrap",
                     background:m.r==="user"?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.card,
                     borderBottomRightRadius:m.r==="user"?4:16,
                     borderBottomLeftRadius:m.r==="ai"?4:16,
@@ -1835,8 +1834,15 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                     <button onClick={()=>{
                       if(!window.confirm(u.ad+" adlı üyeyi silmek istediğinizden emin misiniz?")) return;
                       kaydet({...cfg, users:(cfg.users||[]).filter(x=>x.email!==u.email)});
+                      fetch("/api/users?id="+u.id,{method:"DELETE"}).catch(()=>{});
                     }} style={{padding:"5px 10px",borderRadius:6,background:"rgba(198,40,40,0.1)",color:K.errL,
                       border:"1px solid "+K.err+"33",cursor:"pointer",fontSize:11}}>🗑 Sil</button>
+                    <button onClick={()=>{
+                      const engel={...u,durum:"Engellendi"};
+                      kaydet({...cfg,users:(cfg.users||[]).map(x=>x.email===u.email?engel:x)});
+                      fetch("/api/users",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:u.id,durum:"Engellendi"})}).catch(()=>{});
+                    }} style={{padding:"5px 10px",borderRadius:6,background:"rgba(249,168,37,0.1)",color:K.warn,
+                      border:"1px solid "+K.warn+"33",cursor:"pointer",fontSize:11}}>🚫 Engelle</button>
                   </div>
                 </div>
               ))}
@@ -2035,7 +2041,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                   placeholder="ornek@mail.com" style={gI}/>
                 {hErr&&<div style={{color:K.errL,fontSize:11,marginBottom:8}}>{hErr}</div>}
                 <div style={{color:K.tx4,fontSize:11,marginBottom:8}}>Hediye Türü</div>
-                {["7 Gün","1 Ay","3 Ay","Yıllık","Sınırsız"].map(g=>(
+                {["7 Gün","1 Ay","3 Ay","6 Ay","Yıllık","Sınırsız"].map(g=>(
                   <div key={g} onClick={()=>setHT(g)}
                     style={{padding:"10px 14px",borderRadius:9,
                       background:hT===g?"rgba(46,125,50,0.2)":K.bg3,
@@ -2204,7 +2210,8 @@ export default function App() {
     }
   },[kul]);
   const [adAcik, setAdAcik] = useState(false);
-  const [sayfa, setSayfa] = useState("ana");
+  const [sayfa, setSayfa] = useState(()=>sessionStorage.getItem("sp")||"ana");
+  useEffect(()=>{ sessionStorage.setItem("sp",sayfa); },[sayfa]);
   const [dilSec, setDilSec] = useState(null);
   const [cocuk, setCocuk] = useState(false);
   const [ders, setDers] = useState(null);
@@ -2273,13 +2280,11 @@ const kulGiris = u => {
     if(adGir) return true;
     if(!kul) return false;
     if(kul.durum==="Aktif") return true;
-    if(kul.hediye) return true;
-    if(kul.durum==="Deneme") {
-      const ts = kul.trialStart || kul.trial_start || Date.now();
-      const gunSayisi = (Date.now()-parseInt(ts))/86400000;
-      return gunSayisi < 5;
-    }
-    return false;
+    if(kul.hediye===true) return true;
+    if(kul.plan && kul.plan!=="Deneme") return true;
+    const ts = parseInt(kul.trialStart || kul.trial_start || 0);
+    if(ts===0) return true;
+    return (Date.now()-ts)/86400000 < 5;
   };
 
   const git = s => { setSayfa(s); setDilSec(null); };
