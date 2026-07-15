@@ -648,13 +648,13 @@ function AuthModal({ilkMod, kapat, basari}) {
         body:JSON.stringify({action:"send", email:f.email})
       });
       if(res.ok){
-        setMesaj("Sifre sifirlama linki e-posta adresinize gonderildi. Lufen e-postanizi kontrol edin.");
-      } else {
-        const err = await res.json();
-        setMesaj("Hata: " + (err.error || "Email gonderilemedi"));
+        setMesaj("✅ Şifre sıfırlama linki e-posta adresinize gönderildi.");
+        return;
       }
+      const err = await res.json().catch(()=>({}));
+      setMesaj("❌ Hata: " + (err.error || "E-posta gönderilemedi."));
     } catch(e) {
-      setMesaj("Baglanti hatasi. Lutfen tekrar deneyin.");
+      setMesaj("❌ Bağlantı hatası: " + e.message);
     }
   };
 
@@ -662,7 +662,7 @@ function AuthModal({ilkMod, kapat, basari}) {
     background:a?"linear-gradient(135deg,"+K.g2+","+K.t2+")":K.bg3,
     color:a?"#fff":K.tx3,borderRadius:8});
   const btnP = {width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-    color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8};
+    color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:15,marginBottom:8};
   const btnG = {width:"100%",padding:11,background:"transparent",color:K.tx2,
     border:"1px solid "+K.bdr,borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:13,marginBottom:8};
   const lnk = {background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:12,fontWeight:600};
@@ -1377,7 +1377,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
             </div>
           </>}
 
-          <div style={{color:K.tx2,fontSize:14,fontWeight:700,marginBottom:16}}>Ders Dilini Seç:</div>
+          <div style={{color:K.tx2,fontSize:15,fontWeight:700,marginBottom:16}}>Ders Dilini Seç:</div>
           {[
             {id:"tr",    b:"🇹🇷 Türkçe",         a:"Hoca Türkçe anlatır"},
             {id:"hedef", b:dil.bayrak+" "+dil.ad, a:"Hoca "+dil.ad+" konuşur"},
@@ -1862,7 +1862,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                   <button onClick={()=>setSecilenKullanici(null)}
                     style={{background:"none",border:"none",color:K.tx4,fontSize:20,cursor:"pointer"}}>✕</button>
                 </div>
-                <div style={{color:K.tx,fontWeight:700,fontSize:14,marginBottom:12}}>📚 Ders Geçmişi</div>
+                <div style={{color:K.tx,fontWeight:700,fontSize:15,marginBottom:12}}>📚 Ders Geçmişi</div>
                 {DILLER.map(d => {
                   const dersler = getDG(secilenKullanici.id, d.id);
                   if(dersler.length===0) return null;
@@ -2293,7 +2293,7 @@ const kulGiris = u => {
   if(adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis} setDers={setDers} kul={kul}/>;
   if(ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul||kul} kapat={()=>setDers(null)}/>;
 
-  const bP={padding:"13px 28px",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:14,boxShadow:"0 4px 20px "+K.g2+"55"};
+  const bP={padding:"13px 28px",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:15,boxShadow:"0 4px 20px "+K.g2+"55"};
   const bS={padding:"13px 28px",background:"transparent",color:K.tx2,border:"1px solid "+K.bdr,borderRadius:12,cursor:"pointer",fontWeight:600,fontSize:14};
   const gI2={width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,outline:"none",boxSizing:"border-box"};
 
@@ -2513,7 +2513,7 @@ const kulGiris = u => {
                 }}>
                 <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><Av h={h} dil={dilSec} sz={80}/></div>
                 {h.c&&<div style={{background:"rgba(249,168,37,0.12)",color:K.warn,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,marginBottom:8,display:"inline-block"}}>👶 Çocuklara Özel</div>}
-                <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:K.tx}}>{h.ad}</div>
+                <div style={{fontWeight:700,fontSize:15,marginBottom:3,color:K.tx}}>{h.ad}</div>
                 <div style={{color:K.tx4,fontSize:11,marginBottom:7}}>{h.yer}</div>
                 <div style={{background:K.bg3,borderRadius:7,padding:"3px 9px",fontSize:11,color:K.tx2,marginBottom:10,display:"inline-block"}}>{h.uz}</div>
                 <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:14}}>
@@ -2597,7 +2597,7 @@ const kulGiris = u => {
                   <div key={dr.id} style={{background:K.bg3,borderRadius:9,padding:"10px 14px",border:"1px solid "+K.bdr,marginBottom:6}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div>
-                        <div style={{color:K.tx,fontSize:14,fontWeight:600}}>{dr.tarih} {dr.saat||""}</div>
+                        <div style={{color:K.tx,fontSize:15,fontWeight:600}}>{dr.tarih} {dr.saat||""}</div>
                         <div style={{color:K.tx4,fontSize:11,marginTop:2}}>{dr.hoca+" • "+dr.sure+" dk • "+dr.kategori}</div>
                       </div>
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -2607,7 +2607,7 @@ const kulGiris = u => {
                           const yeniDersler=getDG(kul.id,d.id).filter(x=>x.id!==dr.id);
                           setDG(kul.id,d.id,yeniDersler);
                           fetch("/api/dersler?id="+dr.id,{method:"DELETE"}).catch(()=>{});
-                        }} style={{background:"none",border:"none",color:"#ef5350",cursor:"pointer",fontSize:14,padding:"2px 6px"}}>🗑</button>
+                        }} style={{background:"none",border:"none",color:"#ef5350",cursor:"pointer",fontSize:15,padding:"2px 6px"}}>🗑</button>
                       </div>
                     </div>
                   </div>
@@ -2640,7 +2640,7 @@ const kulGiris = u => {
 
           {/* HESAP SİL */}
           <div style={{background:"rgba(198,40,40,0.05)",borderRadius:14,padding:18,border:"1px solid "+K.err+"33",marginTop:16}}>
-            <div style={{color:K.errL,fontWeight:700,fontSize:14,marginBottom:8}}>⚠️ Hesabı Sil</div>
+            <div style={{color:K.errL,fontWeight:700,fontSize:15,marginBottom:8}}>⚠️ Hesabı Sil</div>
             <select id="silNeden" style={{width:"100%",padding:"10px 12px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:9,color:K.tx,fontSize:13,marginBottom:10,outline:"none"}}>
               <option value="">Neden silmek istiyorsunuz?</option>
               <option value="pahalı">Ücret çok yüksek</option>
@@ -2671,10 +2671,10 @@ const kulGiris = u => {
             <div style={{color:K.tx,fontWeight:700,fontSize:15,marginBottom:14}}>🔐 Şifre Değiştir</div>
             <input type="password" id="kulP1" placeholder="Yeni şifre (min 6 karakter)"
               style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
-                borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+                borderRadius:9,color:K.tx,fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
             <input type="password" id="kulP2" placeholder="Yeni şifreyi tekrar girin"
               style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
-                borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+                borderRadius:9,color:K.tx,fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
             <button onClick={()=>{
               const p1 = document.getElementById("kulP1").value;
               const p2 = document.getElementById("kulP2").value;
@@ -2893,7 +2893,7 @@ const kulGiris = u => {
                   alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
                   setAdUnuttu(false); setAdModal(false);
                 }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:14,marginBottom:8}}>
+                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:15,marginBottom:8}}>
                   Şifreyi Güncelle
                 </button>
                 <div style={{textAlign:"center"}}>
