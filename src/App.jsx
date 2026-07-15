@@ -2286,6 +2286,7 @@ const kulGiris = u => {
     if(kul.durum==="Aktif") return true;
     if(kul.hediye===true) return true;
     if(kul.plan && kul.plan!=="Deneme") return true;
+    if(kul.durum==="Deneme") return true;
     const ts = parseInt(kul.trialStart || kul.trial_start || Date.now());
     return (Date.now()-ts)/86400000 < 5;
   };
