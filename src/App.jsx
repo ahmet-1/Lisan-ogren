@@ -2506,7 +2506,7 @@ const kulGiris = u => {
                 onClick={()=>{
                   if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
                   if(!kul&&!adGir){setAuthMod("kayit");setAuthAcik(true);return;}
-                  // dersGir kontrolü kaldırıldı - deneme her zaman girebilir
+                  if(kul&&!dersGir()){setOdePlan({id:"a",ad:"Aylık Plan",fiyat:"₺349",donem:"/ay",tutar:349});return;}
                   const k2 = adGir?{id:"admin",ad:"Admin",plan:"Sınırsız",durum:"Aktif",trialStart:0}:kul;
                   setDers({dil:dilSec.id,hoca:h,kul:k2});
                 }}>
