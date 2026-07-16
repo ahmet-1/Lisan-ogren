@@ -1730,6 +1730,25 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 
   return (
     <div style={{position:"fixed",inset:0,background:K.bg,zIndex:7000,display:"flex"}}>
+      {izleme&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:K.card,borderRadius:16,padding:24,width:"90%",maxWidth:600,maxHeight:"80vh",overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid "+K.bdr}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{color:K.tx,fontWeight:700,fontSize:16}}>💬 {izleme.kul.ad} - Tüm Mesajlar</div>
+              <button onClick={()=>setIzleme(null)} style={{background:"none",border:"none",color:K.tx3,fontSize:22,cursor:"pointer"}}>✕</button>
+            </div>
+            <div style={{overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:8}}>
+              {izleme.msgs.map((m,i)=>(
+                <div key={i} style={{padding:"8px 12px",borderRadius:10,background:m.r==="user"?"rgba(46,125,50,0.1)":K.bg3,
+                  alignSelf:m.r==="user"?"flex-end":"flex-start",maxWidth:"85%"}}>
+                  <div style={{fontSize:10,color:K.tx4,marginBottom:3}}>{m.r==="user"?"👤 "+izleme.kul.ad:"🤖 Hoca"}</div>
+                  <div style={{color:K.tx,fontSize:13}}>{m.t}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{width:210,background:K.bg2,borderRight:"1px solid "+K.bdr,display:"flex",flexDirection:"column",padding:14,gap:3}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,paddingBottom:14,
           borderBottom:"1px solid "+K.bdr,cursor:"pointer"}} onClick={kapat}>
