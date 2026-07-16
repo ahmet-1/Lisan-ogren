@@ -1942,12 +1942,8 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                                 fetch("/api/messages?userId="+String(u.id)+"&dilId="+son.dil_id+"&hocaId="+son.hoca_id)
                                   .then(r=>r.json()).then(msgs2=>{
                                     if(msgs2&&msgs2.length>0){
-                                      const txt=msgs2.slice(-3).map(m=>(m.r==="user"?"👤 ":"🤖 ")+m.t.substring(0,100)).join("
-
-");
-                                      alert("Son mesajlar ("+u.ad+"):
-
-"+txt);
+                                      const txt=msgs2.slice(-3).map(m=>(m.r==="user"?"U: ":"H: ")+m.t.substring(0,100)).join(" | ");
+                                      alert("Son mesajlar ("+u.ad+"): "+txt);
                                     } else {
                                       alert(u.ad+" şu an aktif ders yapmıyor.");
                                     }
