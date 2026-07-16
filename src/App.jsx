@@ -2334,7 +2334,7 @@ const kulGiris = u => {
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(170deg,"+K.bg+","+K.bg2+" 50%,"+K.bg+")",fontFamily:"'Segoe UI',system-ui,sans-serif",fontSize:"17px"}}>
-      <style>{`*{box-sizing:border-box}
+      <style>{`@media(max-width:768px){*{font-size:110%!important;}}*{box-sizing:border-box}
         #__vcsp,.__vcsp,[data-vercel-toolbar],vercel-live-feedback,
         #vercel-live-feedback,.__vcFeedbackButton,#__vercel_speed_insights_widget,
         [data-vercel-speed-insights],[id*="vercel"],[class*="vercel"]{display:none!important;height:0!important;width:0!important;overflow:hidden!important;}`}</style>
