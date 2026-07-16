@@ -46,7 +46,7 @@ export default async function handler(req, res) {
           body: JSON.stringify(rows)
         });
       }
-      res.status(200).json({ ok: true });
+      res.status(200).json({ ok: true, saved: rows.length, userId: userId, dilId: dilId });
     } else {
       res.status(405).json({ error: "Method not allowed" });
     }
