@@ -19,7 +19,7 @@ export default async function handler(req, res) {
         res.status(400).json({ error: "Eksik parametre" });
         return;
       }
-      const url = SUPA_URL + "/rest/v1/messages?user_id=eq." + userId + "&dil_id=eq." + dilId + "&hoca_id=eq." + hocaId + "&order=created_at.asc&limit=100";
+      const url = SUPA_URL + "/rest/v1/messages?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId) + "&order=created_at.asc&limit=100";
       const r = await fetch(url, {
         headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
       });
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         res.status(400).json({ error: "Eksik parametre" });
         return;
       }
-      await fetch(SUPA_URL + "/rest/v1/messages?user_id=eq." + userId + "&dil_id=eq." + dilId + "&hoca_id=eq." + hocaId, {
+      await fetch(SUPA_URL + "/rest/v1/messages?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId), {
         method: "DELETE",
         headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY }
       });
