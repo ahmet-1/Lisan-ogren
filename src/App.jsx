@@ -1932,12 +1932,8 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                     fetch("/api/messages?userId="+String(u.id)+"&dilId=arabic&hocaId=a1")
                       .then(r=>r.json()).then(msgs=>{
                         if(msgs&&msgs.length>0){
-                          const son = msgs.slice(-3).map(m=>(m.r==="user"?"👤 ":"🤖 ")+m.t.substring(0,100)).join("
-
-");
-                          alert("Son mesajlar ("+u.ad+"):
-
-"+son);
+                          const son = msgs.slice(-3).map(m=>(m.r==="user"?"👤 ":"🤖 ")+m.t.substring(0,100)).join("\n\n");
+                          alert("Son mesajlar ("+u.ad+"): "+son);
                         } else {
                           fetch("/api/dersler?userId="+String(u.id))
                             .then(r=>r.json()).then(dersler=>{
