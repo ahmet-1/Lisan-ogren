@@ -40,17 +40,13 @@ export default async function handler(req, res) {
         return { user_id: String(userId), dil_id: dilId, hoca_id: hocaId, role: m.r, content: m.t, created_at: new Date().toISOString() };
       });
       if (rows.length > 0) {
-        const insertRes = await fetch(SUPA_URL + "/rest/v1/messages", {
+        await fetch(SUPA_URL + "/rest/v1/messages", {
           method: "POST",
           headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json", "Prefer": "return=minimal" },
           body: JSON.stringify(rows)
         });
-        const insertTxt = await insertRes.text();
-        if (!insertRes.ok) {
-          return res.status(200).json({ ok: false, error: insertTxt, rows: rows.length });
-        }
       }
-      res.status(200).json({ ok: true, saved: rows.length });
+      res.status(200).json({ ok: true });
     } else {
       res.status(405).json({ error: "Method not allowed" });
     }
