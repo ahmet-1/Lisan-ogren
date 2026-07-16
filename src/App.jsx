@@ -1951,34 +1951,19 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
                     👁 Dersleri Gör
                   </button>
                   <button onClick={()=>{
-                    fetch("/api/messages?userId="+String(u.id)+"&dilId=arabic&hocaId=a1")
-                      .then(r=>r.json()).then(msgs=>{
-                        if(msgs&&msgs.length>0){
-                          const son = msgs.slice(-3).map(m=>(m.r==="user"?"👤 ":"🤖 ")+m.t.substring(0,100)).join("\n\n");
-                          alert("Son mesajlar ("+u.ad+"): "+son);
-                        } else {
-                          fetch("/api/dersler?userId="+String(u.id))
-                            .then(r=>r.json()).then(dersler=>{
-                              if(dersler&&dersler.length>0){
-                                const son=dersler[0];
-                                fetch("/api/messages?userId="+String(u.id)+"&dilId="+son.dil_id+"&hocaId="+son.hoca_id)
-                                  .then(r=>r.json()).then(msgs2=>{
-                                    if(msgs2&&msgs2.length>0){
-                                      const txt=msgs2.slice(-3).map(m=>(m.r==="user"?"U: ":"H: ")+m.t.substring(0,100)).join(" | ");
-                                      alert("Son mesajlar ("+u.ad+"): "+txt);
-                                    } else {
-                                      alert(u.ad+" şu an aktif ders yapmıyor.");
-                                    }
-                                  });
-                              } else {
-                                alert(u.ad+" henüz ders yapmamış.");
-                              }
-                            });
-                        }
-                      }).catch(()=>alert("Bağlantı hatası"));
+                    fetch("/api/dersler?userId="+String(u.id))
+                      .then(r=>r.json()).then(dersler=>{
+                        if(!dersler||dersler.length===0){alert(u.ad+" henuz ders yapmamis.");return;}
+                        const son=dersler[0];
+                        fetch("/api/messages?userId="+String(u.id)+"&dilId="+son.dil_id+"&hocaId="+son.hoca_id)
+                          .then(r=>r.json()).then(msgs=>{
+                            if(!msgs||msgs.length===0){alert(u.ad+" mesaj yok.");return;}
+                            setIzleme({kul:u,msgs});
+                          });
+                      }).catch(()=>alert("Hata"));
                   }} style={{padding:"7px 12px",borderRadius:7,background:"rgba(46,125,50,0.1)",color:K.gL,
                       border:"1px solid rgba(46,125,50,0.3)",cursor:"pointer",fontSize:11,fontWeight:600}}>
-                    💬 Son Mesajlar
+                    💬 Mesajları İzle
                   </button>
                 </div>
               </div>
