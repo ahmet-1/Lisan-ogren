@@ -1649,7 +1649,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
   const [secilenKullanici, setSecilenKullanici] = useState(null);
   const [kulArama, setKulArama] = useState("");
   const [kayd, setKayd] = useState(false);
-  const [hE,setHE]=useState(""); const [hT,setHT]=useState("7 Gün"); const [hOk,setHOk]=useState(false); const [hErr,setHErr]=useState("");
+  const [hE,setHE]=useState(""); const [hT,setHT]=useState("7 Gün"); const [hOk,setHOk]=useState(false); const [hErr,setHErr]=useState(""); const [izleme,setIzleme]=useState(null);
   const [p1,setP1]=useState(""); const [p2,setP2]=useState(""); const [pMsg,setPMsg]=useState("");
 
   const kaydet = y => { setCfg(y); setA(y); setKayd(true); setTimeout(()=>setKayd(false),2000); };
