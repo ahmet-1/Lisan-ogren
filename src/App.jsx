@@ -816,6 +816,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const sonRef = useRef(null);
   const recRef = useRef(null);
   const konusmaRef = useRef(false);
+  const sesliModRef = useRef(false);
   const baslangic = useRef(Date.now());
 
   useEffect(() => {
@@ -1043,7 +1044,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const temizYan = metinTemizle(yan);
     
     // sesliMod=true ise hoca konuşur, false ise sadece yazar
-    if (sesliMod) {
+    if (sesliModRef.current) {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
       const sesMeyin = temizYan.replace(/[*#_~`]/g,"").replace(/\s+/g," ").trim().substring(0,800);
       sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
@@ -1098,6 +1099,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setYazi(enIyi);
         setMikr(false);
         r.stop();
+        sesliModRef.current=true;
         setSesliMod(true);
         setTimeout(()=>gonder(enIyi.trim()), 100);
       };
@@ -1175,6 +1177,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   };
 
   const mikToggle = () => {
+    sesliModRef.current = !konusmaRef.current;
     setSesliMod(!konusmaRef.current); // Mikrofon açılınca sesli mod
     if (konusmaRef.current) {
       konusmaRef.current=false;
@@ -1559,12 +1562,12 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                   boxShadow:konusmaRef.current?"0 0 20px "+K.errL+"55":"none"}}>
                 {mikr?"🔴":konusmaRef.current?"🟢":"🎤"}
               </button>
-              <input value={yazi} onChange={e=>{setYazi(e.target.value); setSesliMod(false);}}
+              <input value={yazi} onChange={e=>{setYazi(e.target.value); sesliModRef.current=false; setSesliMod(false);}}
                 onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&gonder(yazi)}
                 placeholder={mikr?"Dinliyorum...":konusmaRef.current?"Konuşuyor veya yaz...":"Mesaj yaz veya 🎤 bas..."}
                 style={{flex:1,background:K.bg3,border:"1px solid "+K.bdr,borderRadius:10,
                   padding:"12px 14px",color:K.tx,fontSize:17,outline:"none"}}/>
-              <button onClick={()=>{setSesliMod(false); gonder(yazi);}} disabled={yukl||!yazi.trim()}
+              <button onClick={()=>{sesliModRef.current=false; setSesliMod(false); gonder(yazi);}} disabled={yukl||!yazi.trim()}
                 style={{padding:"12px 20px",borderRadius:10,fontWeight:700,fontSize:17,border:"none",flexShrink:0,
                   cursor:yukl||!yazi.trim()?"not-allowed":"pointer",
                   background:yukl||!yazi.trim()?K.bg3:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
