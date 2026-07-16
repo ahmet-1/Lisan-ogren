@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       if (!userId || !dilId || !hocaId) { res.status(400).json({ error: "Eksik parametre" }); return; }
       const rows = (messages || []).slice(-100).map(m => ({
         user_id: String(userId), dil_id: String(dilId), hoca_id: String(hocaId),
-        role: m.r, content: m.t, created_at: new Date().toISOString()
+        role: m.r, content: m.t
       }));
       await fetch(SUPA_URL + "/rest/v1/messages?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId), {
         method: "DELETE", headers: h
