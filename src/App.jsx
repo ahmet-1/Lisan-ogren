@@ -1098,7 +1098,8 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
         setYazi(enIyi);
         setMikr(false);
         r.stop();
-        gonder(enIyi.trim());
+        setSesliMod(true);
+        setTimeout(()=>gonder(enIyi.trim()), 100);
       };
       
       r.onerror = (e) => {
