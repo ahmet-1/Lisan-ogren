@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const { userId, dilId, hocaId } = req.query;
       if (!userId || !dilId || !hocaId) { res.status(400).json({ error: "Eksik parametre" }); return; }
-      const url = SUPA_URL + "/rest/v1/messages?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId) + "&order=created_at.asc&limit=200";
+      const url = SUPA_URL + "/rest/v1/ders_mesajlar?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId) + "&order=created_at.asc&limit=200";
       const r = await fetch(url, { headers: h });
       const data = await r.json();
       res.status(200).json((data || []).map(d => ({ r: d.role, t: d.content })));
@@ -22,11 +22,11 @@ export default async function handler(req, res) {
         user_id: String(userId), dil_id: String(dilId), hoca_id: String(hocaId),
         role: m.r, content: m.t
       }));
-      await fetch(SUPA_URL + "/rest/v1/messages?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId), {
+      await fetch(SUPA_URL + "/rest/v1/ders_mesajlar?user_id=eq." + encodeURIComponent(userId) + "&dil_id=eq." + encodeURIComponent(dilId) + "&hoca_id=eq." + encodeURIComponent(hocaId), {
         method: "DELETE", headers: h
       });
       if (rows.length > 0) {
-        const insRes = await fetch(SUPA_URL + "/rest/v1/messages", {
+        const insRes = await fetch(SUPA_URL + "/rest/v1/ders_mesajlar", {
           method: "POST",
           headers: { ...h, "Prefer": "return=minimal" },
           body: JSON.stringify(rows)
