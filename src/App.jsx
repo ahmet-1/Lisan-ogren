@@ -764,7 +764,19 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     } catch { return []; }
   });
 
-
+  // Supabase'den mesajları yükle
+  useEffect(() => {
+    const uid = kul?.id ? String(kul.id) : "admin";
+    if (!uid || !dilId || !hoca?.id) return;
+    loadMsgsFromDB(uid, dilId, hoca.id).then(dbMsgs => {
+      if (dbMsgs && dbMsgs.length > 0) {
+        setMsgs(dbMsgs);
+        if (DERS_KEY) {
+          try { localStorage.setItem(DERS_KEY, JSON.stringify(dbMsgs)); } catch {}
+        }
+      }
+    });
+  }, []);
 
   // Mesajları otomatik kaydet
   const msgKaydet = (yeniMsgs) => {
@@ -884,9 +896,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const uid2 = kul?.id ? String(kul.id) : "admin";
     loadMsgsFromDB(uid2, dilId, hoca.id).then(dbMsgs => {
       if (dbMsgs && dbMsgs.length > 0) {
-        msgKaydet(dbMsgs);
+        msgKaydet([...dbMsgs, {r:"ai", t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz. "+getMufredat(dilId,seviye)}]);
       } else {
-        msgKaydet([{r:"ai",t:txt}]);
+        const lm = DERS_KEY ? (() => { try { const k=localStorage.getItem(DERS_KEY); return k?JSON.parse(k):[]; } catch { return []; } })() : [];
+        msgKaydet(lm.length > 0 ? [...lm, {r:"ai",t:"Tekrar hos geldin "+ad+"! Kaldigimiz yerden devam ediyoruz. "+getMufredat(dilId,seviye)}] : [{r:"ai",t:txt}]);
       }
     }).catch(() => { msgKaydet([{r:"ai",t:txt}]); });
     // Besmele - sesli modda oku (sesli/yazılı her ikisinde de yaz, ama sadece sesli modda çal)
