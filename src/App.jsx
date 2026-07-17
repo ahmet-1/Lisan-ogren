@@ -795,7 +795,13 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   const audioChunksRef = useRef([]);
   const [mikErr, setMikErr] = useState("");
   const [sure, setSure] = useState(kul?.plan==="Deneme"?1200:0);
-  const [dilMod, setDilMod] = useState(null);
+  const [dilMod, setDilMod] = useState(()=>{
+    try{return sessionStorage.getItem("dilMod")||null;}catch{return null;}
+  });
+  useEffect(()=>{
+    if(dilMod) sessionStorage.setItem("dilMod",dilMod);
+    else sessionStorage.removeItem("dilMod");
+  },[dilMod]);
   const [sesliMod, setSesliMod] = useState(false);
   const [sinavEkrani, setSinavEkrani] = useState(null); // null | "mid" | "final"
   const [sinavSonuc, setSinavSonuc] = useState(null); // true=sesli, false=yazılı
