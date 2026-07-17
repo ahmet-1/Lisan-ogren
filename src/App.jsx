@@ -222,10 +222,11 @@ const SB_USR = "/api/users";
 // Mesajları Supabase'den yükle
 async function loadMsgsFromDB(userId, dilId, hocaId) {
   try {
-    const res = await fetch(SB_URL + "?userId=" + userId + "&dilId=" + dilId + "&hocaId=" + hocaId);
+    const res = await fetch("/api/messages?userId=" + encodeURIComponent(userId) + "&dilId=" + encodeURIComponent(dilId) + "&hocaId=" + encodeURIComponent(hocaId));
     if (!res.ok) return null;
     const data = await res.json();
-    return data.map(d => ({ r: d.role, t: d.content }));
+    if (!Array.isArray(data) || data.length === 0) return null;
+    return data;
   } catch { return null; }
 }
 
