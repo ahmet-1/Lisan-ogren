@@ -800,7 +800,6 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   });
   useEffect(()=>{
     if(dilMod) sessionStorage.setItem("dilMod",dilMod);
-    else sessionStorage.removeItem("dilMod");
   },[dilMod]);
   const [sesliMod, setSesliMod] = useState(false);
   const [sinavEkrani, setSinavEkrani] = useState(null); // null | "mid" | "final"
