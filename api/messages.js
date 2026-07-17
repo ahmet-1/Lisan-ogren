@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     } else if (req.method === "POST") {
       const { userId, dilId, hocaId, messages } = req.body;
       if (!userId || !dilId || !hocaId) { res.status(400).json({ error: "Eksik parametre" }); return; }
-      const rows = (messages || []).slice(-100).map(m => ({
+      const rows = (messages || []).filter(m => m.r && m.t).slice(-100).map(m => ({
         user_id: String(userId), dil_id: String(dilId), hoca_id: String(hocaId),
         role: m.r, content: m.t
       }));
