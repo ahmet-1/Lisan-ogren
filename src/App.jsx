@@ -2246,7 +2246,13 @@ export default function App() {
   useEffect(()=>{ sessionStorage.setItem("sp",sayfa); },[sayfa]);
   const [dilSec, setDilSec] = useState(null);
   const [cocuk, setCocuk] = useState(false);
-  const [ders, setDers] = useState(null);
+  const [ders, setDers] = useState(()=>{
+    try{const d=sessionStorage.getItem("ders");return d?JSON.parse(d):null;}catch{return null;}
+  });
+  useEffect(()=>{
+    if(ders) sessionStorage.setItem("ders",JSON.stringify(ders));
+    else sessionStorage.removeItem("ders");
+  },[ders]);
   const [authAcik, setAuthAcik] = useState(false);
   const [authMod, setAuthMod] = useState("giris");
   const [adModal, setAdModal] = useState(false);
