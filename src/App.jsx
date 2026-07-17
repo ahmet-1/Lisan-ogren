@@ -1388,7 +1388,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
             {id:"hedef", b:dil.bayrak+" "+dil.ad, a:"Hoca "+dil.ad+" konuşur"},
             {id:"iki",   b:"🔄 İkidilli",          a:"Türkçe + "+dil.ad},
           ].map(s=>(
-            <div key={s.id} onClick={()=>setDilMod(s.id)}
+            <div key={s.id} onClick={()=>{ setDilMod(s.id); sessionStorage.setItem("dilMod",s.id); }}
               style={{background:K.bg3,borderRadius:12,padding:"14px 18px",marginBottom:10,
                 cursor:"pointer",border:"1px solid "+K.bdr,textAlign:"left"}}
               onMouseEnter={e=>{e.currentTarget.style.borderColor=dil.vurgu;e.currentTarget.style.background="rgba(46,125,50,0.1)";}}
