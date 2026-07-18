@@ -2928,24 +2928,13 @@ const kulGiris = u => {
               </>
             ):(
               <>
-                <div style={{color:K.tx3,fontSize:13,marginBottom:14}}>Yeni admin şifresi belirleyin.</div>
-                <input type="password" id="np1" placeholder="Yeni şifre (min 6)"
-                  style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
-                    borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10}}/>
-                <input type="password" id="np2" placeholder="Tekrar girin"
-                  style={{width:"100%",padding:"11px 13px",background:K.bg3,border:"1px solid "+K.bdr,
-                    borderRadius:9,color:K.tx,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:14}}/>
-                <button onClick={()=>{
-                  const pw1=document.getElementById("np1").value;
-                  const pw2=document.getElementById("np2").value;
-                  if(!pw1||pw1.length<6){alert("En az 6 karakter!");return;}
-                  if(pw1!==pw2){alert("Şifreler eşleşmiyor!");return;}
-                  const a=getA(); setA({...a,pw:pw1});
-                  alert("✅ Şifre güncellendi: "+pw1+"\nNot edin!");
-                  setAdUnuttu(false); setAdModal(false);
-                }} style={{width:"100%",padding:12,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",
-                  color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:15,marginBottom:8}}>
-                  Şifreyi Güncelle
+                <div style={{color:K.tx3,fontSize:13,marginBottom:14}}>Şifre sıfırlama için kayıtlı yönetici e-postanıza link gönderilecektir.</div>
+                <div style={{color:K.tx4,fontSize:12,marginBottom:14,padding:10,background:K.bg3,borderRadius:8}}>
+                  Şifrenizi sıfırlamak için lütfen sistem yöneticisiyle iletişime geçin veya uygulama sahibine başvurun.
+                </div>
+                <button onClick={()=>{setAdUnuttu(false);setAdModal(false);}} 
+                  style={{width:"100%",padding:12,background:K.bg3,color:K.tx2,border:"1px solid "+K.bdr,borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:14}}>
+                  Kapat
                 </button>
                 <div style={{textAlign:"center"}}>
                   <button onClick={()=>setAdUnuttu(false)} style={{background:"none",border:"none",color:K.tL,cursor:"pointer",fontSize:13}}>← Geri Dön</button>
