@@ -1051,11 +1051,11 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     // sesliMod=true ise hoca konuşur, false ise sadece yazar
     if (sesliModRef.current) {
       const sesDil = dilMod==="hedef" ? dil.mic : "tr-TR";
-      const sesMeyin = temizYan.replace(/[*#_~`]/g,"").replace(/\s+/g," ").trim().substring(0,800);
+      const sesMeyin = temizYan.replace(/[*#_~`]/g,"").replace(/\s+/g," ").trim().substring(0,1500);
       sesliOku(sesMeyin, hoca.id, sesDil).then(()=>{
-        if(konusmaRef.current) setTimeout(mikDinle, 700);
+        if(konusmaRef.current) setTimeout(mikDinle, 1500);
       }).catch(()=>{
-        if(konusmaRef.current) setTimeout(mikDinle, 700);
+        if(konusmaRef.current) setTimeout(mikDinle, 1500);
       });
     }
     } catch(e) {
@@ -2333,7 +2333,12 @@ const kulGiris = u => {
     return (Date.now()-ts)/86400000 < 5;
   };
 
-  const git = s => { setSayfa(s); setDilSec(null); };
+  const git = s => { setSayfa(s); setDilSec(null); window.history.pushState({sayfa:s},"",""); };
+  useEffect(()=>{
+    const onPop = ()=>{ setSayfa(sessionStorage.getItem("sp")||"ana"); };
+    window.addEventListener("popstate",onPop);
+    return ()=>window.removeEventListener("popstate",onPop);
+  },[]);
   const adm = getA();
 
   if(adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis} setDers={setDers} kul={kul}/>;
