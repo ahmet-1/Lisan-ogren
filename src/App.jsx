@@ -1676,10 +1676,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
     fetch("/api/users").then(r=>r.json()).then(dbUsers=>{
       if(dbUsers&&dbUsers.length>0){
         const a=getA();
-        const localEmails=new Set((a.users||[]).map(u=>u.email));
-        const yeni=[...(a.users||[])];
-        dbUsers.forEach(du=>{ if(!localEmails.has(du.email)) yeni.push(du); });
-        const yeniA={...a,users:yeni};
+        const yeniA={...a,users:dbUsers};
         setA(yeniA);
         setCfg(yeniA);
       }
@@ -2345,7 +2342,7 @@ const kulGiris = u => {
   const adm = getA();
 
   if(adAcik) return <AdminPanel kapat={admKapat} admCikis={admCikis} setDers={setDers} kul={kul}/>;
-  if(ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul||kul} kapat={()=>setDers(null)}/>;
+  if(ders) return <DersEkrani dilId={ders.dil} hoca={ders.hoca} kul={ders.kul||kul} kapat={()=>{setDers(null);sessionStorage.removeItem("ders");sessionStorage.removeItem("dilMod");}}/>;
 
   const bP={padding:"13px 28px",background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:15,boxShadow:"0 4px 20px "+K.g2+"55"};
   const bS={padding:"13px 28px",background:"transparent",color:K.tx2,border:"1px solid "+K.bdr,borderRadius:12,cursor:"pointer",fontWeight:600,fontSize:14};
