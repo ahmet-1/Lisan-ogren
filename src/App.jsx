@@ -2211,7 +2211,7 @@ export default function App() {
           setSbDersler(gruplu);
           // localStorage'a da kaydet
           Object.keys(gruplu).forEach(dilId=>{
-            setDG(kul.id, dilId, gruplu[dilId]);
+            setDG(String(kul.id), dilId, gruplu[dilId]);
           });
         }
       }).catch(()=>{});
