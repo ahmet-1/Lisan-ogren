@@ -1196,7 +1196,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   const dersKapat = () => {
     konusmaRef.current=false;
+    sesliModRef.current=false;
+    setSesliMod(false);
     try{recRef.current?.stop();}catch{}
+    try{window.speechSynthesis.cancel();}catch{}
     // Sadece en az 5 mesaj varsa gerçek ders sayıl
     const gercekDers = msgs.filter(m=>m.r==="user").length >= 1;
     const userId2 = kul?.id ? String(kul.id) : "admin";
@@ -1937,7 +1940,7 @@ function AdminPanel({kapat, admCikis, setDers, kul}) {
 
         {sekme==="ders"&&<>
           <div style={{fontSize:20,fontWeight:800,color:K.tx,marginBottom:8}}>📡 Aktif Dersler</div>
-          <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Öğrencilerin aktif derslerini izleyebilirsiniz.</div>
+          <div style={{color:K.tx4,fontSize:12,marginBottom:16}}>Kullanıcıya tıkla → tüm derslerini gör → derse tıkla → mesajları izle</div>
           {kullaniciListesi.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").length===0
             ? <div style={{...kd,color:K.tx4,textAlign:"center",padding:30}}>Şu an aktif ders yok</div>
             : kullaniciListesi.filter(u=>u.durum==="Aktif"||u.durum==="Deneme").map(u=>(
