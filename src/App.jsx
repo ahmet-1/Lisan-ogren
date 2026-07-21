@@ -837,7 +837,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     const ad = kul?.ad?.split(" ")[0]||"";
     const besmele = BESMELE_DILLER.includes(dilId) ? BESMELE_METNI : "";
     // Önceki ders geçmişini al
-    const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
+    const oncekiDersler = kul?.id ? getDG(String(kul.id), dilId) : [];
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
     const devamMesaj = sonDers 
       ? "Son dersimizde "+sonDers.kategori+" konusunu işlemiştik. Kaldığımız yerden devam edelim.\n\n"
@@ -922,7 +922,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
 
   const getPrompt = () => {
     const ad = kul?.ad?.split(" ")[0] || "Öğrenci";
-    const oncekiDersler = kul?.id ? getDG(kul.id, dilId) : [];
+    const oncekiDersler = kul?.id ? getDG(String(kul.id), dilId) : [];
     const sonDers = oncekiDersler.length > 0 ? oncekiDersler[oncekiDersler.length-1] : null;
 
     const buSeviyeMufredat = getMufredat(dilId, seviye);
@@ -2615,7 +2615,7 @@ const kulGiris = u => {
           <div style={{color:K.tx,fontSize:16,fontWeight:700,marginBottom:12}}>📊 Dil Seviyelerin</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:24}}>
             {DILLER.map(d=>{
-              const dersler = getDG(kul.id,d.id);
+              const dersler = getDG(String(kul.id),d.id);
               if(dersler.length===0) return null;
               const sv = getSV(kul.id,d.id);
               return(
@@ -2635,7 +2635,7 @@ const kulGiris = u => {
           </div>
 
           {DILLER.map(d=>{
-            const dersler = getDG(kul.id,d.id);
+            const dersler = getDG(String(kul.id),d.id);
             if(dersler.length===0) return null;
             return(
               <div key={d.id} style={{background:K.card,borderRadius:14,padding:16,border:"1px solid "+K.bdr,marginBottom:14}}>
@@ -2655,8 +2655,8 @@ const kulGiris = u => {
                         <div style={{background:"rgba(46,125,50,0.15)",color:K.gL,borderRadius:6,padding:"2px 8px",fontSize:12,fontWeight:700}}>{dr.seviye}</div>
                         <button onClick={()=>{
                           if(!window.confirm("Bu ders kaydı silinsin mi?"))return;
-                          const yeniDersler=getDG(kul.id,d.id).filter(x=>x.id!==dr.id);
-                          setDG(kul.id,d.id,yeniDersler);
+                          const yeniDersler=getDG(String(kul.id),d.id).filter(x=>x.id!==dr.id);
+                          setDG(String(kul.id),d.id,yeniDersler);
                           fetch("/api/dersler?id="+dr.id,{method:"DELETE"}).catch(()=>{});
                         }} style={{background:"none",border:"none",color:"#ef5350",cursor:"pointer",fontSize:15,padding:"2px 6px"}}>🗑</button>
                       </div>
@@ -2683,7 +2683,7 @@ const kulGiris = u => {
             );
           }).filter(Boolean)}
 
-          {DILLER.every(d=>getDG(kul.id,d.id).length===0)&&(
+          {DILLER.every(d=>getDG(String(kul.id),d.id).length===0)&&(
             <div style={{background:K.card,borderRadius:12,padding:30,border:"1px solid "+K.bdr,textAlign:"center",color:K.tx4}}>
               Henüz ders geçmişin yok. Hemen başla! 🚀
             </div>
