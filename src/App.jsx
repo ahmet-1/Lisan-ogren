@@ -14,7 +14,7 @@ const playAzureWord = async (wordText, langCode, forcedGender) => {
           text: wordText, 
           language: seciliDil,
           gender: hocaCinsiyet
-        })
+        }) 
       });
       
       if (res.ok) {
