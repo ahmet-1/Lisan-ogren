@@ -579,7 +579,7 @@ function Av({h, dil, sz=64}) {
     const res = await fetch("/api/tts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ text:metin.substring(0,500), voiceId, gender: (selectedTutor && selectedTutor.gender) || (activeHoca && activeHoca.gender) || (hoca && hoca.gender) || "male" })
+      body: JSON.stringify({ text:metin, voiceId, gender: (selectedTutor && selectedTutor.gender) || (activeHoca && activeHoca.gender) || (hoca && hoca.gender) || "male" })
     });
     if (!res.ok) throw new Error("tts hata");
     const blob = await res.blob();
@@ -601,7 +601,7 @@ function tarayiciSes(metin, lang) {
       if (!window.speechSynthesis) { resolve(); return; }
       window.speechSynthesis.cancel();
       var temiz = metin.replace(/[*#_~`>]/g,"").replace(/\s+/g," ").trim();
-      var utt = new SpeechSynthesisUtterance(temiz.substring(0,500));
+      var utt = new SpeechSynthesisUtterance(temiz);
       utt.lang = lang || "tr-TR";
       utt.rate = 0.85;
       utt.pitch = 1.0;
