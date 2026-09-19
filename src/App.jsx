@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from "react";
 const playAzureWord = async (wordText, langCode, forcedGender) => {
     try {
       if (!wordText) return;
-      const hocaCinsiyet = forcedGender || (selectedTutor && selectedTutor.gender) || (activeHoca && activeHoca.gender) || (hoca && hoca.gender) || 'male';
-      const seciliDil = langCode || (selectedLang && selectedLang.code) || 'ar-SA';
+      const hocaCinsiyet = forcedGender || 'male';
+      const seciliDil = langCode || 'ar-SA';
       
       const res = await fetch('/api/azure-tts', {
         method: 'POST',
@@ -576,10 +576,12 @@ function Av({h, dil, sz=64}) {
       default:"EXAVITQu4vr4xnSDxMaL",
     };
     const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
+    const KADIN_SESLER = new Set(["EXAVITQu4vr4xnSDxMaL","MF3mGyEYCl7XYWbV9V6O","21m00Tcm4TlvDq8ikWAM","9BWtsMINqrJLrRacOk9x"]);
+    const gender = KADIN_SESLER.has(voiceId) ? "female" : "male";
     const res = await fetch("/api/tts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ text:metin, voiceId, gender: (selectedTutor && selectedTutor.gender) || (activeHoca && activeHoca.gender) || (hoca && hoca.gender) || "male" })
+      body: JSON.stringify({ text:metin, voiceId, gender })
     });
     if (!res.ok) throw new Error("tts hata");
     const blob = await res.blob();
