@@ -1622,12 +1622,9 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
     return new Blob([view], { type: 'audio/wav' });
   };
 
+  const telaffuzBitirRef = useRef(null);
   const telaffuzTestiniBitir = () => {
-    try {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-        mediaRecorderRef.current.stop();
-      }
-    } catch (e) {}
+    if (telaffuzBitirRef.current) telaffuzBitirRef.current();
   };
   const telaffuzTesti = async (referenceText) => {
     try {
@@ -1644,7 +1641,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       const ctx = new AudioCtx({ sampleRate: 16000 });
       const source = ctx.createMediaStreamSource(stream);
       const processor = ctx.createScriptProcessor(4096, 1, 1);
-      
+
       const pcmChunks = [];
       processor.onaudioprocess = (e) => {
         const input = e.inputBuffer.getChannelData(0);
@@ -1654,17 +1651,24 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       source.connect(processor);
       processor.connect(ctx.destination);
 
-      // 6 saniye kayıt alıp değerlendirmeye gönder
-      setTimeout(async () => {
+      let tamamlandi = false;
+      const degerlendir = async () => {
+        if (tamamlandi) return;
+        tamamlandi = true;
         try {
+          clearTimeout(zamanAsimi);
           stream.getTracks().forEach(t => t.stop());
           processor.disconnect();
-          if (ctx.state !== 'closed') ctx.close();
+          if (ctx.state !== 'closed') await ctx.close();
 
           setTelaffuzSonuc({ info: "⏳ Okumanız değerlendiriliyor..." });
 
           let length = 0;
           pcmChunks.forEach(c => { length += c.length; });
+          if (length === 0) {
+            setTelaffuzSonuc({ error: "Ses algılanamadı. Lütfen tekrar deneyin." });
+            return;
+          }
           const merged = new Float32Array(length);
           let offset = 0;
           pcmChunks.forEach(c => {
@@ -1677,7 +1681,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           reader.onloadend = async () => {
             try {
               const base64 = reader.result.split(',')[1];
-              const seciliDil = (selectedLang && selectedLang.mic) || 'ar-SA';
+              const seciliDil = dilMod === "hedef" ? (dil?.mic || "ar-SA") : "tr-TR";
 
               const res = await fetch('/api/pronunciation', {
                 method: 'POST',
@@ -1689,17 +1693,24 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                 })
               });
 
+              if (!res.ok) {
+                setTelaffuzSonuc({ error: "Sunucu hatası (" + res.status + "). Tekrar deneyin." });
+                return;
+              }
               const data = await res.json();
               setTelaffuzSonuc(data);
             } catch (e) {
-              setTelaffuzSonuc({ error: "Değerlendirme servisine ulaşılamadı." });
+              setTelaffuzSonuc({ error: "Değerlendirme servisine ulaşılamadı: " + e.message });
             }
           };
           reader.readAsDataURL(wavBlob);
         } catch (e) {
-          setTelaffuzSonuc({ error: "Ses işlenirken hata oluştu." });
+          setTelaffuzSonuc({ error: "Ses işlenirken hata oluştu: " + e.message });
         }
-      }, 6500);
+      };
+
+      telaffuzBitirRef.current = degerlendir;
+      const zamanAsimi = setTimeout(degerlendir, 10000);
 
     } catch (err) {
       setTelaffuzSonuc({ error: "Mikrofon izni alınamadı: " + err.message });
