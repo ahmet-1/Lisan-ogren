@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     const resText = await azureRes.text();
     if (!resText || resText.trim().length === 0) {
       return res.status(200).json({
-        error: "Ses algılanamadı. Lütfen mikrofona daha yakın ve net konuşun."
+        error: "TANI: Azure bos yanit dondu. Status=" + azureRes.status + " ContentType=" + (mimeType||'yok') + " AudioBytes=" + audioBuffer.length
       });
     }
 
@@ -48,7 +48,13 @@ export default async function handler(req, res) {
       data = JSON.parse(resText);
     } catch (e) {
       return res.status(200).json({
-        error: "Ses formatı işlenemedi. Lütfen tekrar deneyin."
+        error: "TANI: JSON parse hatasi. Azure RAW cevap: " + resText.slice(0, 500)
+      });
+    }
+
+    if (data.RecognitionStatus && data.RecognitionStatus !== "Success") {
+      return res.status(200).json({
+        error: "TANI: Azure RecognitionStatus=" + data.RecognitionStatus + " TamCevap: " + JSON.stringify(data).slice(0, 500)
       });
     }
 
