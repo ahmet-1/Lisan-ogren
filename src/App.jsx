@@ -1637,46 +1637,33 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       setTelaffuzSonuc({ info: "🎤 Dinleniyor... Sureyi veya cümleyi okuyun." });
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new AudioCtx({ sampleRate: 16000 });
-      const source = ctx.createMediaStreamSource(stream);
-      const processor = ctx.createScriptProcessor(4096, 1, 1);
 
-      const pcmChunks = [];
-      processor.onaudioprocess = (e) => {
-        const input = e.inputBuffer.getChannelData(0);
-        pcmChunks.push(new Float32Array(input));
-      };
+      let mimeType = "audio/webm";
+      if (MediaRecorder.isTypeSupported("audio/mp4")) mimeType = "audio/mp4";
+      else if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mimeType = "audio/webm;codecs=opus";
 
-      source.connect(processor);
-      processor.connect(ctx.destination);
+      const recorder = new MediaRecorder(stream, { mimeType });
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
 
       let tamamlandi = false;
-      const degerlendir = async () => {
+      const degerlendir = () => {
         if (tamamlandi) return;
         tamamlandi = true;
+        clearTimeout(zamanAsimi);
+        try { recorder.stop(); } catch (e) {}
+      };
+
+      recorder.onstop = async () => {
         try {
-          clearTimeout(zamanAsimi);
           stream.getTracks().forEach(t => t.stop());
-          processor.disconnect();
-          if (ctx.state !== 'closed') await ctx.close();
-
-          setTelaffuzSonuc({ info: "⏳ Okumanız değerlendiriliyor..." });
-
-          let length = 0;
-          pcmChunks.forEach(c => { length += c.length; });
-          if (length === 0) {
-            setTelaffuzSonuc({ error: "Ses algılanamadı. Lütfen tekrar deneyin." });
+          if (chunks.length === 0) {
+            setTelaffuzSonuc({ error: "Ses kaydedilemedi. Lütfen mikrofon iznini kontrol edip tekrar deneyin." });
             return;
           }
-          const merged = new Float32Array(length);
-          let offset = 0;
-          pcmChunks.forEach(c => {
-            merged.set(c, offset);
-            offset += c.length;
-          });
+          setTelaffuzSonuc({ info: "⏳ Okumanız değerlendiriliyor..." });
 
-          const wavBlob = encodeWAVData(merged, 16000);
+          const blob = new Blob(chunks, { type: mimeType });
           const reader = new FileReader();
           reader.onloadend = async () => {
             try {
@@ -1689,12 +1676,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                 body: JSON.stringify({
                   audioBase64: base64,
                   referenceText: referenceText,
-                  language: seciliDil
+                  language: seciliDil,
+                  mimeType: mimeType
                 })
               });
 
               if (!res.ok) {
-                setTelaffuzSonuc({ error: "Sunucu hatası (" + res.status + "). Tekrar deneyin." });
+                const errTxt = await res.text().catch(() => "");
+                setTelaffuzSonuc({ error: "Sunucu hatası (" + res.status + "): " + errTxt.slice(0, 200) });
                 return;
               }
               const data = await res.json();
@@ -1703,13 +1692,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
               setTelaffuzSonuc({ error: "Değerlendirme servisine ulaşılamadı: " + e.message });
             }
           };
-          reader.readAsDataURL(wavBlob);
+          reader.readAsDataURL(blob);
         } catch (e) {
           setTelaffuzSonuc({ error: "Ses işlenirken hata oluştu: " + e.message });
         }
       };
 
       telaffuzBitirRef.current = degerlendir;
+      recorder.start();
       const zamanAsimi = setTimeout(degerlendir, 10000);
 
     } catch (err) {

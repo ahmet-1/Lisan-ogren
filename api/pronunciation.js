@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   try {
-    const { audioBase64, referenceText, language } = req.body || {};
+    const { audioBase64, referenceText, language, mimeType } = req.body || {};
     const key = process.env.AZURE_SPEECH_KEY;
     const region = process.env.AZURE_SPEECH_REGION || 'eastus';
 
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
+        'Content-Type': (mimeType && mimeType.includes('webm')) ? 'audio/webm; codecs=opus' : (mimeType && mimeType.includes('mp4')) ? 'audio/mp4' : 'audio/wav; codecs=audio/pcm; samplerate=16000',
         'Ocp-Apim-Subscription-Key': key,
         'Pronunciation-Assessment': pronHeader
       },
