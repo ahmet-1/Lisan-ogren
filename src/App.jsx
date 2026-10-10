@@ -1634,7 +1634,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       }
 
       setTelaffuzAcik(true);
-      setTelaffuzSonuc({ info: "🎤 Dinleniyor... Sureyi veya cümleyi okuyun." });
+      setTelaffuzSonuc({ info: "🎤 Şu cümleyi okuyun (10 sn içinde): " + referenceText });
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -1663,7 +1663,21 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           }
           setTelaffuzSonuc({ info: "⏳ Okumanız değerlendiriliyor..." });
 
-          const blob = new Blob(chunks, { type: mimeType });
+          const rawBlob = new Blob(chunks, { type: mimeType });
+          const arrayBuf = await rawBlob.arrayBuffer();
+          const AC = window.AudioContext || window.webkitAudioContext;
+          const decCtx = new AC();
+          const decoded = await decCtx.decodeAudioData(arrayBuf);
+          try { decCtx.close(); } catch (e) {}
+          const hedefHz = 16000;
+          const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+          const off = new OAC(1, Math.max(1, Math.ceil(decoded.duration * hedefHz)), hedefHz);
+          const kaynak = off.createBufferSource();
+          kaynak.buffer = decoded;
+          kaynak.connect(off.destination);
+          kaynak.start(0);
+          const rendered = await off.startRendering();
+          const blob = encodeWAVData(rendered.getChannelData(0), hedefHz);
           const reader = new FileReader();
           reader.onloadend = async () => {
             try {
@@ -1677,7 +1691,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                   audioBase64: base64,
                   referenceText: referenceText,
                   language: seciliDil,
-                  mimeType: mimeType
+                  mimeType: 'audio/wav'
                 })
               });
 
