@@ -65,10 +65,11 @@ export default async function handler(req, res) {
       });
     }
 
-    const pa = nbest.PronunciationAssessment || {};
+    const pa = nbest.PronunciationAssessment || nbest;
     const words = (nbest.Words || []).map(w => {
-      const wScore = w.PronunciationAssessment ? w.PronunciationAssessment.AccuracyScore : 0;
-      const errorType = w.PronunciationAssessment ? w.PronunciationAssessment.ErrorType : 'None';
+      const wa = w.PronunciationAssessment || w;
+      const wScore = typeof wa.AccuracyScore === 'number' ? wa.AccuracyScore : 0;
+      const errorType = wa.ErrorType || 'None';
       let durum = 'dogru';
       let durumMesaj = 'Doğru';
       
