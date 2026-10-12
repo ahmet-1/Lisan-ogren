@@ -1634,7 +1634,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
       }
 
       setTelaffuzAcik(true);
-      setTelaffuzSonuc({ info: "🎤 Şu cümleyi okuyun (10 sn içinde): " + referenceText });
+      setTelaffuzSonuc({ info: "🎤 Söylemek istediğiniz kelimeyi veya cümleyi söyleyin (en fazla 10 sn)" });
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -1689,7 +1689,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   audioBase64: base64,
-                  referenceText: referenceText,
+                  referenceText: "",
                   language: seciliDil,
                   mimeType: 'audio/wav'
                 })
