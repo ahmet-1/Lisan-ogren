@@ -1682,7 +1682,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
           reader.onloadend = async () => {
             try {
               const base64 = reader.result.split(',')[1];
-              const seciliDil = dilMod === "hedef" ? (dil?.mic || "ar-SA") : "tr-TR";
+              const seciliDil = dil?.mic || "ar-SA";
 
               const res = await fetch('/api/pronunciation', {
                 method: 'POST',
@@ -2209,7 +2209,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                         {w.accuracyScore < 80 && (
                           <span
                             onClick={() => {
-                              playAzureWord(w.word, dilMod === "hedef" ? (dil?.mic || "ar-SA") : "tr-TR");
+                              playAzureWord(w.word, dil?.mic || "ar-SA");
                             }}
                             style={{marginLeft:4,cursor:"pointer",opacity:0.7}}
                             title="Dinle">
