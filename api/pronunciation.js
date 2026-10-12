@@ -27,7 +27,6 @@ export default async function handler(req, res) {
       return { status: r.status, json: j };
     };
 
-    // 1) Referans verilmediyse önce öğrencinin ne söylediğini anla
     let ref = temizle(referenceText);
     if (!ref) {
       const a = await azure({});
@@ -42,14 +41,16 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2) Söylenen metne göre telaffuzu puanla
-    const pronConfig = { ReferenceText: ref, GradingSystem: 'HundredMark', Granularity: 'Word', Dimension: 'Comprehensive', EnableMiscue: true };
-    const header = Buffer.from(JSON.stringify(pronConfig)).toString('base64');
-    const b = await azure({ 'Pronunciation-Assessment': header });
-    const nbest = b.json && b.json.NBest && b.json.NBest[0];
-    if (!nbest) {
-      return res.status(200).json({ error: 'Telaffuz puanı alınamadı.', okunanMetin: ref });
-    }
+    const puanla = async (granularity) => {
+      const cfg = { ReferenceText: ref, GradingSystem: 'HundredMark', Granularity: granularity, Dimension: 'Comprehensive', EnableMiscue: true };
+      const h = Buffer.from(JSON.stringify(cfg)).toString('base64');
+      const r = await azure({ 'Pronunciation-Assessment': h });
+      return r.json && r.json.NBest && r.json.NBest[0];
+    };
+    let nbest = await puanla('Phoneme');
+    if (!nbest) nbest = await puanla('Word');
+    if (!nbest) return res.status(200).json({ error: 'Telaffuz puanı alınamadı.', okunanMetin: ref });
+
     const pa = nbest.PronunciationAssessment || nbest;
     if (typeof pa.PronScore !== 'number') {
       return res.status(200).json({ error: 'Bu dil için Azure telaffuz puanı vermiyor olabilir. Söylediğiniz: ' + ref, okunanMetin: ref });
@@ -63,8 +64,31 @@ export default async function handler(req, res) {
       if (errorType === 'Mispronunciation' || wScore < 60) { durum = 'yanlis'; durumMesaj = 'Hatalı Telaffuz'; }
       else if (errorType === 'Omission') { durum = 'atlanmis'; durumMesaj = 'Atlandı / Okunmadı'; }
       else if (wScore < 80) { durum = 'orta'; durumMesaj = 'Geliştirilebilir'; }
-      return { word: w.Word, accuracyScore: Math.round(wScore), durum, durumMesaj };
+      let enZayif = null;
+      if (Array.isArray(w.Phonemes)) {
+        let min = 101;
+        w.Phonemes.forEach(p => {
+          const pp = p.PronunciationAssessment || p;
+          const s = typeof pp.AccuracyScore === 'number' ? pp.AccuracyScore : 100;
+          if (s < min) { min = s; enZayif = { ses: p.Phoneme, puan: Math.round(s) }; }
+        });
+        if (min >= 80) enZayif = null;
+      }
+      return { word: w.Word, accuracyScore: Math.round(wScore), durum, durumMesaj, enZayif };
     });
+
+    const ESIK = 90;
+    const zayif = words.filter(w => w.accuracyScore < ESIK || w.durum === 'atlanmis').sort((a, b) => a.accuracyScore - b.accuracyScore);
+    const uyarilar = zayif.map(w => ({
+      word: w.word,
+      puan: w.accuracyScore,
+      ipucu: w.durum === 'atlanmis' ? 'Bu kelime duyulmadı, tekrar söyle.'
+        : (w.enZayif ? '"' + w.enZayif.ses + '" sesini daha net çıkar.' : 'Kelimeyi daha net ve tam söyle.')
+    }));
+    const ilk = zayif.slice(0, 2).map(w => w.word);
+    let uyariMetni = '';
+    if (ilk.length > 0) uyariMetni = 'Dikkat et: ' + ilk.join(', ') + '. Şimdi doğru okunuşunu dinle.';
+    else if (words.length > 0) uyariMetni = 'Telaffuzun çok iyi, tebrikler.';
 
     return res.status(200).json({
       pronScore: Math.round(pa.PronScore || 0),
@@ -72,6 +96,9 @@ export default async function handler(req, res) {
       fluencyScore: Math.round(pa.FluencyScore || 0),
       words,
       hataliKelimeler: words.filter(w => w.durum === 'yanlis' || w.durum === 'atlanmis'),
+      uyarilar,
+      uyariMetni,
+      uyariKelimeleri: uyariMetni.startsWith('Dikkat') ? ilk : [],
       okunanMetin: ref
     });
   } catch (err) {

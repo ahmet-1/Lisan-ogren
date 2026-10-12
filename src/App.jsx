@@ -581,7 +581,7 @@ function Av({h, dil, sz=64}) {
     const res = await fetch("/api/tts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ text:metin, voiceId, gender })
+      body: JSON.stringify({ text:metin, voiceId, gender, language: dil_mic || "tr-TR" })
     });
     if (!res.ok) throw new Error("tts hata");
     const blob = await res.blob();
@@ -1702,6 +1702,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
               }
               const data = await res.json();
               setTelaffuzSonuc(data);
+              if (data && data.uyariMetni) {
+                (async () => {
+                  await sesliOku(data.uyariMetni, hoca.id, "tr-TR");
+                  for (const k of (data.uyariKelimeleri || [])) {
+                    await sesliOku(k, hoca.id, dil?.mic || "ar-SA");
+                  }
+                })();
+              }
             } catch (e) {
               setTelaffuzSonuc({ error: "Değerlendirme servisine ulaşılamadı: " + e.message });
             }
@@ -2198,6 +2206,14 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                 </div>
                 {telaffuzSonuc.words && telaffuzSonuc.words.length>0 && (
                   <div style={{marginBottom:10}}>
+                    {telaffuzSonuc.uyarilar && telaffuzSonuc.uyarilar.length>0 && (
+                      <div style={{background:"rgba(249,168,37,0.12)",border:"1px solid "+K.warn+"44",borderRadius:8,padding:10,marginBottom:10}}>
+                        <div style={{color:K.warn,fontSize:12,fontWeight:700,marginBottom:6}}>⚠️ Dikkat edilecekler</div>
+                        {telaffuzSonuc.uyarilar.map((u,i)=>(
+                          <div key={i} style={{color:K.tx2,fontSize:12,marginBottom:4}}><b>{u.word}</b> ({u.puan}): {u.ipucu}</div>
+                        ))}
+                      </div>
+                    )}
                     <div style={{color:K.tx3,fontSize:11,marginBottom:6}}>Kelime Bazlı:</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                       {telaffuzSonuc.words.map((w,i)=>(
@@ -2206,10 +2222,10 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                           color:w.accuracyScore>=80?K.gL:K.errL}}>
                           {w.word} ({Math.round(w.accuracyScore||0)})
 
-                        {w.accuracyScore < 80 && (
+                        {w.accuracyScore < 90 && (
                           <span
                             onClick={() => {
-                              playAzureWord(w.word, dil?.mic || "ar-SA");
+                              sesliOku(w.word, hoca.id, dil?.mic || "ar-SA");
                             }}
                             style={{marginLeft:4,cursor:"pointer",opacity:0.7}}
                             title="Dinle">
