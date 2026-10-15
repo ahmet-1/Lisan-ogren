@@ -13,6 +13,7 @@ export default async function handler(req, res) {
 
     // 1. ONCE ELEVENLABS DENE (voiceId varsa)
     const elevenKey = process.env.ELEVENLABS_API_KEY;
+    let elevenHata = voiceId ? (elevenKey ? '' : 'key-yok') : 'voiceId-yok';
     if (voiceId && elevenKey) {
       try {
         const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -32,11 +33,13 @@ export default async function handler(req, res) {
         if (elevenRes.ok) {
           const audioBuffer = await elevenRes.arrayBuffer();
           res.setHeader('Content-Type', 'audio/mpeg');
+          res.setHeader('X-Ses-Kaynak', 'elevenlabs');
           return res.status(200).send(Buffer.from(audioBuffer));
         }
-        // ElevenLabs basarisiz oldu (kredi bitti / hata) -> asagida Azure'a dusecek
+        const hataGovde = await elevenRes.text().catch(() => '');
+        elevenHata = 'HTTP ' + elevenRes.status + ' ' + hataGovde.slice(0, 150);
       } catch (elevenErr) {
-        // ElevenLabs istek atilamadi -> asagida Azure'a dusecek
+        elevenHata = 'istek-hatasi ' + String(elevenErr && elevenErr.message).slice(0, 100);
       }
     }
 
@@ -86,6 +89,8 @@ export default async function handler(req, res) {
 
     const audioBuffer = await response.arrayBuffer();
     res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('X-Ses-Kaynak', 'azure');
+    res.setHeader('X-Eleven-Durum', encodeURIComponent(elevenHata || 'denenmedi'));
     return res.status(200).send(Buffer.from(audioBuffer));
   } catch (error) {
     return res.status(500).json({ error: error.message });

@@ -584,6 +584,7 @@ function Av({h, dil, sz=64}) {
       body: JSON.stringify({ text:metin, voiceId, gender, language: dil_mic || "tr-TR" })
     });
     if (!res.ok) throw new Error("tts hata");
+    console.info("SES:", res.headers.get("X-Ses-Kaynak"), decodeURIComponent(res.headers.get("X-Eleven-Durum") || ""));
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
