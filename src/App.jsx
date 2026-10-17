@@ -1,4 +1,27 @@
 import { useState, useRef, useEffect } from "react";
+if (typeof window !== "undefined" && !window.__apiFetchPatched) {
+  window.__apiFetchPatched = true;
+  try {
+    const kk = JSON.parse(localStorage.getItem("la_kul") || "null");
+    if (kk && kk.pw !== undefined) { delete kk.pw; localStorage.setItem("la_kul", JSON.stringify(kk)); }
+    const aa = JSON.parse(localStorage.getItem("la_adm") || "null");
+    if (aa) {
+      if (Array.isArray(aa.users)) aa.users = aa.users.map((u) => { const { pw, ...r } = u; return r; });
+      aa.pw = null;
+      localStorage.setItem("la_adm", JSON.stringify(aa));
+    }
+  } catch (e) {}
+  const _fetch = window.fetch.bind(window);
+  window.fetch = (url, opts = {}) => {
+    try {
+      if (typeof url === "string" && url.startsWith("/api/") && !url.startsWith("/api/auth")) {
+        const t = localStorage.getItem("la_admtoken") || localStorage.getItem("la_token");
+        if (t) opts = { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + t } };
+      }
+    } catch (e) {}
+    return _fetch(url, opts);
+  };
+}
 
 // Azure Gerçek Hoca Sesiyle Dinletme
 const playAzureWord = async (wordText, langCode, forcedGender) => {
@@ -331,7 +354,7 @@ async function saveMsgsToDB(userId, dilId, hocaId, messages) {
   }
 }
 
-const getA = () => DB.g("adm") || {pw:"admin123",email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
+const getA = () => DB.g("adm") || {pw:null,email:"",contactEmail:"",iban:"",bank:"",acName:"",users:[],pays:[],ihtarlar:[]};
 const setA = d => DB.s("adm",d);
 
 const SEVIYELER = ["A1","A2","B1","B2","C1","C2"];
@@ -669,19 +692,14 @@ function AuthModal({ilkMod, kapat, basari}) {
   }
 
   const a = getA();
-  let u = (a.users||[]).find(x=>x.email.toLowerCase()===f.email.trim().toLowerCase()&&x.pw===f.sifre);
-  if(!u){
-    try{
-      const r = await fetch("/api/users?email="+encodeURIComponent(f.email.trim()));
-      const du = await r.json();
-      if(du&&du.pw===f.sifre){
-        u=du;
-        setA({...a,users:[...(a.users||[]).filter(x=>x.email!==du.email),du]});
-      }
-    }catch(e){}
-  }
-  if(!u){setH({sifre:"E-posta veya şifre hatalı"});return;}
-  basari(u);
+  let sunucu = null;
+  try {
+    const rr = await fetch("/api/auth", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"login", email:f.email.trim(), password:f.sifre})});
+    sunucu = await rr.json();
+  } catch(err) {}
+  if(!sunucu || !sunucu.ok){ setH({sifre:(sunucu && sunucu.error) || "E-posta veya şifre hatalı"}); return; }
+  localStorage.setItem("la_token", sunucu.token);
+  basari(sunucu.user);
 };
  const doKayit = async () => {
   const e = {};
@@ -719,11 +737,19 @@ function AuthModal({ilkMod, kapat, basari}) {
   const bildirim={id:Date.now()+1,tip:"yeniUye",okundu:false,
     mesaj:"Yeni uye: "+yeni.ad+" ("+yeni.email+")",
     tarih:new Date().toLocaleString("tr-TR")};
-  setA({...a2,users:[...(a2.users||[]),yeni],bildirimler:[...(a2.bildirimler||[]),bildirim]});
-  fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(yeni)}).catch(()=>{});
+  let sunucu = null;
+  try {
+    const rr = await fetch("/api/auth", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"register", email:yeni.email, password:f.sifre, ad:yeni.ad, tel:yeni.tel, sehir:yeni.sehir, dogum:yeni.dogum})});
+    sunucu = await rr.json();
+  } catch(err) {}
+  if(!sunucu || !sunucu.ok){ setH({email:(sunucu && sunucu.error) || "Kayıt yapılamadı, tekrar deneyin"}); return; }
+  localStorage.setItem("la_token", sunucu.token);
+  const yeniGuvenli = {...yeni}; delete yeniGuvenli.pw; delete yeniGuvenli.tc;
+  setA({...a2,users:[...(a2.users||[]),yeniGuvenli],bildirimler:[...(a2.bildirimler||[]),bildirim]});
+  
 
   setTamam(true);
-  basari(yeni);
+  basari(sunucu.user);
 };
   const doSifre = async () => {
     if(!f.email.includes("@")){setH({email:"Gecerli e-posta girin"});return;}
@@ -2955,12 +2981,13 @@ export default function App() {
 const kulGiris = u => {
     // Supabase'den güncel veriyi çek
     fetch("/api/users?email="+encodeURIComponent(u.email)).then(r=>r.json()).then(dbU=>{
-      const guncel = dbU||u;
+      const guncel = (dbU && dbU.id) ? dbU : u;
       setKul(guncel); DB.s("kul",guncel);
     }).catch(()=>{ setKul(u); DB.s("kul",u); });
-    fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)}).catch(()=>{});
+    
   };
   const kulCikis = () => {
+    localStorage.removeItem("la_token");
     setKul(null);
     DB.d("kul");
     setDilSec(null);
@@ -2970,13 +2997,19 @@ const kulGiris = u => {
   };
   const admKapat = () => { setAdAcik(false); };
   const admCikis = () => { setAdAcik(false); setAdGir(false); DB.d("adGir"); };
-  const admGiris = () => {
-    const a = getA();
-    if(adSifre===a.pw){
-      setAdGir(true); DB.s("adGir",true);
-      setAdAcik(true); setAdModal(false);
-      setAdSifre(""); setAdHata(""); setAdUnuttu(false);
-    } else setAdHata("Yanlış şifre");
+  const admGiris = async () => {
+    try {
+      const rr = await fetch("/api/auth", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"admin", password:adSifre})});
+      const j = await rr.json();
+      if(j && j.ok){
+        localStorage.setItem("la_admtoken", j.token);
+        setAdGir(true); DB.s("adGir",true);
+        setAdAcik(true); setAdModal(false);
+        setAdSifre(""); setAdHata(""); setAdUnuttu(false);
+        return;
+      }
+      setAdHata((j && j.error) || "Yanlış şifre");
+    } catch(err) { setAdHata("Bağlantı hatası"); }
   };
 
   const dersGir = () => {
