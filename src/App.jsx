@@ -249,6 +249,22 @@ const MUFREDAT = {
     C1:"Edebi Farsça, Hafız şiirleri, akademik dil.",
     C2:"Ana dil seviyesi, edebi metinler."
   },
+  ottoman: {
+    A1:"Osmanlı alfabesi (elifba): harflerin şekilleri, bitişme kuralları, uzun ve kısa sesliler, rakamlar.",
+    A2:"Harflerle kelime okuma, günlük sık kelimeler, Arapça ve Farsça kökenli temel kelimeler, kısa cümleler.",
+    B1:"Farsça tamlamalar (izafet), Arapça çoğul kalıpları, basit metin okuma.",
+    B2:"Matbu metinler, gazete ve ferman dili, resmî yazışma kalıpları.",
+    C1:"Divan edebiyatı metinleri, hat çeşitlerini (nesih, sülüs, rik'a, talik) tanıma ve okuma.",
+    C2:"El yazması, vesika ve arşiv belgesi çözümleme."
+  },
+  oldturkic: {
+    A1:"Orhun (Göktürk) alfabesi: harfler, yazım yönü, ünlü uyumunu gösteren işaretler, temel kelimeler.",
+    A2:"Kısa yazıt cümleleri, temel isimler ve fiiller, sayılar, ek sistemine giriş.",
+    B1:"Orhun yazıtlarından kısa bölümleri okuma ve günümüz Türkçesine çevirme, ekler ve çekim.",
+    B2:"Bilge Kağan, Kül Tigin ve Tonyukuk yazıtlarından uzun bölümler, cümle yapısı.",
+    C1:"Uygur dönemi metinleri ve Karahanlı Türkçesi (Kutadgu Bilig, Divanü Lügati't-Türk) bölümleri.",
+    C2:"Yazıt ve el yazması çözümleme, farklı okuma önerilerini karşılaştırma."
+  },
   kurdish: {
     A1:"Kürtçe alfabesi, temel kelimeler, selamlasma, sayilar",
     A2:"Temel cumle yapisi, fiil temelleri, günlük konusmalar",
@@ -391,6 +407,8 @@ const DILLER = [
   {id:"turkish",ad:"Türkçe",          bayrak:"🇹🇷",renk:"#2a0a0a",vurgu:"#ecf0f1",mic:"tr-TR",mods:["Dilbilgisi","Konuşma","Yazma","TÖMER"],cats:["Genel","Günlük Hayat","İş","Akademik"]},
   {id:"hebrew", ad:"İbranice",        bayrak:"🇮🇱",renk:"#1a1a2e",vurgu:"#4fc3f7",mic:"he-IL",mods:["Alefbet","Gramer","Konuşma","Metin"],cats:["Genel","Günlük Hayat","Dini Metinler","Akademik"]},
   {id:"persian",ad:"Farsça",bayrak:"🇮🇷",renk:"#1b5e20",vurgu:"#4CAF50",mic:"fa-IR",mods:["Alfabe","Modern","Klasik","Konuşma","Gramer","Günlük Hayat"],cats:["Genel","Kültür","Edebiyat","Dini Metinler","İş Farsçası"]},
+  {id:"ottoman",ad:"Osmanlıca",bayrak:"📜",renk:"#3e2723",vurgu:"#ffb300",mic:"tr-TR",mods:["Elifba","Okuma","Kelime","Gramer","Metin Çözümü"],cats:["Genel","Hat ve Yazı","Tarih Metinleri","Resmî Yazışma","Edebiyat"]},
+  {id:"oldturkic",ad:"Eski Türkçe",bayrak:"🏺",renk:"#263238",vurgu:"#80cbc4",mic:"tr-TR",mods:["Orhun Alfabesi","Okuma","Kelime","Gramer","Yazıt Çözümü"],cats:["Genel","Orhun Yazıtları","Uygur Metinleri","Karahanlı Dönemi","Gramer"]},
   {id:"kurdish",ad:"Kürtçe",         bayrak:"🟡",renk:"#1a1a0e",vurgu:"#ffd600",mic:"tr-TR",mods:["Kurmanci","Zazaca","Gramer","Konuşma"],cats:["Genel","Günlük Hayat","Kültür","Akademik"]},
   {id:"syriac", ad:"Süryanice",       bayrak:"🏛️",renk:"#1a0e1a",vurgu:"#ce93d8",mic:"tr-TR",mods:["Alfabe","Gramer","Klasik Metin","Konuşma"],cats:["Genel","Klasik","Dini Metinler","Akademik"]},
 
@@ -510,6 +528,18 @@ syriac:[
   {id:"sy5",ad:"Öğrt. Rami",         yer:"Midyat",  uz:"Çocuklara Süryanice",   p:4.8,n:290,c:true},
   {id:"sy6",ad:"Öğrt. Narin",        yer:"Mardin",  uz:"Çocuk Süryanicesi",     p:4.7,n:250,c:true},
 ], 
+  ottoman:[
+    {id:"o1",ad:"Mehmed Nuri Efendi",yer:"İstanbul",uz:"Osmanlıca Okuma & Yazı",p:4.8,n:310,c:false},
+    {id:"o2",ad:"Dr. Zeynep Hanım",yer:"Bursa",uz:"Divan Edebiyatı",p:4.7,n:240,c:false},
+    {id:"o3",ad:"Müderris Hafız Ali",yer:"Konya",uz:"Arapça-Farsça Kökenli Kelimeler",p:4.9,n:180,c:false},
+    {id:"o4",ad:"Saliha Hanım",yer:"Edirne",uz:"Resmî Yazışma & Arşiv",p:4.6,n:150,c:false}
+  ],
+  oldturkic:[
+    {id:"u1",ad:"Prof. Dr. Bilgin Ertürk",yer:"Ankara",uz:"Orhun Yazıtları",p:4.8,n:210,c:false},
+    {id:"u2",ad:"Dr. Gökçe Hanım",yer:"Eskişehir",uz:"Uygur Metinleri",p:4.7,n:160,c:false},
+    {id:"u3",ad:"Doç. Dr. Tuğrul Arslan",yer:"Kayseri",uz:"Karahanlı Türkçesi",p:4.8,n:140,c:false},
+    {id:"u4",ad:"Öğr. Gör. Aybike Hanım",yer:"İzmir",uz:"Eski Türkçe Gramer",p:4.6,n:120,c:false}
+  ],
 kurdish:[
     {id:"kd1",ad:"Dr. Serdar Kaya",yer:"Diyarbakır",uz:"Kurmanci Gramer",p:4.8,n:620,c:false},
     {id:"kd2",ad:"Prof. Zinar Baran",yer:"Mardin",uz:"Zazaca ve Kurmanci",p:4.9,n:540,c:false},
@@ -596,6 +626,9 @@ function Av({h, dil, sz=64}) {
       s1:"VR6AewLTigWG4xSOukaG", s2:"pNInz6obpgDQGcFmaJgB",  // erkek
       s3:"EXAVITQu4vr4xnSDxMaL", s4:"21m00Tcm4TlvDq8ikWAM",  // kadın
       s5:"IKne3meq5aSn9XLyUdCD", s6:"9BWtsMINqrJLrRacOk9x",   // çocuk
+      o1:"pNInz6obpgDQGcFmaJgB", o2:"EXAVITQu4vr4xnSDxMaL", o3:"VR6AewLTigWG4xSOukaG", o4:"21m00Tcm4TlvDq8ikWAM",
+      u1:"pNInz6obpgDQGcFmaJgB", u2:"EXAVITQu4vr4xnSDxMaL", u3:"VR6AewLTigWG4xSOukaG", u4:"21m00Tcm4TlvDq8ikWAM",
+      p1:"pNInz6obpgDQGcFmaJgB", p2:"EXAVITQu4vr4xnSDxMaL", p3:"VR6AewLTigWG4xSOukaG", p4:"21m00Tcm4TlvDq8ikWAM",
       default:"EXAVITQu4vr4xnSDxMaL",
     };
     const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
