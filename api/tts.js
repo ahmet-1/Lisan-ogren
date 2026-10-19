@@ -66,9 +66,20 @@ export default async function handler(req, res) {
       voiceName = gender === 'female' ? 'es-ES-ElviraNeural' : 'es-ES-AlvaroNeural';
     } else if (language.startsWith('ru')) {
       voiceName = gender === 'female' ? 'ru-RU-SvetlanaNeural' : 'ru-RU-DmitryNeural';
+    } else if (language.startsWith('it')) {
+      voiceName = gender === 'female' ? 'it-IT-ElsaNeural' : 'it-IT-DiegoNeural';
+    } else if (language.startsWith('ja')) {
+      voiceName = gender === 'female' ? 'ja-JP-NanamiNeural' : 'ja-JP-KeitaNeural';
+    } else if (language.startsWith('ko')) {
+      voiceName = gender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+    } else if (language.startsWith('fa')) {
+      voiceName = gender === 'female' ? 'fa-IR-DilaraNeural' : 'fa-IR-FaridNeural';
+    } else if (language.startsWith('he')) {
+      voiceName = gender === 'female' ? 'he-IL-HilaNeural' : 'he-IL-AvriNeural';
     }
 
-    const ssml = `<speak version='1.0' xml:lang='${language}'><voice xml:lang='${language}' name='${voiceName}'>${text}</voice></speak>`;
+    const xmlKacis = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const ssml = `<speak version='1.0' xml:lang='${language}'><voice xml:lang='${language}' name='${voiceName}'>${xmlKacis(text)}</voice></speak>`;
 
     const ttsUrl = `https://${speechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
     const response = await fetch(ttsUrl, {
