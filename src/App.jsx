@@ -581,7 +581,23 @@ function Av({h, dil, sz=64}) {
     </div>
   );
 }
-     async function sesliOku(metin, hocaId, dil_mic) {
+     function konusmaMetniTemizle(t) {
+  return String(t || "")
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, " ")
+    .replace(/[→←↑↓⇒⇐↔➜➤▶◀•·●○■□★☆✓✔✗✘]/g, " ")
+    .replace(/\.{2,}|…/g, ", ")
+    .replace(/\s*[=|]\s*/g, ", ")
+    .replace(/-{2,}/g, " ")
+    .replace(/(^|\s)[-–—]+(\s|$)/g, ", ")
+    .replace(/[*#_~`>\\\/^]/g, " ")
+    .replace(/\s*,(\s*,)+/g, ",")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s,]+/, "")
+    .trim();
+}
+async function sesliOku(metin, hocaId, dil_mic, secenek) {
+  metin = konusmaMetniTemizle(metin);
+  if (!metin) return;
   try {
     // ElevenLabs ses ID - DOĞRU kadın/erkek eşleştirme
     // ERKEK: Adam=pNInz6obpgDQGcFmaJgB, Arnold=VR6AewLTigWG4xSOukaG, Josh=TxGEqnHWrfWFTfGW9XjX
@@ -637,7 +653,7 @@ function Av({h, dil, sz=64}) {
     const res = await fetch("/api/tts", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ text:metin, voiceId, gender, language: dil_mic || "tr-TR" })
+      body: JSON.stringify({ text:metin, voiceId, gender, language: dil_mic || "tr-TR", ...(secenek || {}) })
     });
     if (!res.ok) throw new Error("tts hata");
     console.info("SES:", res.headers.get("X-Ses-Kaynak"), decodeURIComponent(res.headers.get("X-Eleven-Durum") || ""));
@@ -1766,7 +1782,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                 (async () => {
                   await sesliOku(data.uyariMetni, hoca.id, "tr-TR");
                   for (const k of (data.uyariKelimeleri || [])) {
-                    await sesliOku(k, hoca.id, dil?.mic || "ar-SA");
+                    await sesliOku(k, hoca.id, dil?.mic || "ar-SA", {engine:"azure", hiz:0.8});
                   }
                 })();
               }
@@ -2285,7 +2301,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
                         {w.accuracyScore < 90 && (
                           <span
                             onClick={() => {
-                              sesliOku(w.word, hoca.id, dil?.mic || "ar-SA");
+                              sesliOku(w.word, hoca.id, dil?.mic || "ar-SA", {engine:"azure", hiz:0.8});
                             }}
                             style={{marginLeft:4,cursor:"pointer",opacity:0.7}}
                             title="Dinle">
