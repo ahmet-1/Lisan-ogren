@@ -803,8 +803,6 @@ function AuthModal({ilkMod, kapat, basari}) {
   const doSifre = async () => {
     if(!f.email.includes("@")){setH({email:"Gecerli e-posta girin"});return;}
     const a = getA();
-    const kulBulundu = (a.users||[]).find(u=>u.email.toLowerCase()===f.email.toLowerCase());
-    if(!kulBulundu){setH({email:"Bu e-posta kayitli degil"});return;}
     try {
       const res = await fetch("/api/reset-password", {
         method:"POST",
