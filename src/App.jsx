@@ -713,6 +713,67 @@ async function aiYanit(msgs, system) {
   return d.content?.[0]?.text || "";
 }
 
+function SifreSifirlaModal({durum, bitir, girisAc}) {
+  const [yeni, setYeni] = useState("");
+  const [tekrar, setTekrar] = useState("");
+  const [goster, setGoster] = useState(false);
+  const [hata, setHata] = useState("");
+  const [yukl, setYukl] = useState(false);
+  const [bitti, setBitti] = useState(false);
+  const girdi = {width:"100%",padding:"12px 14px",background:K.bg3,border:"1px solid "+K.bdr,borderRadius:10,color:K.tx,fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:10};
+  const anaDugme = {width:"100%",padding:13,background:"linear-gradient(135deg,"+K.g2+","+K.t2+")",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:15,marginTop:4};
+  const ikinciDugme = {width:"100%",padding:11,background:"transparent",color:K.tx3,border:"1px solid "+K.bdr,borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:14,marginTop:8};
+  const kaydet = async () => {
+    setHata("");
+    if (yeni.length < 6) { setHata("Şifre en az 6 karakter olmalı"); return; }
+    if (yeni !== tekrar) { setHata("Şifreler eşleşmiyor"); return; }
+    setYukl(true);
+    try {
+      const r = await fetch("/api/reset-password", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"reset", token:durum.jeton, newPassword:yeni})});
+      const d = await r.json().catch(()=>({}));
+      if (d && d.ok) setBitti(true);
+      else setHata((d && d.error) || "Şifre güncellenemedi, lütfen tekrar deneyin.");
+    } catch (e) { setHata("Bağlantı kurulamadı. Lütfen tekrar deneyin."); }
+    setYukl(false);
+  };
+  return (
+    <div id="lo-reset-modal" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20}}>
+      <div style={{background:K.card,borderRadius:18,padding:28,width:"100%",maxWidth:400,border:"1px solid "+K.bdr}}>
+        {!durum.jeton ? (
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:42,marginBottom:10}}>⚠️</div>
+            <div style={{color:K.tx,fontSize:18,fontWeight:700,marginBottom:8}}>Bağlantı geçersiz</div>
+            <div style={{color:K.tx3,fontSize:14,marginBottom:18}}>{durum.hata}</div>
+            <button onClick={bitir} style={anaDugme}>Kapat</button>
+          </div>
+        ) : bitti ? (
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:42,marginBottom:10}}>✅</div>
+            <div style={{color:K.tx,fontSize:18,fontWeight:700,marginBottom:8}}>Şifreniz güncellendi</div>
+            <div style={{color:K.tx3,fontSize:14,marginBottom:18}}>Artık yeni şifrenizle giriş yapabilirsiniz.</div>
+            <button onClick={girisAc} style={anaDugme}>Giriş Yap</button>
+          </div>
+        ) : (
+          <div>
+            <div style={{textAlign:"center",marginBottom:18}}>
+              <div style={{fontSize:38,marginBottom:6}}>🔐</div>
+              <div style={{color:K.tx,fontSize:19,fontWeight:700}}>Yeni Şifre Belirle</div>
+              <div style={{color:K.tx4,fontSize:13,marginTop:4}}>{durum.email}</div>
+            </div>
+            <input type={goster ? "text" : "password"} value={yeni} placeholder="Yeni şifre (en az 6 karakter)" onChange={e=>{setYeni(e.target.value);setHata("");}} onKeyDown={e=>e.key==="Enter"&&kaydet()} style={girdi}/>
+            <input type={goster ? "text" : "password"} value={tekrar} placeholder="Yeni şifre (tekrar)" onChange={e=>{setTekrar(e.target.value);setHata("");}} onKeyDown={e=>e.key==="Enter"&&kaydet()} style={girdi}/>
+            <label style={{display:"flex",alignItems:"center",gap:8,color:K.tx3,fontSize:13,marginBottom:8,cursor:"pointer"}}>
+              <input type="checkbox" checked={goster} onChange={e=>setGoster(e.target.checked)}/> Şifreyi göster
+            </label>
+            {hata && <div style={{color:K.errL,fontSize:13,marginBottom:8}}>{hata}</div>}
+            <button onClick={kaydet} disabled={yukl} style={{...anaDugme,opacity:yukl?0.6:1}}>{yukl ? "Kaydediliyor..." : "Şifremi Güncelle"}</button>
+            <button onClick={bitir} style={ikinciDugme}>İptal</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 function AuthModal({ilkMod, kapat, basari}) {
   const [mod, setMod] = useState(ilkMod||"giris");
   const [f, setF] = useState({ad:"",email:"",tel:"",tc:"",dogum:"",sehir:"",sifre:"",sifre2:"",onay:false});
@@ -2990,39 +3051,16 @@ export default function App() {
   const [pwaPrompt, setPwaPrompt] = useState(null);
   const [users, setUsers] = useState([]);
 
-  // Şifre sıfırlama token kontrolü
-    useEffect(()=>{
-    const params = new URLSearchParams(window.location.search);
-    const resetToken = params.get("reset");
-    if(resetToken){
-      fetch("/api/reset-password", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"verify", token:resetToken})
-      }).then(r=>r.json()).then(data=>{
-        if(data.ok){
-          const yeniSifre = prompt("Yeni sifrenizi girin (min 6 karakter):");
-          if(!yeniSifre || yeniSifre.length < 6){ alert("Gecersiz sifre."); return; }
-          // Şifreyi localStorage'da güncelle
-          const a = getA();
-          const guncellenmis = (a.users||[]).map(u=>
-            u.email===data.email ? {...u, pw:yeniSifre} : u
-          );
-          setA({...a, users:guncellenmis});
-          // Token'ı geçersiz kıl
-          fetch("/api/reset-password", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({action:"reset", token:resetToken, newPassword:yeniSifre})
-          });
-          alert("Sifreniz basariyla guncellendi! Simdi giris yapabilirsiniz.");
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } else {
-          alert("Sifre sifirlama linki gecersiz veya suresi dolmus.");
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }).catch(()=>{});
-    }
+  // Şifre sıfırlama bağlantısı kontrolü
+  const [resetDurum, setResetDurum] = useState(null);
+  useEffect(()=>{
+    const jeton = new URLSearchParams(window.location.search).get("reset");
+    if(!jeton) return;
+    fetch("/api/reset-password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"verify",token:jeton})})
+      .then(r=>r.json()).then(d=>{
+        if(d && d.ok) setResetDurum({jeton:jeton, email:d.email, hata:""});
+        else setResetDurum({jeton:"", email:"", hata:(d && d.error) || "Bağlantı geçersiz veya süresi dolmuş."});
+      }).catch(()=>setResetDurum({jeton:"", email:"", hata:"Bağlantı kurulamadı. Lütfen tekrar deneyin."}));
   },[]);
 
 const kulGiris = u => {
@@ -3616,6 +3654,9 @@ const kulGiris = u => {
         </div>
       )}
 
+      {resetDurum && <SifreSifirlaModal durum={resetDurum}
+        bitir={()=>{ window.history.replaceState({}, document.title, window.location.pathname); setResetDurum(null); }}
+        girisAc={()=>{ window.history.replaceState({}, document.title, window.location.pathname); setResetDurum(null); setAuthMod("giris"); setAuthAcik(true); }}/>}
       {authAcik&&<AuthModal ilkMod={authMod} kapat={()=>setAuthAcik(false)} basari={u=>{kulGiris(u);setAuthAcik(false);git("diller");}}/>}
 
       {odePlan&&(
