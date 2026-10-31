@@ -581,7 +581,79 @@ function Av({h, dil, sz=64}) {
     </div>
   );
 }
-     function konusmaMetniTemizle(t) {
+     const SES_SURUM = "v4-parcali";
+const SES_ERKEK = ["pNInz6obpgDQGcFmaJgB","JBFqnCBsd6RMkjVDRZzb","nPczCjzI2devNBz1zQrb","pqHfZKP75CvOlQylNhV4","onwK4e9ZLuTAKqWW03F9","cjVigY5qzO86Huf0OWal","iP95p4xoKVk53GoZ742B","bIHbv24MWmeRgasZH58o","CwhRBWXzGAHq8TQ4Fs17","N2lVS1w4EtoT3dr4eOWO"];
+const SES_KADIN = ["EXAVITQu4vr4xnSDxMaL","Xb7hH8MSUJpSbSDYk0k2","XrExE9yKIg1WjnnlVkGX","pFZP5JQG7iQjIQuC4Bku","cgSgspJ2msm6clMCkdW9","FGY2WhTYpPnrIDTdsKH5","hpp4J3VqNfWAUOO0d1Us"];
+let __sesOturum = 0;
+let __aktifAudio = null;
+let __aktifBitir = null;
+function sesiDurdur() {
+  __sesOturum++;
+  try { if (__aktifAudio) __aktifAudio.pause(); } catch (e) {}
+  try { if (__aktifBitir) __aktifBitir(); } catch (e) {}
+  __aktifAudio = null; __aktifBitir = null;
+  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+}
+function sesSec(hocaId, gender) {
+  const id = String(hocaId || "");
+  const harf = id.charCodeAt(0) || 0;
+  const no = parseInt(id.replace(/\D/g, ""), 10) || 0;
+  const slot = harf * 7 + no * 3;
+  if (no >= 5) return { voiceId: gender === "female" ? "FGY2WhTYpPnrIDTdsKH5" : "TX3LPaxmHKxFdv7VOQHJ", slot };
+  const havuz = gender === "female" ? SES_KADIN : SES_ERKEK;
+  return { voiceId: havuz[slot % havuz.length], slot };
+}
+function sesUzunBol(p, max) {
+  const out = [];
+  let kalan = String(p).trim();
+  while (kalan.length > max) {
+    let k = kalan.lastIndexOf(", ", max);
+    if (k < max * 0.4) k = kalan.lastIndexOf(" ", max);
+    if (k < 1) k = max;
+    out.push(kalan.slice(0, k + 1).trim());
+    kalan = kalan.slice(k + 1).trim();
+  }
+  if (kalan) out.push(kalan);
+  return out;
+}
+function sesParcala(metin) {
+  const cumleler = String(metin).match(/[^.!?؟。！？…]+[.!?؟。！？…]*/g) || [String(metin)];
+  const hepsi = [];
+  cumleler.forEach((s) => {
+    const t = s.trim();
+    if (!t) return;
+    const max = hepsi.length === 0 ? 130 : 280;
+    (t.length > max + 20 ? sesUzunBol(t, max) : [t]).forEach((x) => { if (x) hepsi.push(x); });
+  });
+  const parcalar = [];
+  let simdi = "";
+  hepsi.forEach((t) => {
+    const sinir = parcalar.length === 0 ? 120 : 280;
+    if (simdi && (simdi + " " + t).length > sinir) { parcalar.push(simdi); simdi = t; }
+    else simdi = simdi ? simdi + " " + t : t;
+  });
+  if (simdi) parcalar.push(simdi);
+  return parcalar.slice(0, 14);
+}
+function sesOynat(blob) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const a = new Audio(url);
+    let bitti = false;
+    const bit = () => {
+      if (bitti) return;
+      bitti = true;
+      try { URL.revokeObjectURL(url); } catch (e) {}
+      if (__aktifAudio === a) { __aktifAudio = null; __aktifBitir = null; }
+      resolve();
+    };
+    __aktifAudio = a; __aktifBitir = bit;
+    a.onended = bit; a.onerror = bit;
+    const pr = a.play();
+    if (pr && pr.catch) pr.catch(bit);
+  });
+}
+function konusmaMetniTemizle(t) {
   return String(t || "")
     .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, " ")
     .replace(/[→←↑↓⇒⇐↔➜➤▶◀•·●○■□★☆✓✔✗✘]/g, " ")
@@ -650,21 +722,34 @@ async function sesliOku(metin, hocaId, dil_mic, secenek) {
     const voiceId = HOCA_SES[hocaId] || HOCA_SES.default;
     const KADIN_SESLER = new Set(["EXAVITQu4vr4xnSDxMaL","MF3mGyEYCl7XYWbV9V6O","21m00Tcm4TlvDq8ikWAM","9BWtsMINqrJLrRacOk9x"]);
     const gender = KADIN_SESLER.has(voiceId) ? "female" : "male";
-    const res = await fetch("/api/tts", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ text:metin, voiceId, gender, language: dil_mic || "tr-TR", ...(secenek || {}) })
-    });
-    if (!res.ok) throw new Error("tts hata");
-    console.info("SES:", res.headers.get("X-Ses-Kaynak"), decodeURIComponent(res.headers.get("X-Eleven-Durum") || ""));
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    return new Promise(resolve => {
-      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-      audio.onerror = () => { URL.revokeObjectURL(url); tarayiciSes(metin, dil_mic).then(resolve); };
-      audio.play().catch(() => tarayiciSes(metin, dil_mic).then(resolve));
-    });
+    const sec = sesSec(hocaId, gender);
+    const parcalar = sesParcala(metin);
+    if (parcalar.length === 0) return;
+    sesiDurdur();
+    const oturum = __sesOturum;
+    const getir = async (parca) => {
+      try {
+        const r = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: parca, voiceId: sec.voiceId, gender, language: dil_mic || "tr-TR", slot: sec.slot, ...(secenek || {}) })
+        });
+        if (!r.ok) return null;
+        console.info("SES:", SES_SURUM, r.headers.get("X-Ses-Kaynak"), r.headers.get("X-Ses-Ad"), decodeURIComponent(r.headers.get("X-Eleven-Durum") || ""));
+        return await r.blob();
+      } catch (e) { return null; }
+    };
+    const isler = new Array(parcalar.length);
+    const basla = (i) => { if (i < parcalar.length && !isler[i]) isler[i] = getir(parcalar[i]); };
+    basla(0); basla(1);
+    for (let i = 0; i < parcalar.length; i++) {
+      const blob = await isler[i];
+      if (oturum !== __sesOturum) return new Promise(() => {});
+      basla(i + 2);
+      if (blob) await sesOynat(blob);
+      else await tarayiciSes(parcalar[i], dil_mic);
+      if (oturum !== __sesOturum) return new Promise(() => {});
+    }
   } catch {
     return tarayiciSes(metin, dil_mic);
   }
@@ -1879,6 +1964,7 @@ function DersEkrani({dilId, hoca, kul, kapat}) {
   };
 
   const dersKapat = () => {
+    sesiDurdur();
     konusmaRef.current=false;
     sesliModRef.current=false;
     setSesliMod(false);
