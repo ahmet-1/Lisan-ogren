@@ -1,12 +1,34 @@
-export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+import { createHmac, timingSafeEqual } from "node:crypto";
 
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
+function oturum(req) {
+  const baslik = String((req.headers && req.headers.authorization) || "");
+  const jeton = baslik.startsWith("Bearer ") ? baslik.slice(7) : "";
+  const parca = jeton.split(".");
+  if (parca.length !== 2 || !process.env.SESSION_SECRET) return null;
+  const beklenen = createHmac("sha256", process.env.SESSION_SECRET).update(parca[0]).digest("base64url");
+  const a = Buffer.from(parca[1]);
+  const b = Buffer.from(beklenen);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  try {
+    const yuk = JSON.parse(Buffer.from(parca[0], "base64url").toString());
+    return yuk && yuk.exp > Date.now() && (yuk.role === "admin" || yuk.role === "user") ? yuk : null;
+  } catch (e) {
+    return null;
   }
+}
+
+const sayac = new Map();
+function sinirli(anahtar, adet, sureMs) {
+  const simdi = Date.now();
+  const liste = (sayac.get(anahtar) || []).filter((t) => simdi - t < sureMs);
+  if (liste.length >= adet) { sayac.set(anahtar, liste); return true; }
+  liste.push(simdi);
+  sayac.set(anahtar, liste);
+  return false;
+}
+
+export default async function handler(req, res) {
+  res.setHeader("X-Api-Surum", "2");
 
   const SUPA_URL = process.env.SUPABASE_URL;
   const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -23,6 +45,13 @@ export default async function handler(req, res) {
     Authorization: "Bearer " + SUPA_KEY,
     "Content-Type": "application/json"
   };
+
+  const s = oturum(req);
+  if (!s) { res.status(401).json({ error: "Giriş gerekli" }); return; }
+  const admin = s.role === "admin";
+  const hedef = String((req.method === "GET" ? (req.query || {}).userId : (req.body || {}).userId) || "");
+  if (!admin && req.method !== "DELETE" && hedef !== String(s.sub)) { res.status(403).json({ error: "Yetkisiz" }); return; }
+  if (sinirli("veri:" + s.sub, 300, 60000)) { res.status(429).json({ error: "Çok fazla istek. Biraz bekleyin." }); return; }
 
   try {
     /*

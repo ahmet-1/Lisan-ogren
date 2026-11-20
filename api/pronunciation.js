@@ -1,5 +1,38 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+function oturum(req) {
+  const baslik = String((req.headers && req.headers.authorization) || "");
+  const jeton = baslik.startsWith("Bearer ") ? baslik.slice(7) : "";
+  const parca = jeton.split(".");
+  if (parca.length !== 2 || !process.env.SESSION_SECRET) return null;
+  const beklenen = createHmac("sha256", process.env.SESSION_SECRET).update(parca[0]).digest("base64url");
+  const a = Buffer.from(parca[1]);
+  const b = Buffer.from(beklenen);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  try {
+    const yuk = JSON.parse(Buffer.from(parca[0], "base64url").toString());
+    return yuk && yuk.exp > Date.now() && (yuk.role === "admin" || yuk.role === "user") ? yuk : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+const sayac = new Map();
+function sinirli(anahtar, adet, sureMs) {
+  const simdi = Date.now();
+  const liste = (sayac.get(anahtar) || []).filter((t) => simdi - t < sureMs);
+  if (liste.length >= adet) { sayac.set(anahtar, liste); return true; }
+  liste.push(simdi);
+  sayac.set(anahtar, liste);
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader('X-Api-Surum', '2');
+  const oturumBilgi = oturum(req);
+  if (!oturumBilgi) return res.status(401).json({ error: 'Giriş gerekli' });
+  if (sinirli('pron:' + oturumBilgi.sub, 30, 10 * 60 * 1000)) return res.status(429).json({ error: 'Çok fazla deneme. Biraz bekleyin.' });
   try {
     const { audioBase64, referenceText, language, mimeType } = req.body || {};
     const key = process.env.AZURE_SPEECH_KEY;

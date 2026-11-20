@@ -19,7 +19,22 @@ if (typeof window !== "undefined" && !window.__apiFetchPatched) {
         if (t) opts = { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + t } };
       }
     } catch (e) {}
-    return _fetch(url, opts);
+    return _fetch(url, opts).then((r) => {
+      try {
+        if (r.status === 401 && typeof url === "string" && url.startsWith("/api/") && !url.startsWith("/api/auth") && !url.startsWith("/api/reset-password") && !sessionStorage.getItem("la_oturum_uyari")) {
+          const adm = localStorage.getItem("la_admtoken");
+          const kul = localStorage.getItem("la_kul");
+          if (adm || kul) {
+            sessionStorage.setItem("la_oturum_uyari", "1");
+            if (adm) { localStorage.removeItem("la_admtoken"); localStorage.removeItem("la_adGir"); }
+            if (kul) { localStorage.removeItem("la_kul"); localStorage.removeItem("la_token"); }
+            alert(adm ? "Yönetici oturumunuzun süresi doldu. Lütfen yönetici girişini tekrar yapın." : "Güvenlik güncellemesi: lütfen tekrar giriş yapın.");
+            window.location.reload();
+          }
+        }
+      } catch (e) {}
+      return r;
+    });
   };
 }
 
